@@ -1,0 +1,11 @@
+general:
+  logFile: log/portfolio-trader.log
+  bindAddress: :8443
+database:
+  address: localhost:3401
+  name: portfolio
+  username: bitfever
+  password: bitfever
+scan:
+  address: https://158.69.26.216:8443/api/v1/strategies
+  periodHour: 2

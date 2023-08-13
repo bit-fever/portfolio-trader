@@ -1,2 +1,2 @@
-# portfolio-trader
+# Portfolio Trader
 Portfolio Trader component
