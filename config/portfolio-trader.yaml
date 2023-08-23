@@ -1,6 +1,6 @@
 general:
   logFile: log/portfolio-trader.log
-  bindAddress: :8443
+  bindAddress: :8445
 database:
   address: localhost:3401
   name: portfolio

@@ -22,33 +22,57 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package service
 
-import "gorm.io/gorm"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"net/http"
+	"strconv"
+)
 
 //=============================================================================
 
-func GetInstruments(tx *gorm.DB) ([]Instrument, error) {
-	var list []Instrument
-	res := tx.Find(&list)
+func getTradingSystems(c *gin.Context) {
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		list, err := db.GetTradingSystems(tx)
 
-	if res.Error != nil {
-		return nil, res.Error
+		if err != nil {
+			return err
+		}
+
+		c.JSON(http.StatusOK, &list)
+		return nil
+	})
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, err.Error)
 	}
-
-	return list, nil
 }
 
 //=============================================================================
 
-func GetOrCreateInstrument(tx *gorm.DB, ticker string, i *Instrument) (*Instrument, error) {
-	res := tx.Where(&Instrument{Ticker: ticker}).FirstOrCreate(i)
-
-	if res.Error != nil {
-		return nil, res.Error
+func getDailyInfo(c *gin.Context) {
+	tsId, err := strconv.ParseInt(c.Param("id"), 10, 32)
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, err.Error)
 	}
 
-	return i, nil
+	err = db.RunInTransaction(func(tx *gorm.DB) error {
+		list, err := db.GetDailyInfo(tx, int(tsId))
+
+		if err != nil {
+			return err
+		}
+
+		c.JSON(http.StatusOK, &list)
+		return nil
+	})
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, err.Error)
+	}
 }
 
 //=============================================================================

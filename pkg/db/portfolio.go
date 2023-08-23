@@ -28,6 +28,19 @@ import "gorm.io/gorm"
 
 //=============================================================================
 
+func GetPortfolios(tx *gorm.DB) ([]Portfolio, error) {
+	var list []Portfolio
+	res := tx.Find(&list)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return list, nil
+}
+
+//=============================================================================
+
 func GetPortfolioById(tx *gorm.DB, id any) (*Portfolio, error) {
 	var p Portfolio
 	res := tx.First(&p, id)

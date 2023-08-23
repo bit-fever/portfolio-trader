@@ -29,8 +29,12 @@ import "github.com/gin-gonic/gin"
 //=============================================================================
 
 func Init(router *gin.Engine) {
-	//router.GET("/api/inventory/v1/instruments",     getInstruments)
-	//router.GET("/api/inventory/v1/instruments/:id", getInstrumentById)
+	router.GET("/api/portfolio/v1/trading-systems",                getTradingSystems)
+	router.GET("/api/portfolio/v1/trading-systems/:id/daily-info", getDailyInfo)
+
+	router.GET("/api/portfolio/v1/instruments", getInstruments)
+	router.GET("/api/portfolio/v1/portfolios",  getPortfolios)
+
 	//router.POST("/api/inventory/v1/instruments",    addInstrument)
 }
 

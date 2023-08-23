@@ -24,7 +24,22 @@ THE SOFTWARE.
 
 package db
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
+
+//=============================================================================
+
+func GetTradingSystems(tx *gorm.DB) ([]TradingSystem, error) {
+	var list []TradingSystem
+	res := tx.Find(&list)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return list, nil
+}
 
 //=============================================================================
 
@@ -36,6 +51,23 @@ func GetOrCreateTradingSystem(tx *gorm.DB, code string, ts *TradingSystem) (*Tra
 	}
 
 	return ts, nil
+}
+
+//=============================================================================
+
+func GetDailyInfo(tx *gorm.DB, tsId int) (*[]TsDailyInfo, error) {
+	var data []TsDailyInfo
+
+	filter := map[string]any{}
+	filter["trading_system_id"] = tsId
+
+	res := tx.Where(filter).Find(&data)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &data, nil
 }
 
 //=============================================================================

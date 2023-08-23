@@ -22,33 +22,32 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package service
 
-import "gorm.io/gorm"
-
-//=============================================================================
-
-func GetInstruments(tx *gorm.DB) ([]Instrument, error) {
-	var list []Instrument
-	res := tx.Find(&list)
-
-	if res.Error != nil {
-		return nil, res.Error
-	}
-
-	return list, nil
-}
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
+	"net/http"
+)
 
 //=============================================================================
 
-func GetOrCreateInstrument(tx *gorm.DB, ticker string, i *Instrument) (*Instrument, error) {
-	res := tx.Where(&Instrument{Ticker: ticker}).FirstOrCreate(i)
+func getPortfolios(c *gin.Context) {
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		list, err := db.GetPortfolios(tx)
 
-	if res.Error != nil {
-		return nil, res.Error
+		if err != nil {
+			return err
+		}
+
+		c.JSON(http.StatusOK, &list)
+		return nil
+	})
+
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, err.Error)
 	}
-
-	return i, nil
 }
 
 //=============================================================================
