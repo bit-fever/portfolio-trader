@@ -26,6 +26,7 @@ package service
 
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
@@ -34,29 +35,36 @@ import (
 
 //=============================================================================
 
-func getTradingSystems(c *gin.Context) {
-	err := db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := db.GetTradingSystems(tx)
+func getTradingSystemsFull(c *gin.Context) {
+	offset, limit, err := tool.GetPagingParams(c)
+
+	if err != nil {
+		return
+	}
+
+	err = db.RunInTransaction(func(tx *gorm.DB) error {
+		list, err := db.GetTradingSystemsFull(tx, nil, offset, limit)
 
 		if err != nil {
 			return err
 		}
 
-		c.JSON(http.StatusOK, &list)
-		return nil
+		return tool.Return(c, list, offset, limit, len(*list))
 	})
 
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, err.Error)
+		tool.ErrorInternal(c, err.Error())
 	}
 }
 
 //=============================================================================
 
 func getDailyInfo(c *gin.Context) {
-	tsId, err := strconv.ParseInt(c.Param("id"), 10, 32)
+	id := c.Param("id")
+	tsId, err := strconv.ParseInt(id, 10, 32)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, err.Error)
+		tool.ErrorBadRequest(c, "Invalid trading-system id", id)
+		return
 	}
 
 	err = db.RunInTransaction(func(tx *gorm.DB) error {
@@ -71,7 +79,7 @@ func getDailyInfo(c *gin.Context) {
 	})
 
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, err.Error)
+		tool.ErrorInternal(c, err.Error())
 	}
 }
 

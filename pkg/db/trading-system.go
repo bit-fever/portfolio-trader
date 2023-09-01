@@ -30,15 +30,33 @@ import (
 
 //=============================================================================
 
-func GetTradingSystems(tx *gorm.DB) ([]TradingSystem, error) {
+func GetTradingSystems(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]TradingSystem, error) {
 	var list []TradingSystem
-	res := tx.Find(&list)
+	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	return list, nil
+	return &list, nil
+}
+
+//=============================================================================
+
+func GetTradingSystemsFull(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]TradingSystemFull, error) {
+	var list []TradingSystemFull
+	query := "SELECT ts.*, i.ticker as instrument_ticker, p.name as portfolio_name " +
+		"FROM trading_system ts " +
+		"LEFT JOIN instrument i on ts.instrument_id = i.id " +
+		"LEFT JOIN portfolio p on ts.portfolio_id = p.id"
+
+	res := tx.Raw(query).Find(&list)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &list, nil
 }
 
 //=============================================================================

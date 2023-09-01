@@ -22,20 +22,27 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package service
-
-import "github.com/gin-gonic/gin"
+package model
 
 //=============================================================================
 
-func Init(router *gin.Engine) {
-	router.GET("/api/portfolio/v1/trading-systems", getTradingSystemsFull)
-	router.GET("/api/portfolio/v1/trading-systems/:id/daily-info", getDailyInfo)
+const MaxLimit = 5000
 
-	router.GET("/api/portfolio/v1/instruments", getInstruments)
-	router.GET("/api/portfolio/v1/portfolios", getPortfolios)
+//=============================================================================
 
-	//router.POST("/api/inventory/v1/instruments",    addInstrument)
+type ErrorResponse struct {
+	Code    int    `json:"code"`
+	Error   string `json:"error"`
+	Details any    `json:"details,omitempty"`
+}
+
+//=============================================================================
+
+type ListResponse struct {
+	Offset   int  `json:"offset"`
+	Limit    int  `json:"limit"`
+	Overflow bool `json:"overflow"`
+	Result   any  `json:"result"`
 }
 
 //=============================================================================

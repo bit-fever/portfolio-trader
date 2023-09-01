@@ -29,40 +29,67 @@ import "time"
 //=============================================================================
 
 type Portfolio struct {
-	Id        uint   `json:"id" gorm:"primaryKey"`
-	Name      string `json:"name"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        uint      `json:"id" gorm:"primaryKey"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 //=============================================================================
 
 type Instrument struct {
-	Id        uint   `json:"id" gorm:"primaryKey"`
-	Ticker    string `json:"ticker"`
-	Name      string `json:"name"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	Id        uint      `json:"id" gorm:"primaryKey"`
+	Ticker    string    `json:"ticker"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 //=============================================================================
 
 type TradingSystem struct {
-	Id              uint   `json:"id" gorm:"primaryKey"`
-	Code            string `json:"code"`
-	Name            string `json:"name"`
-	InstrumentId    uint   `json:"instrumentId"`
-	PortfolioId     uint   `json:"portfolioId"`
-	FirstUpdate     int     `json:"firstUpdate"`
-	LastUpdate      int     `json:"lastUpdate"`
-	LastPl          float64 `json:"lastPl"`
-	TradingDays     int     `json:"tradingDays"`
-	NumTrades       int     `json:"numTrades"`
-	FilterType      int     `json:"filterType"`
-	Filter          string  `json:"filter"`
-	SuggestedAction int     `json:"suggestedAction"`
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	Id              uint            `json:"id" gorm:"primaryKey"`
+	Code            string          `json:"code"`
+	Name            string          `json:"name"`
+	InstrumentId    uint            `json:"instrumentId"`
+	PortfolioId     uint            `json:"portfolioId"`
+	FirstUpdate     int             `json:"firstUpdate"`
+	LastUpdate      int             `json:"lastUpdate"`
+	LastPl          float64         `json:"lastPl"`
+	TradingDays     int             `json:"tradingDays"`
+	NumTrades       int             `json:"numTrades"`
+	FilterType      FilterType      `json:"filterType"`
+	Filter          string          `json:"filter"`
+	SuggestedAction SuggestedAction `json:"suggestedAction"`
+	CreatedAt       time.Time       `json:"createdAt"`
+	UpdatedAt       time.Time       `json:"updatedAt"`
+}
+
+//-----------------------------------------------------------------------------
+
+type FilterType int
+
+const (
+	None FilterType = iota
+	ShortLong
+)
+
+//-----------------------------------------------------------------------------
+
+type SuggestedAction int
+
+const (
+	Unknown SuggestedAction = iota
+	Activate
+	Deactivate
+)
+
+//=============================================================================
+
+type TradingSystemFull struct {
+	TradingSystem
+	InstrumentTicker string `json:"instrumentTicker"`
+	PortfolioName    string `json:"portfolioName"`
 }
 
 //=============================================================================

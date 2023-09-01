@@ -28,20 +28,20 @@ import "gorm.io/gorm"
 
 //=============================================================================
 
-func GetPortfolios(tx *gorm.DB) ([]Portfolio, error) {
+func GetPortfolios(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Portfolio, error) {
 	var list []Portfolio
-	res := tx.Find(&list)
+	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	return list, nil
+	return &list, nil
 }
 
 //=============================================================================
 
-func GetPortfolioById(tx *gorm.DB, id any) (*Portfolio, error) {
+func GetPortfolioById(tx *gorm.DB, id int) (*Portfolio, error) {
 	var p Portfolio
 	res := tx.First(&p, id)
 

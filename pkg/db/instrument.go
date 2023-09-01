@@ -28,15 +28,15 @@ import "gorm.io/gorm"
 
 //=============================================================================
 
-func GetInstruments(tx *gorm.DB) ([]Instrument, error) {
+func GetInstruments(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Instrument, error) {
 	var list []Instrument
-	res := tx.Find(&list)
+	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
 		return nil, res.Error
 	}
 
-	return list, nil
+	return &list, nil
 }
 
 //=============================================================================
