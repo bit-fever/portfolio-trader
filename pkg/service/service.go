@@ -24,7 +24,9 @@ THE SOFTWARE.
 
 package service
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 //=============================================================================
 
@@ -34,6 +36,7 @@ func Init(router *gin.Engine) {
 
 	router.GET("/api/portfolio/v1/instruments", getInstruments)
 	router.GET("/api/portfolio/v1/portfolios", getPortfolios)
+	router.GET("/api/portfolio/v1/portfolio-tree", getPortfolioTree)
 
 	//router.POST("/api/inventory/v1/instruments",    addInstrument)
 }

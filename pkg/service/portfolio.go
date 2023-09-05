@@ -29,6 +29,7 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"net/http"
 )
 
 //=============================================================================
@@ -48,6 +49,25 @@ func getPortfolios(c *gin.Context) {
 		}
 
 		return tool.Return(c, list, offset, limit, len(*list))
+	})
+
+	if err != nil {
+		tool.ErrorInternal(c, err.Error())
+	}
+}
+
+//=============================================================================
+
+func getPortfolioTree(c *gin.Context) {
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		list, err := db.GetPortfolioTree(tx)
+
+		if err != nil {
+			return err
+		}
+
+		c.JSON(http.StatusOK, list)
+		return nil
 	})
 
 	if err != nil {

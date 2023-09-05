@@ -30,9 +30,30 @@ import "time"
 
 type Portfolio struct {
 	Id        uint      `json:"id" gorm:"primaryKey"`
+	ParentId  uint      `json:"parentId"`
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+//=============================================================================
+
+type PortfolioTree struct {
+	Portfolio
+	Children       []*PortfolioTree `json:"children"`
+	TradingSystems []*TradingSystem `json:"tradingSystems"`
+}
+
+//-----------------------------------------------------------------------------
+
+func (pt *PortfolioTree) AddChild(p *PortfolioTree) {
+	pt.Children = append(pt.Children, p)
+}
+
+//-----------------------------------------------------------------------------
+
+func (pt *PortfolioTree) AddTradingSystem(ts *TradingSystem) {
+	pt.TradingSystems = append(pt.TradingSystems, ts)
 }
 
 //=============================================================================
