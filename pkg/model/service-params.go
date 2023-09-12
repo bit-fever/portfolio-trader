@@ -22,24 +22,13 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package service
-
-import (
-	"github.com/gin-gonic/gin"
-)
+package model
 
 //=============================================================================
 
-func Init(router *gin.Engine) {
-	router.GET("/api/portfolio/v1/trading-systems", getTradingSystemsFull)
-	router.GET("/api/portfolio/v1/trading-systems/:id/daily-info", getDailyInfo)
-
-	router.GET("/api/portfolio/v1/instruments", getInstruments)
-	router.GET("/api/portfolio/v1/portfolios", getPortfolios)
-	router.GET("/api/portfolio/v1/portfolio/tree", getPortfolioTree)
-	router.GET("/api/portfolio/v1/portfolio/analysis", getPortfolioAnalysis)
-
-	//router.POST("/api/inventory/v1/instruments",    addInstrument)
+type PortfolioAnalysisParams struct {
+	Id     int `form:"id"     binding:"required,min=1"`
+	Period int `form:"period" binding:"required,min=20100000,max=30000000"`
 }
 
 //=============================================================================

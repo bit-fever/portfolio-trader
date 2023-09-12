@@ -26,6 +26,7 @@ package service
 
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/portfolio-trader/pkg/model"
 	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -72,6 +73,30 @@ func getPortfolioTree(c *gin.Context) {
 
 	if err != nil {
 		tool.ErrorInternal(c, err.Error())
+	}
+}
+
+//=============================================================================
+
+func getPortfolioAnalysis(c *gin.Context) {
+	params := model.PortfolioAnalysisParams{}
+	if err := tool.BindParamsFromQuery(c, &params); err != nil {
+		return
+	}
+
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		result, err := db.GetPortfolioAnalysis(tx, &params)
+
+		if err != nil {
+			return err
+		}
+
+		c.JSON(http.StatusOK, result)
+		return nil
+	})
+
+	if err != nil {
+		_ = tool.ErrorInternal(c, err.Error())
 	}
 }
 
