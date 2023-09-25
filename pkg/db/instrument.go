@@ -41,6 +41,26 @@ func GetInstruments(tx *gorm.DB, filter map[string]any, offset int, limit int) (
 
 //=============================================================================
 
+func GetInstrumentsAsMap(tx *gorm.DB) (map[uint]*Instrument, error) {
+	var list []Instrument
+	res := tx.Find(&list)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	instMap := map[uint]*Instrument{}
+
+	for _, inst := range list {
+		inAux := inst
+		instMap[inst.Id] = &inAux
+	}
+
+	return instMap, nil
+}
+
+//=============================================================================
+
 func GetOrCreateInstrument(tx *gorm.DB, ticker string, i *Instrument) (*Instrument, error) {
 	res := tx.Where(&Instrument{Ticker: ticker}).FirstOrCreate(i)
 

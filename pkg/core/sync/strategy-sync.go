@@ -127,13 +127,11 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 
 		for _, inDi := range s.DailyInfo {
 			if _, ok := diMap[inDi.Day]; !ok {
-				db.AddTsDailyInfo(tx, &db.TsDailyInfo{
+				_ = db.AddTsDailyInfo(tx, &db.TsDailyInfo{
 					TradingSystemId: ts.Id,
 					Day: inDi.Day,
 					OpenProfit: inDi.OpenProfit,
 					Position: inDi.Position,
-					GapValue: inDi.GapValue,
-					TrueRange: inDi.TrueRange,
 					NumTrades: inDi.NumTrades,
 				})
 

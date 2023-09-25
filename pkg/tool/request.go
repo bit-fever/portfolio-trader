@@ -128,6 +128,18 @@ func BindParamsFromQuery(c *gin.Context, obj any) (err error) {
 }
 
 //=============================================================================
+
+func BindParamsFromBody(c *gin.Context, obj any) (err error) {
+	if err := c.ShouldBind(obj); err != nil {
+		message := parseError(err)
+		_ = ErrorBadRequest(c, message, nil)
+		return errors.New(message)
+	}
+
+	return nil
+}
+
+//=============================================================================
 //===
 //=== Private methods
 //===

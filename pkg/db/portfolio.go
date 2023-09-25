@@ -25,7 +25,6 @@ THE SOFTWARE.
 package db
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/model"
 	"gorm.io/gorm"
 	"log"
 )
@@ -100,32 +99,6 @@ func AddPortfolio(tx *gorm.DB, p *Portfolio) error {
 }
 
 //=============================================================================
-
-func GetPortfolioAnalysis(tx *gorm.DB, params *model.PortfolioAnalysisParams) (int, error) {
-
-	//--- Get all portfolios
-
-	var poList []Portfolio
-	res := tx.Find(&poList)
-
-	if res.Error != nil {
-		return 0, res.Error
-	}
-
-	//--- Get all trading systems
-
-	var tsList []TradingSystem
-	res = tx.Find(&tsList)
-
-	if res.Error != nil {
-		return 0, res.Error
-	}
-
-	//return buildPortfolioTree(&poList, &tsList), nil
-	return 0, nil
-}
-
-//=============================================================================
 //===
 //=== Private methods
 //===
@@ -180,7 +153,5 @@ func buildPortfolioTree(poList *[]Portfolio, tsList *[]TradingSystem) *[]*Portfo
 
 	return &result
 }
-
-//=============================================================================
 
 //=============================================================================

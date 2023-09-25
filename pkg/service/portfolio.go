@@ -78,14 +78,14 @@ func getPortfolioTree(c *gin.Context) {
 
 //=============================================================================
 
-func getPortfolioAnalysis(c *gin.Context) {
-	params := model.PortfolioAnalysisParams{}
-	if err := tool.BindParamsFromQuery(c, &params); err != nil {
+func getPortfolioMonitoring(c *gin.Context) {
+	params := model.PortfolioMonitoringParams{}
+	if err := tool.BindParamsFromBody(c, &params); err != nil {
 		return
 	}
 
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
-		result, err := db.GetPortfolioAnalysis(tx, &params)
+		result, err := db.GetPortfolioMonitoring(tx, &params)
 
 		if err != nil {
 			return err

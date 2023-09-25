@@ -26,9 +26,49 @@ package model
 
 //=============================================================================
 
-type PortfolioAnalysisParams struct {
-	Id     int `form:"id"     binding:"required,min=1"`
-	Period int `form:"period" binding:"required,min=20100000,max=30000000"`
+type PortfolioMonitoringParams struct {
+	TsIds  []int `form:"tsIds"  binding:"required,min=1,dive"`
+	Period   int `form:"period" binding:"required,min=1,max=5000"`
+}
+
+//=============================================================================
+
+type BaseMonitoring struct {
+	Days        []int      `json:"days"`
+	RawProfit   []float64  `json:"rawProfit"`
+	NetProfit   []float64  `json:"netProfit"`
+	RawDrawdown []float64  `json:"rawDrawdown"`
+	NetDrawdown []float64  `json:"netDrawdown"`
+	NumTrades   []int      `json:"numTrades"`
+}
+
+//=============================================================================
+
+type TradingSystemMonitoring struct {
+	BaseMonitoring
+	Id   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+//=============================================================================
+
+type PortfolioMonitoringResponse struct {
+	BaseMonitoring
+	TradingSystems []*TradingSystemMonitoring `json:"tradingSystems"`
+}
+
+//=============================================================================
+
+func NewTradingSystemAnalysis(size int) *TradingSystemMonitoring {
+	tsa := &TradingSystemMonitoring{}
+	tsa.Days        = make([]int,     size)
+	tsa.RawProfit   = make([]float64, size)
+	tsa.NetProfit   = make([]float64, size)
+	tsa.RawDrawdown = make([]float64, size)
+	tsa.NetDrawdown = make([]float64, size)
+	tsa.NumTrades   = make([]int,     size)
+
+	return tsa
 }
 
 //=============================================================================

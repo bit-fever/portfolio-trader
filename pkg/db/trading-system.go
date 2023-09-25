@@ -43,6 +43,39 @@ func GetTradingSystems(tx *gorm.DB, filter map[string]any, offset int, limit int
 
 //=============================================================================
 
+func GetTradingSystemsById(tx *gorm.DB, ids []int) (*[]TradingSystem, error) {
+	var list []TradingSystem
+	res := tx.Find(&list, ids)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &list, nil
+}
+
+//=============================================================================
+
+func GetTradingSystemsByIdAsMap(tx *gorm.DB, ids []int) (map[int]*TradingSystem, error) {
+	var list []TradingSystem
+	res := tx.Find(&list, ids)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	tsMap := map[int]*TradingSystem{}
+
+	for _, ts := range list {
+		tsAux := ts
+		tsMap[int(ts.Id)] = &tsAux
+	}
+
+	return tsMap, nil
+}
+
+//=============================================================================
+
 func GetTradingSystemsFull(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]TradingSystemFull, error) {
 	var list []TradingSystemFull
 	query := "SELECT ts.*, i.ticker as instrument_ticker, p.name as portfolio_name " +
@@ -80,6 +113,20 @@ func GetDailyInfo(tx *gorm.DB, tsId int) (*[]TsDailyInfo, error) {
 	filter["trading_system_id"] = tsId
 
 	res := tx.Where(filter).Find(&data)
+
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	return &data, nil
+}
+
+//=============================================================================
+
+func GetDailyInfos(tx *gorm.DB, tsIds []int, fromDay int) (*[]TsDailyInfo, error) {
+	var data []TsDailyInfo
+
+	res := tx.Find(&data, "trading_system_id in ? and day >= ?", tsIds, fromDay)
 
 	if res.Error != nil {
 		return nil, res.Error

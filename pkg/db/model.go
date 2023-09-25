@@ -62,6 +62,7 @@ type Instrument struct {
 	Id        uint      `json:"id" gorm:"primaryKey"`
 	Ticker    string    `json:"ticker"`
 	Name      string    `json:"name"`
+	Cost      float32   `json:"cost"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -121,8 +122,6 @@ type TsDailyInfo struct {
 	Day             int     `json:"day"`
 	OpenProfit      float64 `json:"openProfit"`
 	Position        int     `json:"position"`
-	GapValue        float64 `json:"gapValue"`
-	TrueRange       float64 `json:"trueRange"`
 	NumTrades       int     `json:"numTrades"`
 }
 
