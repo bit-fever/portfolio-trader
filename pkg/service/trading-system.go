@@ -25,12 +25,11 @@ THE SOFTWARE.
 package service
 
 import (
+	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
-	"strconv"
 )
 
 //=============================================================================
@@ -38,49 +37,64 @@ import (
 func getTradingSystemsFull(c *gin.Context) {
 	offset, limit, err := tool.GetPagingParams(c)
 
-	if err != nil {
-		return
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			list, err := db.GetTradingSystemsFull(tx, nil, offset, limit)
+
+			if err != nil {
+				return err
+			}
+
+			return tool.ReturnList(c, list, offset, limit, len(*list))
+		})
 	}
 
-	err = db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := db.GetTradingSystemsFull(tx, nil, offset, limit)
-
-		if err != nil {
-			return err
-		}
-
-		return tool.Return(c, list, offset, limit, len(*list))
-	})
-
-	if err != nil {
-		tool.ErrorInternal(c, err.Error())
-	}
+	tool.ReturnError(c, err)
 }
 
 //=============================================================================
 
 func getDailyInfo(c *gin.Context) {
-	id := c.Param("id")
-	tsId, err := strconv.ParseInt(id, 10, 32)
-	if err != nil {
-		tool.ErrorBadRequest(c, "Invalid trading-system id", id)
-		return
+	tsId, err := tool.GetIdFromUrl(c)
+
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			list, err := db.FindDailyInfoByTsId(tx, tsId)
+
+			if err != nil {
+				return err
+			}
+
+			return tool.ReturnObject(c, &list)
+		})
 	}
 
-	err = db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := db.GetDailyInfo(tx, int(tsId))
+	tool.ReturnError(c, err)
+}
 
-		if err != nil {
-			return err
+//=============================================================================
+
+func getFilteringAnalysis(c *gin.Context) {
+	tsId, err := tool.GetIdFromUrl(c)
+
+	if err == nil {
+		params := business.FilteringParams{}
+		err = tool.BindParamsFromBody(c, &params)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.GetFilteringAnalysis(tx, tsId, &params)
+
+				if err != nil {
+					return err
+				}
+
+				return tool.ReturnObject(c, rep)
+			})
 		}
-
-		c.JSON(http.StatusOK, &list)
-		return nil
-	})
-
-	if err != nil {
-		tool.ErrorInternal(c, err.Error())
 	}
+
+	tool.ReturnError(c, err)
 }
 
 //=============================================================================

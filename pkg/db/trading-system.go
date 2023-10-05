@@ -25,6 +25,7 @@ THE SOFTWARE.
 package db
 
 import (
+	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +36,7 @@ func GetTradingSystems(tx *gorm.DB, filter map[string]any, offset int, limit int
 	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -43,12 +44,29 @@ func GetTradingSystems(tx *gorm.DB, filter map[string]any, offset int, limit int
 
 //=============================================================================
 
-func GetTradingSystemsById(tx *gorm.DB, ids []int) (*[]TradingSystem, error) {
+func GetTradingSystemById(tx *gorm.DB, id uint) (*TradingSystem, error) {
+	var list []TradingSystem
+	res := tx.Find(&list, id)
+
+	if res.Error != nil {
+		return nil, tool.NewServerErrorByError(res.Error)
+	}
+
+	if len(list) == 1 {
+		return &list[0], nil
+	}
+
+	return nil, nil
+}
+
+//=============================================================================
+
+func GetTradingSystemsById(tx *gorm.DB, ids []uint) (*[]TradingSystem, error) {
 	var list []TradingSystem
 	res := tx.Find(&list, ids)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -56,12 +74,12 @@ func GetTradingSystemsById(tx *gorm.DB, ids []int) (*[]TradingSystem, error) {
 
 //=============================================================================
 
-func GetTradingSystemsByIdAsMap(tx *gorm.DB, ids []int) (map[int]*TradingSystem, error) {
+func GetTradingSystemsByIdAsMap(tx *gorm.DB, ids []uint) (map[int]*TradingSystem, error) {
 	var list []TradingSystem
 	res := tx.Find(&list, ids)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	tsMap := map[int]*TradingSystem{}
@@ -86,7 +104,7 @@ func GetTradingSystemsFull(tx *gorm.DB, filter map[string]any, offset int, limit
 	res := tx.Raw(query).Find(&list)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -98,41 +116,10 @@ func GetOrCreateTradingSystem(tx *gorm.DB, code string, ts *TradingSystem) (*Tra
 	res := tx.Where(&TradingSystem{Code: code}).FirstOrCreate(&ts)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return ts, nil
-}
-
-//=============================================================================
-
-func GetDailyInfo(tx *gorm.DB, tsId int) (*[]TsDailyInfo, error) {
-	var data []TsDailyInfo
-
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
-
-	res := tx.Where(filter).Find(&data)
-
-	if res.Error != nil {
-		return nil, res.Error
-	}
-
-	return &data, nil
-}
-
-//=============================================================================
-
-func GetDailyInfos(tx *gorm.DB, tsIds []int, fromDay int) (*[]TsDailyInfo, error) {
-	var data []TsDailyInfo
-
-	res := tx.Find(&data, "trading_system_id in ? and day >= ?", tsIds, fromDay)
-
-	if res.Error != nil {
-		return nil, res.Error
-	}
-
-	return &data, nil
 }
 
 //=============================================================================

@@ -27,6 +27,10 @@ package db
 import "time"
 
 //=============================================================================
+//===
+//=== Entities
+//===
+//=============================================================================
 
 type Portfolio struct {
 	Id        uint      `json:"id" gorm:"primaryKey"`
@@ -34,26 +38,6 @@ type Portfolio struct {
 	Name      string    `json:"name"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-//=============================================================================
-
-type PortfolioTree struct {
-	Portfolio
-	Children       []*PortfolioTree `json:"children"`
-	TradingSystems []*TradingSystem `json:"tradingSystems"`
-}
-
-//-----------------------------------------------------------------------------
-
-func (pt *PortfolioTree) AddChild(p *PortfolioTree) {
-	pt.Children = append(pt.Children, p)
-}
-
-//-----------------------------------------------------------------------------
-
-func (pt *PortfolioTree) AddTradingSystem(ts *TradingSystem) {
-	pt.TradingSystems = append(pt.TradingSystems, ts)
 }
 
 //=============================================================================
@@ -80,21 +64,10 @@ type TradingSystem struct {
 	LastPl          float64         `json:"lastPl"`
 	TradingDays     int             `json:"tradingDays"`
 	NumTrades       int             `json:"numTrades"`
-	FilterType      FilterType      `json:"filterType"`
-	Filter          string          `json:"filter"`
 	SuggestedAction SuggestedAction `json:"suggestedAction"`
 	CreatedAt       time.Time       `json:"createdAt"`
 	UpdatedAt       time.Time       `json:"updatedAt"`
 }
-
-//-----------------------------------------------------------------------------
-
-type FilterType int
-
-const (
-	None FilterType = iota
-	ShortLong
-)
 
 //-----------------------------------------------------------------------------
 
@@ -127,6 +100,23 @@ type TsDailyInfo struct {
 
 //=============================================================================
 
+type TsFiltering struct {
+	Id             uint
+	LsEnabled      bool
+	LsLongPeriod   int
+	LsShortPeriod  int
+	LsThreshold    float32
+	LsShortPosPerc int
+	MaEnabled      bool
+	MaDays         int
+}
+
+//=============================================================================
+//===
+//=== Table names
+//===
+//=============================================================================
+
 func (Portfolio) TableName() string {
 	return "portfolio"
 }
@@ -147,6 +137,12 @@ func (TradingSystem) TableName() string {
 
 func (TsDailyInfo) TableName() string {
 	return "ts_daily_info"
+}
+
+//=============================================================================
+
+func (TsFiltering) TableName() string {
+	return "ts_filtering"
 }
 
 //=============================================================================

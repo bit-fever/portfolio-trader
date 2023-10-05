@@ -22,53 +22,88 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package model
+package tool
+
+import (
+	"errors"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
+)
 
 //=============================================================================
 
-type PortfolioMonitoringParams struct {
-	TsIds  []int `form:"tsIds"  binding:"required,min=1,dive"`
-	Period   int `form:"period" binding:"required,min=1,max=5000"`
+func NewRequestError(message string, params ...any) error {
+	msg := fmt.Sprintf(message, params)
+	err := AppError{
+		RequestError: errors.New(msg),
+	}
+
+	return err
 }
 
 //=============================================================================
 
-type BaseMonitoring struct {
-	Days        []int      `json:"days"`
-	RawProfit   []float64  `json:"rawProfit"`
-	NetProfit   []float64  `json:"netProfit"`
-	RawDrawdown []float64  `json:"rawDrawdown"`
-	NetDrawdown []float64  `json:"netDrawdown"`
-	NumTrades   []int      `json:"numTrades"`
+func NewServerError(message string, params ...any) error {
+	msg := fmt.Sprintf(message, params)
+	err := AppError{
+		ServerError: errors.New(msg),
+	}
+
+	return err
 }
 
 //=============================================================================
 
-type TradingSystemMonitoring struct {
-	BaseMonitoring
-	Id   uint   `json:"id"`
-	Name string `json:"name"`
+func NewServerErrorByError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	return AppError{
+		ServerError: err,
+	}
 }
 
 //=============================================================================
 
-type PortfolioMonitoringResponse struct {
-	BaseMonitoring
-	TradingSystems []*TradingSystemMonitoring `json:"tradingSystems"`
+func ReturnError(c *gin.Context, err error) {
+	if err != nil {
+		var ae AppError
+		if errors.As(err, &ae) {
+			if ae.RequestError != nil {
+				writeError(c, http.StatusBadRequest, err.Error(), nil)
+			} else if ae.ServerError != nil {
+				writeError(c, http.StatusInternalServerError, err.Error(), nil)
+			} else {
+				writeError(c, http.StatusInternalServerError, "Bad AppError object", nil)
+			}
+		} else {
+			writeError(c, http.StatusInternalServerError, "Found non AppError object : "+ err.Error(), nil)
+		}
+	}
 }
 
 //=============================================================================
+//===
+//=== Private methods
+//===
+//=============================================================================
 
-func NewTradingSystemAnalysis(size int) *TradingSystemMonitoring {
-	tsa := &TradingSystemMonitoring{}
-	tsa.Days        = make([]int,     size)
-	tsa.RawProfit   = make([]float64, size)
-	tsa.NetProfit   = make([]float64, size)
-	tsa.RawDrawdown = make([]float64, size)
-	tsa.NetDrawdown = make([]float64, size)
-	tsa.NumTrades   = make([]int,     size)
+type errorResponse struct {
+	Code    int    `json:"code"`
+	Error   string `json:"error"`
+	Details any    `json:"details,omitempty"`
+}
 
-	return tsa
+//-----------------------------------------------------------------------------
+
+func writeError(c *gin.Context, errorCode int, errorMessage string, details any) {
+	c.JSON(errorCode, &errorResponse{
+		Code:    errorCode,
+		Error:   errorMessage,
+		Details: details,
+	})
 }
 
 //=============================================================================

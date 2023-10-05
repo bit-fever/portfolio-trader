@@ -24,7 +24,10 @@ THE SOFTWARE.
 
 package db
 
-import "gorm.io/gorm"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/tool"
+	"gorm.io/gorm"
+)
 
 //=============================================================================
 
@@ -33,7 +36,7 @@ func GetInstruments(tx *gorm.DB, filter map[string]any, offset int, limit int) (
 	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -46,7 +49,7 @@ func GetInstrumentsAsMap(tx *gorm.DB) (map[uint]*Instrument, error) {
 	res := tx.Find(&list)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	instMap := map[uint]*Instrument{}
@@ -65,7 +68,7 @@ func GetOrCreateInstrument(tx *gorm.DB, ticker string, i *Instrument) (*Instrume
 	res := tx.Where(&Instrument{Ticker: ticker}).FirstOrCreate(i)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return i, nil

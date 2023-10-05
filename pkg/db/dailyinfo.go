@@ -24,16 +24,23 @@ THE SOFTWARE.
 
 package db
 
-import "gorm.io/gorm"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/tool"
+	"gorm.io/gorm"
+)
 
 //=============================================================================
 
 func FindDailyInfoByTsId(tx *gorm.DB, tsId uint) ([]TsDailyInfo, error) {
 	var list []TsDailyInfo
-	res := tx.Find(&list, &TsDailyInfo{ TradingSystemId: tsId })
+
+	filter := map[string]any{}
+	filter["trading_system_id"] = tsId
+
+	res := tx.Where(filter).Find(&list)
 
 	if res.Error != nil {
-		return nil, res.Error
+		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
 	return list, nil
@@ -59,8 +66,23 @@ func FindDailyInfoByTsIdAsMap(tx *gorm.DB, tsId uint) (map[int]TsDailyInfo, erro
 
 //=============================================================================
 
+func FindDailyInfoFromDay(tx *gorm.DB, tsIds []uint, fromDay int) (*[]TsDailyInfo, error) {
+	var data []TsDailyInfo
+
+	res := tx.Find(&data, "trading_system_id in ? and day >= ?", tsIds, fromDay)
+
+	if res.Error != nil {
+		return nil, tool.NewServerErrorByError(res.Error)
+	}
+
+	return &data, nil
+}
+
+//=============================================================================
+
 func AddTsDailyInfo(tx *gorm.DB, di *TsDailyInfo) error {
-	return tx.Create(di).Error
+	err := tx.Create(di).Error
+	return tool.NewServerErrorByError(err)
 }
 
 //=============================================================================

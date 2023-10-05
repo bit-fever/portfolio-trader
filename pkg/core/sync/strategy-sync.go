@@ -107,7 +107,6 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 			Name: s.Name,
 			InstrumentId: in.Id,
 			PortfolioId: p.Id,
-			FilterType: 0,
 			SuggestedAction: 0,
 		})
 
@@ -127,14 +126,17 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 
 		for _, inDi := range s.DailyInfo {
 			if _, ok := diMap[inDi.Day]; !ok {
-				_ = db.AddTsDailyInfo(tx, &db.TsDailyInfo{
+				di := &db.TsDailyInfo{
 					TradingSystemId: ts.Id,
 					Day: inDi.Day,
 					OpenProfit: inDi.OpenProfit,
 					Position: inDi.Position,
 					NumTrades: inDi.NumTrades,
-				})
+				}
+				_ = db.AddTsDailyInfo(tx, di)
 
+				//--- Add entry to map to avoid duplicates
+				diMap[inDi.Day] = *di
 				deltaTrades++
 
 				//--- Update information on trading system

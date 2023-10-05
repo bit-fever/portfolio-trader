@@ -22,16 +22,36 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package business
 
-import "testing"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/portfolio-trader/pkg/tool"
+	"gorm.io/gorm"
+)
 
 //=============================================================================
 
-func TestDay(t *testing.T) {
-//	calcFromDay()
-//	t.Error("bla bla bla")
+func GetFilteringAnalysis(tx *gorm.DB, tsId uint, params *FilteringParams) (*FilteringResponse, error) {
+
+	ts, err := db.GetTradingSystemById(tx, tsId)
+	if err != nil {
+		return nil, err
+	}
+
+	if ts == nil {
+		return nil, tool.NewRequestError("Missing trading system with id=%v", tsId)
+	}
+
+	if params.IsEmpty() {
+		//if err := json.Unmarshal([]byte(ts.Filter), &params); err != nil {
+		//	return nil, errors.New("Bad json format for filter : %v", ts.Filter)
+		//}
+	}
+
+	res := &FilteringResponse{}
+
+	return res, nil
 }
 
 //=============================================================================
-

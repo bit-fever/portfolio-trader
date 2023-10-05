@@ -36,23 +36,19 @@ import (
 func getInstruments(c *gin.Context) {
 	offset, limit, err := tool.GetPagingParams(c)
 
-	if err != nil {
-		return
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			list, err := db.GetInstruments(tx, nil, offset, limit)
+
+			if err != nil {
+				return err
+			}
+
+			return tool.ReturnList(c, list, offset, limit, len(*list))
+		})
 	}
 
-	err = db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := db.GetInstruments(tx, nil, offset, limit)
-
-		if err != nil {
-			return err
-		}
-
-		return tool.Return(c, list, offset, limit, len(*list))
-	})
-
-	if err != nil {
-		tool.ErrorInternal(c, err.Error())
-	}
+	tool.ReturnError(c, err)
 }
 
 //=============================================================================

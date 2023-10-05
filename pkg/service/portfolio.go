@@ -25,12 +25,11 @@ THE SOFTWARE.
 package service
 
 import (
+	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/model"
 	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
-	"net/http"
 )
 
 //=============================================================================
@@ -38,66 +37,56 @@ import (
 func getPortfolios(c *gin.Context) {
 	offset, limit, err := tool.GetPagingParams(c)
 
-	if err != nil {
-		return
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			list, err := db.GetPortfolios(tx, nil, offset, limit)
+
+			if err != nil {
+				return err
+			}
+
+			return tool.ReturnList(c, list, offset, limit, len(*list))
+		})
 	}
 
-	err = db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := db.GetPortfolios(tx, nil, offset, limit)
-
-		if err != nil {
-			return err
-		}
-
-		return tool.Return(c, list, offset, limit, len(*list))
-	})
-
-	if err != nil {
-		tool.ErrorInternal(c, err.Error())
-	}
+	tool.ReturnError(c, err)
 }
 
 //=============================================================================
 
 func getPortfolioTree(c *gin.Context) {
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := db.GetPortfolioTree(tx)
+		list, err := business.GetPortfolioTree(tx)
 
 		if err != nil {
 			return err
 		}
 
-		c.JSON(http.StatusOK, list)
-		return nil
+		return tool.ReturnObject(c, list)
 	})
 
-	if err != nil {
-		tool.ErrorInternal(c, err.Error())
-	}
+	tool.ReturnError(c, err)
 }
 
 //=============================================================================
 
 func getPortfolioMonitoring(c *gin.Context) {
-	params := model.PortfolioMonitoringParams{}
-	if err := tool.BindParamsFromBody(c, &params); err != nil {
-		return
+	params := business.PortfolioMonitoringParams{}
+	err    := tool.BindParamsFromBody(c, &params)
+
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			result, err := business.GetPortfolioMonitoring(tx, &params)
+
+			if err != nil {
+				return err
+			}
+
+			return tool.ReturnObject(c, result)
+		})
 	}
 
-	err := db.RunInTransaction(func(tx *gorm.DB) error {
-		result, err := db.GetPortfolioMonitoring(tx, &params)
-
-		if err != nil {
-			return err
-		}
-
-		c.JSON(http.StatusOK, result)
-		return nil
-	})
-
-	if err != nil {
-		_ = tool.ErrorInternal(c, err.Error())
-	}
+	tool.ReturnError(c, err)
 }
 
 //=============================================================================

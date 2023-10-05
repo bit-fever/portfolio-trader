@@ -22,56 +22,94 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package business
 
 import (
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"gorm.io/gorm"
+	"log"
 )
 
 //=============================================================================
 
-func GetPortfolios(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Portfolio, error) {
-	var list []Portfolio
-	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
+func GetPortfolioTree(tx *gorm.DB) (*[]*PortfolioTree, error) {
+
+	//--- Get all portfolios
+
+	var poList []db.Portfolio
+	res := tx.Find(&poList)
 
 	if res.Error != nil {
 		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
-	return &list, nil
-}
+	//--- Get all trading systems
 
-//=============================================================================
-
-func GetPortfolioById(tx *gorm.DB, id uint) (*Portfolio, error) {
-	var p Portfolio
-	res := tx.First(&p, id)
+	var tsList []db.TradingSystem
+	res = tx.Find(&tsList)
 
 	if res.Error != nil {
 		return nil, tool.NewServerErrorByError(res.Error)
 	}
 
-	return &p, nil
+	return buildPortfolioTree(&poList, &tsList), nil
 }
 
 //=============================================================================
+//===
+//=== Private methods
+//===
+//=============================================================================
 
-func GetOrCreatePortfolio(tx *gorm.DB, name string, p *Portfolio) (*Portfolio, error) {
-	res := tx.Where(&Portfolio{Name: name}).FirstOrCreate(&p)
+func buildPortfolioTree(poList *[]db.Portfolio, tsList *[]db.TradingSystem) *[]*PortfolioTree {
 
-	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+	//--- Step 1: Collect all nodes into a map
+
+	nodeMap := map[uint]*PortfolioTree{}
+	fullMap := map[uint]*PortfolioTree{}
+
+	for _, p := range *poList {
+		pt := &PortfolioTree{
+			Portfolio:      p,
+			Children:       []*PortfolioTree{},
+			TradingSystems: []*db.TradingSystem{},
+		}
+		nodeMap[p.Id] = pt
+		fullMap[p.Id] = pt
 	}
 
-	return p, nil
-}
+	//--- Step 2: Build the tree
 
-//=============================================================================
+	for key, p := range fullMap {
+		if p.ParentId != 0 {
+			parent := fullMap[p.ParentId]
+			parent.AddChild(p)
+			delete(nodeMap, key)
+		}
+	}
 
-func AddPortfolio(tx *gorm.DB, p *Portfolio) error {
-	err := tx.Create(p).Error
-	return tool.NewServerErrorByError(err)
+	//--- Step 2: Add trading system information
+
+	for _, ts := range *tsList {
+		aux := ts
+		portfolio := fullMap[ts.PortfolioId]
+		portfolio.AddTradingSystem(&aux)
+	}
+
+	//--- Step 3: Return tree
+
+	if len(*poList) > 0 && len(nodeMap) == 0 {
+		log.Println("Portfolios have circular loops (!)")
+	}
+
+	var result []*PortfolioTree
+
+	for _, p := range nodeMap {
+		result = append(result, p)
+	}
+
+	return &result
 }
 
 //=============================================================================

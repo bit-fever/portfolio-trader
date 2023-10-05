@@ -22,27 +22,16 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package model
+package business
+
+import "testing"
 
 //=============================================================================
 
-const MaxLimit = 5000
-
-//=============================================================================
-
-type ErrorResponse struct {
-	Code    int    `json:"code"`
-	Error   string `json:"error"`
-	Details any    `json:"details,omitempty"`
+func TestDay(t *testing.T) {
+//	calcFromDay()
+//	t.Error("bla bla bla")
 }
 
 //=============================================================================
 
-type ListResponse struct {
-	Offset   int  `json:"offset"`
-	Limit    int  `json:"limit"`
-	Overflow bool `json:"overflow"`
-	Result   any  `json:"result"`
-}
-
-//=============================================================================

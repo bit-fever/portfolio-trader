@@ -26,9 +26,7 @@ package tool
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/bit-fever/portfolio-trader/pkg/model"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
@@ -39,28 +37,12 @@ import (
 
 //=============================================================================
 
-func Error(c *gin.Context, errorCode int, errorMessage string, details any) error {
-	c.JSON(errorCode, &model.ErrorResponse{
-		Code:    errorCode,
-		Error:   errorMessage,
-		Details: details,
-	})
-
-	return errors.New(errorMessage)
-}
+const MaxQueryLimit = 5000
 
 //=============================================================================
-
-func ErrorBadRequest(c *gin.Context, errorMessage string, details any) error {
-	return Error(c, http.StatusBadRequest, errorMessage, details)
-}
-
-//=============================================================================
-
-func ErrorInternal(c *gin.Context, errorMessage string) error {
-	return Error(c, http.StatusInternalServerError, errorMessage, nil)
-}
-
+//===
+//=== Parameter retrieval
+//===
 //=============================================================================
 
 func GetPagingParams(c *gin.Context) (offset int, limit int, errV error) {
@@ -76,8 +58,7 @@ func GetPagingParams(c *gin.Context) (offset int, limit int, errV error) {
 		offsetV, err := strconv.ParseInt(offsetP, 10, 64)
 
 		if err != nil || offsetV < 0 {
-			ErrorBadRequest(c, "Invalid offset param", offsetP)
-			return 0, 0, err
+			return 0, 0, NewRequestError("Invalid 'offset' param: %v", offsetP)
 		}
 
 		offset = int(offsetV)
@@ -86,14 +67,13 @@ func GetPagingParams(c *gin.Context) (offset int, limit int, errV error) {
 	//--- Extract limit
 
 	if !params.Has("limit") {
-		limit = model.MaxLimit
+		limit = MaxQueryLimit
 	} else {
 		limitP := params.Get("limit")
 		limitV, err := strconv.ParseInt(limitP, 10, 32)
 
-		if err != nil || limitV < 1 || limit > model.MaxLimit {
-			ErrorBadRequest(c, "Invalid limit param", limitP)
-			return 0, 0, err
+		if err != nil || limitV < 1 || limit > MaxQueryLimit {
+			return 0, 0, NewRequestError("Invalid 'limit' param: %v", limitP)
 		}
 
 		limit = int(limitV)
@@ -104,24 +84,10 @@ func GetPagingParams(c *gin.Context) (offset int, limit int, errV error) {
 
 //=============================================================================
 
-func Return(c *gin.Context, result any, offset int, limit int, size int) error {
-	c.JSON(http.StatusOK, &model.ListResponse{
-		Offset:   offset,
-		Limit:    limit,
-		Overflow: size == model.MaxLimit,
-		Result:   result,
-	})
-
-	return nil
-}
-
-//=============================================================================
-
 func BindParamsFromQuery(c *gin.Context, obj any) (err error) {
 	if err := c.ShouldBindQuery(obj); err != nil {
 		message := parseError(err)
-		_ = ErrorBadRequest(c, message, nil)
-		return errors.New(message)
+		return NewRequestError(message, nil)
 	}
 
 	return nil
@@ -132,9 +98,50 @@ func BindParamsFromQuery(c *gin.Context, obj any) (err error) {
 func BindParamsFromBody(c *gin.Context, obj any) (err error) {
 	if err := c.ShouldBind(obj); err != nil {
 		message := parseError(err)
-		_ = ErrorBadRequest(c, message, nil)
-		return errors.New(message)
+		return NewRequestError(message, nil)
 	}
+
+	return nil
+}
+
+//=============================================================================
+
+func GetIdFromUrl(c *gin.Context) (uint, error) {
+	sId := c.Param("id")
+	iId, err := strconv.ParseInt(sId, 10, 64)
+
+	if err != nil || iId<0 {
+		return 0, NewRequestError("Invalid ID in url: %v", sId)
+	}
+
+	return uint(iId), nil
+}
+
+//=============================================================================
+
+func ReturnObject(c *gin.Context, data any) error {
+	c.JSON(http.StatusOK, data)
+	return nil
+}
+
+//=============================================================================
+
+type listResponse struct {
+	Offset   int  `json:"offset"`
+	Limit    int  `json:"limit"`
+	Overflow bool `json:"overflow"`
+	Result   any  `json:"result"`
+}
+
+//-----------------------------------------------------------------------------
+
+func ReturnList(c *gin.Context, result any, offset int, limit int, size int) error {
+	c.JSON(http.StatusOK, &listResponse{
+		Offset:   offset,
+		Limit:    limit,
+		Overflow: size == MaxQueryLimit,
+		Result:   result,
+	})
 
 	return nil
 }

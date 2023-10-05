@@ -22,56 +22,27 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
-
-import (
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
-	"gorm.io/gorm"
-)
+package tool
 
 //=============================================================================
 
-func GetPortfolios(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Portfolio, error) {
-	var list []Portfolio
-	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
-
-	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
+type AppError struct {
+	RequestError error
+	ServerError  error
 }
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
-func GetPortfolioById(tx *gorm.DB, id uint) (*Portfolio, error) {
-	var p Portfolio
-	res := tx.First(&p, id)
-
-	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+func (a AppError) Error() string {
+	if a.RequestError != nil {
+		return a.RequestError.Error()
 	}
 
-	return &p, nil
-}
-
-//=============================================================================
-
-func GetOrCreatePortfolio(tx *gorm.DB, name string, p *Portfolio) (*Portfolio, error) {
-	res := tx.Where(&Portfolio{Name: name}).FirstOrCreate(&p)
-
-	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+	if a.ServerError != nil {
+		return a.ServerError.Error()
 	}
 
-	return p, nil
-}
-
-//=============================================================================
-
-func AddPortfolio(tx *gorm.DB, p *Portfolio) error {
-	err := tx.Create(p).Error
-	return tool.NewServerErrorByError(err)
+	return "!undefined!"
 }
 
 //=============================================================================
