@@ -25,130 +25,48 @@ THE SOFTWARE.
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"errors"
+	"github.com/bit-fever/core/boot"
+	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/core/sync"
-	"github.com/bit-fever/portfolio-trader/pkg/model/config"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/portfolio-trader/pkg/model/config"
 	"github.com/bit-fever/portfolio-trader/pkg/service"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"os"
 )
 
 //=============================================================================
 
 func main() {
-	cfg := readConfig()
-	file := initLogs(cfg)
+	cfg := &config.Config{}
+	boot.ReadConfig("portfolio-trader", cfg)
+	file := boot.InitLogs(cfg.General.LogFile)
 	defer file.Close()
 
+	initClients()
 	db.InitDatabase(cfg)
-	router := registerServices()
+	router := registerServices(cfg)
 	sync.StartPeriodicScan(cfg)
-	runHttpServer(router, cfg)
+	boot.RunHttpServer(router, cfg.General.BindAddress)
 }
 
 //=============================================================================
 
-func readConfig() *config.Config {
-	viper.SetConfigName("portfolio-trader")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("/etc/bit-fever/")
-	viper.AddConfigPath("$HOME/.bit-fever/portfolio-trader")
-	viper.AddConfigPath("config")
-
-	err := viper.ReadInConfig()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var cfg config.Config
-
-	err = viper.Unmarshal(&cfg)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return &cfg
+func initClients() {
+	log.Println("Initializing clients...")
+	req.AddClient("bf", "ca.crt",         "server.crt",         "server.key")
+	req.AddClient("ws", "wserver-ca.crt", "wserver-client.crt", "wserver-client.key")
 }
 
 //=============================================================================
 
-func initLogs(cfg *config.Config) *os.File {
-
-	log.SetFlags(log.Ldate | log.Ltime | log.LUTC | log.Lmicroseconds | log.Lshortfile)
-
-	f, err := os.OpenFile(cfg.General.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatal(err)
-	}
-	wrt := io.MultiWriter(os.Stdout, f)
-	log.SetOutput(wrt)
-	gin.DefaultWriter = wrt
-
-	return f
-}
-
-//=============================================================================
-
-func registerServices() *gin.Engine {
+func registerServices(cfg *config.Config) *gin.Engine {
 
 	log.Println("Registering services...")
 	router := gin.Default()
-	service.Init(router)
+	service.Init(router, cfg)
 
 	return router
-}
-
-//=============================================================================
-
-func runHttpServer(router *gin.Engine, cfg *config.Config) {
-
-	log.Println("Starting HTTPS server...")
-	rootCAs, err := x509.SystemCertPool()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if rootCAs == nil {
-		rootCAs = x509.NewCertPool()
-	}
-
-	caCert, err := ioutil.ReadFile("config/ca.crt")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if ok := rootCAs.AppendCertsFromPEM(caCert); !ok {
-		err := errors.New("failed to append CA cert to local certificate pool")
-		log.Fatal(err)
-	}
-
-	tlsConfig := &tls.Config{
-		//		RootCAs: rootCAs,
-		ClientCAs:  rootCAs,
-		ClientAuth: tls.RequireAndVerifyClientCert,
-	}
-
-	server := &http.Server{
-		Addr:      cfg.General.BindAddress,
-		TLSConfig: tlsConfig,
-		Handler:   router,
-	}
-
-	log.Println("Running")
-	err = server.ListenAndServeTLS("config/server.crt", "config/server.key")
-
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 //=============================================================================

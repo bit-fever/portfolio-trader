@@ -124,23 +124,22 @@ type EquityAverage struct {
 
 //-----------------------------------------------------------------------------
 
-type FilteringParams struct {
+type FilteringConfig struct {
 	LongShort     `json:"longShort"`
 	EquityAverage `json:"equityAverage"`
 }
 
 //-----------------------------------------------------------------------------
 
-func (fc FilteringParams) IsEmpty() bool {
-	return	fc.LongShort.LongPeriod  == 0 &&
-		fc.LongShort.ShortPeriod == 0 &&
-		fc.EquityAverage.Days    == 0
+type FilteringParams struct {
+	NoConfig bool   `json:"noConfig"`
+	FilteringConfig `json:"config"`
 }
 
 //=============================================================================
 
 type TradingSystem struct {
-	Id   int    `json:"id"`
+	Id   uint   `json:"id"`
 	Name string `json:"name"`
 }
 
@@ -159,7 +158,7 @@ type Equities struct {
 	Days               []int      `json:"days"`
 	UnfilteredProfit   []float64  `json:"unfilteredProfit"`
 	FilteredProfit     []float64  `json:"filteredProfit"`
-	UnfilteredDrawdown []float64  `json:"UnfilteredDrawdown"`
+	UnfilteredDrawdown []float64  `json:"unfilteredDrawdown"`
 	FilteredDrawdown   []float64  `json:"filteredDrawdown"`
 	Average            []float64  `json:"average"`
 }
@@ -170,7 +169,7 @@ type FilteringResponse struct {
 	TradingSystem      `json:"tradingSystem"`
 	Summary            `json:"summary"`
 	Equities           `json:"equities"`
-	FilteringParams    `json:"filtering"`
+	FilteringConfig    `json:"config"`
 }
 
 //=============================================================================

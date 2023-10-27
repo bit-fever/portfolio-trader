@@ -25,7 +25,7 @@ THE SOFTWARE.
 package db
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
+	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
 )
 
@@ -36,7 +36,7 @@ func GetTradingSystems(tx *gorm.DB, filter map[string]any, offset int, limit int
 	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -49,7 +49,7 @@ func GetTradingSystemById(tx *gorm.DB, id uint) (*TradingSystem, error) {
 	res := tx.Find(&list, id)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	if len(list) == 1 {
@@ -66,7 +66,7 @@ func GetTradingSystemsById(tx *gorm.DB, ids []uint) (*[]TradingSystem, error) {
 	res := tx.Find(&list, ids)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -79,7 +79,7 @@ func GetTradingSystemsByIdAsMap(tx *gorm.DB, ids []uint) (map[int]*TradingSystem
 	res := tx.Find(&list, ids)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	tsMap := map[int]*TradingSystem{}
@@ -104,7 +104,7 @@ func GetTradingSystemsFull(tx *gorm.DB, filter map[string]any, offset int, limit
 	res := tx.Raw(query).Find(&list)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -116,7 +116,7 @@ func GetOrCreateTradingSystem(tx *gorm.DB, code string, ts *TradingSystem) (*Tra
 	res := tx.Where(&TradingSystem{Code: code}).FirstOrCreate(&ts)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return ts, nil

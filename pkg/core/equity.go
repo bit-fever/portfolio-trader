@@ -22,27 +22,24 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package tool
+package core
 
 //=============================================================================
 
-type AppError struct {
-	RequestError error
-	ServerError  error
-}
+func CalcDrawDown(equity *[]float64, drawDown *[]float64) {
+	maxProfit    := 0.0
+	currDrawDown := 0.0
 
-//-----------------------------------------------------------------------------
+	for i, currProfit := range *equity {
+		if currProfit >= maxProfit {
+			maxProfit = currProfit
+			currDrawDown = 0
+		} else {
+			currDrawDown = currProfit - maxProfit
+		}
 
-func (a AppError) Error() string {
-	if a.RequestError != nil {
-		return a.RequestError.Error()
+		(*drawDown)[i] = currDrawDown
 	}
-
-	if a.ServerError != nil {
-		return a.ServerError.Error()
-	}
-
-	return "!undefined!"
 }
 
 //=============================================================================

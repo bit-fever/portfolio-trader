@@ -22,35 +22,28 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package service
+package db
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/auth/roles"
 	"github.com/bit-fever/core/req"
-	"github.com/bit-fever/portfolio-trader/pkg/model/config"
-	"github.com/gin-gonic/gin"
-	"log"
+	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func Init(router *gin.Engine, cfg *config.Config) {
+func GetTsFilteringById(tx *gorm.DB, id uint) (*TsFiltering, error) {
+	var list []TsFiltering
+	res := tx.Find(&list, id)
 
-	ctrl, err := auth.NewOidcController(cfg.Authentication.Authority, req.GetClient("bf"))
-	if err != nil {
-		log.Fatal(err)
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
-	router.GET ("/api/portfolio/v1/trading-systems",                        ctrl.Secure(getTradingSystemsFull,  roles.Admin_And_User))
-	router.GET ("/api/portfolio/v1/trading-systems/:id/daily-info",         ctrl.Secure(getDailyInfo,           roles.Admin_And_User))
-	router.POST("/api/portfolio/v1/trading-systems/:id/filtering-analysis", ctrl.Secure(getFilteringAnalysis,   roles.Admin_And_User))
+	if len(list) == 1 {
+		return &list[0], nil
+	}
 
-	router.GET ("/api/portfolio/v1/instruments",                            ctrl.Secure(getInstruments,         roles.Admin_And_User))
-
-	router.GET ("/api/portfolio/v1/portfolios",                             ctrl.Secure(getPortfolios,          roles.Admin_And_User))
-	router.GET ("/api/portfolio/v1/portfolio/tree",                         ctrl.Secure(getPortfolioTree,       roles.Admin_And_User))
-	router.POST("/api/portfolio/v1/portfolio/monitoring",                   ctrl.Secure(getPortfolioMonitoring, roles.Admin_And_User))
+	return nil, nil
 }
 
 //=============================================================================

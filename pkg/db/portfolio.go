@@ -25,7 +25,7 @@ THE SOFTWARE.
 package db
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
+	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
 )
 
@@ -36,7 +36,7 @@ func GetPortfolios(tx *gorm.DB, filter map[string]any, offset int, limit int) (*
 	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
@@ -49,7 +49,7 @@ func GetPortfolioById(tx *gorm.DB, id uint) (*Portfolio, error) {
 	res := tx.First(&p, id)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &p, nil
@@ -61,7 +61,7 @@ func GetOrCreatePortfolio(tx *gorm.DB, name string, p *Portfolio) (*Portfolio, e
 	res := tx.Where(&Portfolio{Name: name}).FirstOrCreate(&p)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return p, nil
@@ -71,7 +71,7 @@ func GetOrCreatePortfolio(tx *gorm.DB, name string, p *Portfolio) (*Portfolio, e
 
 func AddPortfolio(tx *gorm.DB, p *Portfolio) error {
 	err := tx.Create(p).Error
-	return tool.NewServerErrorByError(err)
+	return req.NewServerErrorByError(err)
 }
 
 //=============================================================================

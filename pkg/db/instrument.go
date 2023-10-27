@@ -25,7 +25,7 @@ THE SOFTWARE.
 package db
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
+	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
 )
 
@@ -36,10 +36,27 @@ func GetInstruments(tx *gorm.DB, filter map[string]any, offset int, limit int) (
 	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
+}
+
+//=============================================================================
+
+func GetInstrumentById(tx *gorm.DB, id uint) (*Instrument, error) {
+	var list []Instrument
+	res := tx.Find(&list, id)
+
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	if len(list) == 1 {
+		return &list[0], nil
+	}
+
+	return nil, nil
 }
 
 //=============================================================================
@@ -49,7 +66,7 @@ func GetInstrumentsAsMap(tx *gorm.DB) (map[uint]*Instrument, error) {
 	res := tx.Find(&list)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	instMap := map[uint]*Instrument{}
@@ -68,7 +85,7 @@ func GetOrCreateInstrument(tx *gorm.DB, ticker string, i *Instrument) (*Instrume
 	res := tx.Where(&Instrument{Ticker: ticker}).FirstOrCreate(i)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return i, nil

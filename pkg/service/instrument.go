@@ -25,16 +25,17 @@ THE SOFTWARE.
 package service
 
 import (
+	"github.com/bit-fever/core/auth"
+	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func getInstruments(c *gin.Context) {
-	offset, limit, err := tool.GetPagingParams(c)
+func getInstruments(c *gin.Context, us *auth.UserSession) {
+	offset, limit, err := req.GetPagingParams(c)
 
 	if err == nil {
 		err = db.RunInTransaction(func(tx *gorm.DB) error {
@@ -44,11 +45,11 @@ func getInstruments(c *gin.Context) {
 				return err
 			}
 
-			return tool.ReturnList(c, list, offset, limit, len(*list))
+			return req.ReturnList(c, list, offset, limit, len(*list))
 		})
 	}
 
-	tool.ReturnError(c, err)
+	req.ReturnError(c, err)
 }
 
 //=============================================================================

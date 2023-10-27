@@ -25,8 +25,9 @@ THE SOFTWARE.
 package business
 
 import (
+	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"gorm.io/gorm"
 	"math"
 	"sort"
@@ -46,7 +47,7 @@ func GetPortfolioMonitoring(tx *gorm.DB, params *PortfolioMonitoringParams) (*Po
 	}
 
 	if len(tsMap) != len(params.TsIds) {
-		return nil, tool.NewRequestError("Missing some trading systems (input:%v. found:%v)", len(params.TsIds), len(tsMap))
+		return nil, req.NewRequestError("Missing some trading systems (input:%v. found:%v)", len(params.TsIds), len(tsMap))
 	}
 
 	//--- Get trading systems daily data
@@ -157,28 +158,10 @@ func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.TsDailyInfo, 
 		tsa.NumTrades[i] = currTrades
 	}
 
-	calcDrawDown(&tsa.RawProfit, &tsa.RawDrawdown)
-	calcDrawDown(&tsa.NetProfit, &tsa.NetDrawdown)
+	core.CalcDrawDown(&tsa.RawProfit, &tsa.RawDrawdown)
+	core.CalcDrawDown(&tsa.NetProfit, &tsa.NetDrawdown)
 
 	return tsa
-}
-
-//=============================================================================
-
-func calcDrawDown(equity *[]float64, drawDown *[]float64) {
-	maxProfit    := 0.0
-	currDrawDown := 0.0
-
-	for i, currProfit := range *equity {
-		if currProfit >= maxProfit {
-			maxProfit = currProfit
-			currDrawDown = 0
-		} else {
-			currDrawDown = currProfit - maxProfit
-		}
-
-		(*drawDown)[i] = currDrawDown
-	}
 }
 
 //=============================================================================
@@ -238,8 +221,8 @@ func buildTotalInfo(pm *PortfolioMonitoringResponse) {
 		pm.NumTrades[i] = ds.totTrades
 	}
 
-	calcDrawDown(&pm.RawProfit, &pm.RawDrawdown)
-	calcDrawDown(&pm.NetProfit, &pm.NetDrawdown)
+	core.CalcDrawDown(&pm.RawProfit, &pm.RawDrawdown)
+	core.CalcDrawDown(&pm.NetProfit, &pm.NetDrawdown)
 }
 
 //=============================================================================

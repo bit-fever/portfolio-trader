@@ -25,17 +25,18 @@ THE SOFTWARE.
 package service
 
 import (
+	"github.com/bit-fever/core/auth"
+	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func getTradingSystemsFull(c *gin.Context) {
-	offset, limit, err := tool.GetPagingParams(c)
+func getTradingSystemsFull(c *gin.Context, us *auth.UserSession) {
+	offset, limit, err := req.GetPagingParams(c)
 
 	if err == nil {
 		err = db.RunInTransaction(func(tx *gorm.DB) error {
@@ -45,17 +46,17 @@ func getTradingSystemsFull(c *gin.Context) {
 				return err
 			}
 
-			return tool.ReturnList(c, list, offset, limit, len(*list))
+			return req.ReturnList(c, list, offset, limit, len(*list))
 		})
 	}
 
-	tool.ReturnError(c, err)
+	req.ReturnError(c, err)
 }
 
 //=============================================================================
 
-func getDailyInfo(c *gin.Context) {
-	tsId, err := tool.GetIdFromUrl(c)
+func getDailyInfo(c *gin.Context, us *auth.UserSession) {
+	tsId, err := req.GetIdFromUrl(c)
 
 	if err == nil {
 		err = db.RunInTransaction(func(tx *gorm.DB) error {
@@ -65,21 +66,21 @@ func getDailyInfo(c *gin.Context) {
 				return err
 			}
 
-			return tool.ReturnObject(c, &list)
+			return req.ReturnObject(c, &list)
 		})
 	}
 
-	tool.ReturnError(c, err)
+	req.ReturnError(c, err)
 }
 
 //=============================================================================
 
-func getFilteringAnalysis(c *gin.Context) {
-	tsId, err := tool.GetIdFromUrl(c)
+func getFilteringAnalysis(c *gin.Context, us *auth.UserSession) {
+	tsId, err := req.GetIdFromUrl(c)
 
 	if err == nil {
 		params := business.FilteringParams{}
-		err = tool.BindParamsFromBody(c, &params)
+		err = req.BindParamsFromBody(c, &params)
 
 		if err == nil {
 			err = db.RunInTransaction(func(tx *gorm.DB) error {
@@ -89,12 +90,12 @@ func getFilteringAnalysis(c *gin.Context) {
 					return err
 				}
 
-				return tool.ReturnObject(c, rep)
+				return req.ReturnObject(c, rep)
 			})
 		}
 	}
 
-	tool.ReturnError(c, err)
+	req.ReturnError(c, err)
 }
 
 //=============================================================================

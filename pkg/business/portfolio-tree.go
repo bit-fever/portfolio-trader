@@ -25,8 +25,8 @@ THE SOFTWARE.
 package business
 
 import (
+	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"gorm.io/gorm"
 	"log"
 )
@@ -41,7 +41,7 @@ func GetPortfolioTree(tx *gorm.DB) (*[]*PortfolioTree, error) {
 	res := tx.Find(&poList)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	//--- Get all trading systems
@@ -50,7 +50,7 @@ func GetPortfolioTree(tx *gorm.DB) (*[]*PortfolioTree, error) {
 	res = tx.Find(&tsList)
 
 	if res.Error != nil {
-		return nil, tool.NewServerErrorByError(res.Error)
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return buildPortfolioTree(&poList, &tsList), nil

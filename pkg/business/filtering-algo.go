@@ -22,88 +22,93 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package tool
+package business
 
-import (
-	"errors"
-	"fmt"
-	"github.com/gin-gonic/gin"
-	"net/http"
-)
+import "github.com/bit-fever/core/req"
 
 //=============================================================================
 
-func NewRequestError(message string, params ...any) error {
-	msg := fmt.Sprintf(message, params)
-	err := AppError{
-		RequestError: errors.New(msg),
-	}
-
-	return err
+type EquityFilter interface {
+	init(c *FilteringConfig) error
+	compute(e *Equities, index int) bool
 }
 
 //=============================================================================
 
-func NewServerError(message string, params ...any) error {
-	msg := fmt.Sprintf(message, params)
-	err := AppError{
-		ServerError: errors.New(msg),
-	}
+func createFilterChain(c *FilteringConfig) (*[]EquityFilter, error) {
+	var list []EquityFilter
 
-	return err
-}
+	//--- Append equity average filter
 
-//=============================================================================
-
-func NewServerErrorByError(err error) error {
-	if err == nil {
-		return nil
-	}
-
-	return AppError{
-		ServerError: err,
-	}
-}
-
-//=============================================================================
-
-func ReturnError(c *gin.Context, err error) {
-	if err != nil {
-		var ae AppError
-		if errors.As(err, &ae) {
-			if ae.RequestError != nil {
-				writeError(c, http.StatusBadRequest, err.Error(), nil)
-			} else if ae.ServerError != nil {
-				writeError(c, http.StatusInternalServerError, err.Error(), nil)
-			} else {
-				writeError(c, http.StatusInternalServerError, "Bad AppError object", nil)
-			}
-		} else {
-			writeError(c, http.StatusInternalServerError, "Found non AppError object : "+ err.Error(), nil)
+	if c.EquityAverage.Enabled {
+		eaf := EquityAverageFilter{}
+		if err:=eaf.init(c); err != nil {
+			return nil, err
 		}
+
+		list = append(list, &eaf)
 	}
+
+	//--- Append long/short period filter
+
+	if c.LongShort.Enabled {
+		lsf := LongShortPeriodFilter{}
+		if err:=lsf.init(c); err != nil {
+			return nil, err
+		}
+
+		list = append(list, &lsf)
+	}
+
+	return &list, nil
 }
 
 //=============================================================================
 //===
-//=== Private methods
+//=== Equity average filtering
 //===
 //=============================================================================
 
-type errorResponse struct {
-	Code    int    `json:"code"`
-	Error   string `json:"error"`
-	Details any    `json:"details,omitempty"`
+type EquityAverageFilter struct {
+	days int
 }
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 
-func writeError(c *gin.Context, errorCode int, errorMessage string, details any) {
-	c.JSON(errorCode, &errorResponse{
-		Code:    errorCode,
-		Error:   errorMessage,
-		Details: details,
-	})
+func (e *EquityAverageFilter) init(c *FilteringConfig) error {
+	e.days = c.EquityAverage.Days
+
+	if e.days <1 || e.days > 200 {
+		return req.NewRequestError("Invalid range for Average days (must be 1..200): %d", e.days)
+	}
+
+	return nil
+}
+
+//=============================================================================
+
+func (e *EquityAverageFilter) compute(eq *Equities, index int) bool {
+	return eq.UnfilteredProfit[index] >= eq.Average[index]
+}
+
+//=============================================================================
+//===
+//=== Long/Short periods filtering
+//===
+//=============================================================================
+
+type LongShortPeriodFilter struct {}
+
+//=============================================================================
+
+func (e *LongShortPeriodFilter) init(c *FilteringConfig) error {
+	return nil
+}
+
+//=============================================================================
+
+func (e *LongShortPeriodFilter) compute(eq *Equities, index int) bool {
+	return true
 }
 
 //=============================================================================

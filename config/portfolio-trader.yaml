@@ -6,6 +6,10 @@ database:
   name: portfolio
   username: bitfever
   password: bitfever
+authentication:
+  authority: https://bitfever-server:8443/auth/realms/bitfever
+  clientId: bitfever-backend
+  clientSecret: xyz
 scan:
   address: https://158.69.26.216:8443/api/v1/strategies
   periodHour: 2

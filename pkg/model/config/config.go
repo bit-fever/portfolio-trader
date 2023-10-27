@@ -41,6 +41,12 @@ type Config struct {
 		Password string
 	}
 
+	Authentication struct {
+		Authority    string
+		ClientId     string
+		ClientSecret string
+	}
+
 	Scan struct {
 		Address string
 		PeriodHour time.Duration

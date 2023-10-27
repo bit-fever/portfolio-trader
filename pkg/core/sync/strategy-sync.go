@@ -25,9 +25,9 @@ THE SOFTWARE.
 package sync
 
 import (
+	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"github.com/bit-fever/portfolio-trader/pkg/model/config"
-	"github.com/bit-fever/portfolio-trader/pkg/tool"
 	"gorm.io/gorm"
 	"log"
 	"strconv"
@@ -60,7 +60,7 @@ func run(cfg *config.Config) {
 
 	var data []strategy
 
-	err := tool.DoGet(tool.GetClient("ws"), url, &data)
+	err := req.DoGet(req.GetClient("ws"), url, &data)
 
 	if err == nil {
 		log.Println("Got "+ strconv.Itoa(len(data))+ " strategies")
