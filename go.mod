@@ -1,19 +1,16 @@
 module github.com/bit-fever/portfolio-trader
 
-go 1.20
+go 1.21
 
 require (
 	github.com/bit-fever/core v1.0.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
+	gorm.io/driver/mysql v1.5.2
+	gorm.io/gorm v1.25.5
 )
 
 //replace github.com/bit-fever/core v1.0.0 => ../core
-
-require (
-	gorm.io/driver/mysql v1.5.1
-	gorm.io/gorm v1.25.3
-)
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect
