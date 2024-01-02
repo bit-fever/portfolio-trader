@@ -22,28 +22,26 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package app
 
 import (
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
+	"github.com/bit-fever/core"
+	"time"
 )
 
 //=============================================================================
 
-func GetTsFilteringById(tx *gorm.DB, id uint) (*TsFiltering, error) {
-	var list []TsFiltering
-	res := tx.Find(&list, id)
+type Config struct {
+	core.Application
+	core.Database
+	core.Authentication
+	core.Platform
+	core.Messaging
 
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
+	Scan struct {
+		Address string
+		PeriodHour time.Duration
 	}
-
-	if len(list) == 1 {
-		return &list[0], nil
-	}
-
-	return nil, nil
 }
 
 //=============================================================================

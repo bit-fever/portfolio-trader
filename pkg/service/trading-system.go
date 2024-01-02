@@ -26,76 +26,78 @@ package service
 
 import (
 	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
-
-func getTradingSystemsFull(c *gin.Context, us *auth.UserSession) {
-	offset, limit, err := req.GetPagingParams(c)
-
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := db.GetTradingSystemsFull(tx, nil, offset, limit)
-
-			if err != nil {
-				return err
-			}
-
-			return req.ReturnList(c, list, offset, limit, len(*list))
-		})
-	}
-
-	req.ReturnError(c, err)
-}
-
-//=============================================================================
-
-func getDailyInfo(c *gin.Context, us *auth.UserSession) {
-	tsId, err := req.GetIdFromUrl(c)
+func getTradingSystems(c *auth.Context) {
+	filter := map[string]any{}
+	offset, limit, err := c.GetPagingParams()
 
 	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := db.FindDailyInfoByTsId(tx, tsId)
-
-			if err != nil {
-				return err
-			}
-
-			return req.ReturnObject(c, &list)
-		})
-	}
-
-	req.ReturnError(c, err)
-}
-
-//=============================================================================
-
-func getFilteringAnalysis(c *gin.Context, us *auth.UserSession) {
-	tsId, err := req.GetIdFromUrl(c)
-
-	if err == nil {
-		params := business.FilteringParams{}
-		err = req.BindParamsFromBody(c, &params)
+		details, err := c.GetParamAsBool("details", false)
 
 		if err == nil {
 			err = db.RunInTransaction(func(tx *gorm.DB) error {
-				rep, err := business.GetFilteringAnalysis(tx, tsId, &params)
+				list, err := business.GetTradingSystems(tx, c, filter, offset, limit, details)
 
 				if err != nil {
 					return err
 				}
 
-				return req.ReturnObject(c, rep)
+				return c.ReturnList(list, offset, limit, len(*list))
 			})
 		}
 	}
 
-	req.ReturnError(c, err)
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func getDailyInfo(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			list, err := business.GetDailyInfo(tx, c, tsId)
+
+			if err != nil {
+				return err
+			}
+
+			return c.ReturnObject(&list)
+		})
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func getFilteringAnalysis(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		params := business.FilteringParams{}
+		err = c.BindParamsFromBody(&params)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.GetFilteringAnalysis(tx, c, tsId, &params)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(rep)
+			})
+		}
+	}
+
+	c.ReturnError(err)
 }
 
 //=============================================================================

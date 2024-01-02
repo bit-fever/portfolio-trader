@@ -26,17 +26,17 @@ package sync
 
 import (
 	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/app"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/model/config"
 	"gorm.io/gorm"
-	"log"
+	"log/slog"
 	"strconv"
 	"time"
 )
 
 //=============================================================================
 
-func StartPeriodicScan(cfg *config.Config) *time.Ticker {
+func InitPeriodicScan(cfg *app.Config) *time.Ticker {
 
 	ticker := time.NewTicker(cfg.Scan.PeriodHour * time.Hour)
 
@@ -54,86 +54,67 @@ func StartPeriodicScan(cfg *config.Config) *time.Ticker {
 
 //=============================================================================
 
-func run(cfg *config.Config) {
+func run(cfg *app.Config) {
 	url := cfg.Scan.Address
-	log.Println("Starting to fetch strategies from: "+ url)
+	slog.Info("Starting to fetch strategies from: "+ url)
 
 	var data []strategy
 
-	err := req.DoGet(req.GetClient("ws"), url, &data)
+	err := req.DoGet(req.GetClient("ws"), url, &data, "")
 
 	if err == nil {
-		log.Println("Got "+ strconv.Itoa(len(data))+ " strategies")
+		slog.Info("Got "+ strconv.Itoa(len(data))+ " strategies")
 
-		db.RunInTransaction(func (tx *gorm.DB) error {
+		_ = db.RunInTransaction(func (tx *gorm.DB) error {
 			return updateDb(tx, data)
 		})
 	} else {
-		log.Println("Cannot connect to url. Error is: "+ err.Error())
+		slog.Error("Cannot connect to url. Error is: "+ err.Error())
 	}
 
-	log.Println("Ending to fetch strategies")
+	slog.Info("Ending to fetch strategies")
 }
 
 //=============================================================================
 
 func updateDb(tx *gorm.DB, inStrategies []strategy) error {
-	log.Println("Updating database...")
-
-	p, err := db.GetOrCreatePortfolio(tx, "Main", &db.Portfolio{
-		Name: "Main",
-	})
-
-	if err != nil {
-		log.Println("Cannot add the first portfolio: "+ err.Error())
-		return err
-	}
+	slog.Info("Updating database...")
 
 	for _, s := range inStrategies {
-		log.Println("Updating trading system: "+ s.Name)
-
-		in, err := db.GetOrCreateInstrument(tx, s.Ticker, &db.Instrument{
-			Ticker: s.Ticker,
-			Name: s.Ticker,
-		})
+		ts, err := db.GetTradingSystemByName(tx, s.Name)
 
 		if err != nil {
-			log.Println("Cannot add the instrument with ticker '"+ s.Ticker +"': "+ err.Error())
+			slog.Error("Cannot scan for trading system '"+ s.Name +"': "+ err.Error())
 			return err
 		}
 
-		ts, err := db.GetOrCreateTradingSystem(tx, s.Name, &db.TradingSystem{
-			Code: s.Name,
-			Name: s.Name,
-			InstrumentId: in.Id,
-			PortfolioId: p.Id,
-			SuggestedAction: 0,
-		})
-
-		if err != nil {
-			log.Println("Cannot add the trading system '"+ s.Name +"': "+ err.Error())
-			return err
+		if ts == nil {
+			slog.Warn("Trading system '"+ s.Name +"' was not found. Skipping")
+			continue
 		}
 
 		diMap, err := db.FindDailyInfoByTsIdAsMap(tx, ts.Id)
 
 		if err != nil {
-			log.Println("Cannot retrieve DailyInfo list for trading system '"+ s.Name +"': "+ err.Error())
+			slog.Error("Cannot retrieve DailyInfo list for trading system '"+ s.Name +"': "+ err.Error())
 			return err
 		}
+
+		slog.Info("Updating trading system: "+ s.Name)
 
 		deltaTrades := 0
 
 		for _, inDi := range s.DailyInfo {
 			if _, ok := diMap[inDi.Day]; !ok {
-				di := &db.TsDailyInfo{
+				di := &db.DailyInfo{
 					TradingSystemId: ts.Id,
-					Day: inDi.Day,
-					OpenProfit: inDi.OpenProfit,
-					Position: inDi.Position,
-					NumTrades: inDi.NumTrades,
+					Day            : inDi.Day,
+					OpenProfit     : inDi.OpenProfit,
+					ClosedProfit   : inDi.ClosedProfit,
+					Position       : inDi.Position,
+					NumTrades      : inDi.NumTrades,
 				}
-				_ = db.AddTsDailyInfo(tx, di)
+				_ = db.AddDailyInfo(tx, di)
 
 				//--- Add entry to map to avoid duplicates
 				diMap[inDi.Day] = *di
@@ -146,15 +127,15 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 				}
 
 				if ts.LastUpdate < inDi.Day {
-					ts.LastUpdate = inDi.Day
-					ts.LastPl     = inDi.OpenProfit
-					ts.NumTrades  = inDi.NumTrades
+					ts.LastUpdate   = inDi.Day
+					ts.ClosedProfit = inDi.ClosedProfit
+					ts.NumTrades    = inDi.NumTrades
 				}
 			}
 		}
 
 		ts.TradingDays += deltaTrades
-		tx.Updates(ts)
+		db.UpdateTradingSystem(tx, ts)
 	}
 
 	return nil

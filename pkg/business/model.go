@@ -24,32 +24,6 @@ THE SOFTWARE.
 
 package business
 
-import "github.com/bit-fever/portfolio-trader/pkg/db"
-
-//=============================================================================
-//===
-//=== Portfolio tree
-//===
-//=============================================================================
-
-type PortfolioTree struct {
-	db.Portfolio
-	Children       []*PortfolioTree    `json:"children"`
-	TradingSystems []*db.TradingSystem `json:"tradingSystems"`
-}
-
-//-----------------------------------------------------------------------------
-
-func (pt *PortfolioTree) AddChild(p *PortfolioTree) {
-	pt.Children = append(pt.Children, p)
-}
-
-//-----------------------------------------------------------------------------
-
-func (pt *PortfolioTree) AddTradingSystem(ts *db.TradingSystem) {
-	pt.TradingSystems = append(pt.TradingSystems, ts)
-}
-
 //=============================================================================
 //===
 //=== Portfolio monitoring

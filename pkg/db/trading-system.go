@@ -61,65 +61,68 @@ func GetTradingSystemById(tx *gorm.DB, id uint) (*TradingSystem, error) {
 
 //=============================================================================
 
-func GetTradingSystemsById(tx *gorm.DB, ids []uint) (*[]TradingSystem, error) {
+func GetTradingSystemBySourceId(tx *gorm.DB, sourceId uint) (*TradingSystem, error) {
 	var list []TradingSystem
-	res := tx.Find(&list, ids)
+	res := tx.Find(&list, "source_id", sourceId)
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
 	}
 
-	return &list, nil
+	if len(list) == 1 {
+		return &list[0], nil
+	}
+
+	return nil, nil
 }
 
 //=============================================================================
 
-func GetTradingSystemsByIdAsMap(tx *gorm.DB, ids []uint) (map[int]*TradingSystem, error) {
+func GetTradingSystemByName(tx *gorm.DB, name string) (*TradingSystem, error) {
 	var list []TradingSystem
-	res := tx.Find(&list, ids)
+	res := tx.Find(&list, "name = ?", name)
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
 	}
 
-	tsMap := map[int]*TradingSystem{}
+	if len(list) == 1 {
+		return &list[0], nil
+	}
+
+	return nil, nil
+}
+
+//=============================================================================
+
+func AddTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
+	return tx.Create(ts).Error
+}
+
+//=============================================================================
+
+func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) {
+	tx.Updates(ts)
+}
+
+//=============================================================================
+
+func GetTradingSystemsBySourceIdAsMap(tx *gorm.DB, sourceIds []uint) (map[uint]*TradingSystem, error) {
+	var list []TradingSystem
+	res := tx.Find(&list, "source_id in ?", sourceIds)
+
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	tsMap := map[uint]*TradingSystem{}
 
 	for _, ts := range list {
 		tsAux := ts
-		tsMap[int(ts.Id)] = &tsAux
+		tsMap[ts.Id] = &tsAux
 	}
 
 	return tsMap, nil
-}
-
-//=============================================================================
-
-func GetTradingSystemsFull(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]TradingSystemFull, error) {
-	var list []TradingSystemFull
-	query := "SELECT ts.*, i.ticker as instrument_ticker, p.name as portfolio_name " +
-		"FROM trading_system ts " +
-		"LEFT JOIN instrument i on ts.instrument_id = i.id " +
-		"LEFT JOIN portfolio p on ts.portfolio_id = p.id"
-
-	res := tx.Raw(query).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
-}
-
-//=============================================================================
-
-func GetOrCreateTradingSystem(tx *gorm.DB, code string, ts *TradingSystem) (*TradingSystem, error) {
-	res := tx.Where(&TradingSystem{Code: code}).FirstOrCreate(&ts)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return ts, nil
 }
 
 //=============================================================================

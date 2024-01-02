@@ -25,6 +25,7 @@ THE SOFTWARE.
 package business
 
 import (
+	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
@@ -34,7 +35,7 @@ import (
 
 //=============================================================================
 
-func GetFilteringAnalysis(tx *gorm.DB, tsId uint, params *FilteringParams) (*FilteringResponse, error) {
+func GetFilteringAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, params *FilteringParams) (*FilteringResponse, error) {
 
 	//--- Get trading system
 
@@ -44,31 +45,32 @@ func GetFilteringAnalysis(tx *gorm.DB, tsId uint, params *FilteringParams) (*Fil
 	}
 
 	if ts == nil {
-		return nil, req.NewRequestError("Missing trading system with id=%v", tsId)
+		return nil, req.NewNotFoundError("Missing trading system with id=%v", tsId)
 	}
 
 	//--- Get filtering config (if not provided)
 
-	config, err := getFilteringConfig(tx, tsId, params)
-	if err != nil {
-		return nil, err
-	}
+	//config, err := getFilteringConfig(tx, tsId, params)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	//--- Get instrument for costs
 
-	inst, err := db.GetInstrumentById(tx, ts.InstrumentId)
-	if err != nil {
-		return nil, err
-	}
+	//inst, err := db.GetInstrumentById(tx, ts.InstrumentId)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//res := &FilteringResponse{}
+	//res.TradingSystem.Id   = ts.Id
+	//res.TradingSystem.Name = ts.Name
+	//res.FilteringConfig    = *config
 
-	res := &FilteringResponse{}
-	res.TradingSystem.Id   = ts.Id
-	res.TradingSystem.Name = ts.Name
-	res.FilteringConfig    = *config
+	//err = runFiltering(tx, float64(inst.Cost), res)
 
-	err =runFiltering(tx, float64(inst.Cost), res)
-
-	return res, err
+	//return res, err
+	return nil, err
 }
 
 //=============================================================================
@@ -77,45 +79,45 @@ func GetFilteringAnalysis(tx *gorm.DB, tsId uint, params *FilteringParams) (*Fil
 //===
 //=============================================================================
 
-func getFilteringConfig(tx *gorm.DB, tsId uint, params *FilteringParams) (*FilteringConfig, error) {
-	if params.NoConfig {
-		config := &FilteringConfig{}
-
-		tsf, err := db.GetTsFilteringById(tx, tsId)
-		if err != nil {
-			return nil, err
-		}
-
-		//--- A trading system may not have a config attached
-
-		if tsf != nil {
-			config = recordToParams(tsf)
-		}
-
-		return config, nil
-	} else {
-		return &params.FilteringConfig, nil
-	}
-}
-
-//=============================================================================
-
-func recordToParams(r *db.TsFiltering) *FilteringConfig {
-	fp := &FilteringConfig{}
-	fp.LongShort.Enabled      = r.LsEnabled
-	fp.LongShort.LongPeriod   = r.LsLongPeriod
-	fp.LongShort.ShortPeriod  = r.LsShortPeriod
-	fp.LongShort.Threshold    = r.LsThreshold
-	fp.LongShort.ShortPosPerc = r.LsShortPosPerc
-	fp.EquityAverage.Enabled  = r.MaEnabled
-	fp.EquityAverage.Days     = r.MaDays
-
-	return fp
-}
+//func getFilteringConfig(tx *gorm.DB, tsId uint, params *FilteringParams) (*FilteringConfig, error) {
+//	if params.NoConfig {
+//		config := &FilteringConfig{}
+//
+//		tsf, err := db.GetTsFilteringById(tx, tsId)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		//--- A trading system may not have a config attached
+//
+//		if tsf != nil {
+//			config = recordToParams(tsf)
+//		}
+//
+//		return config, nil
+//	} else {
+//		return &params.FilteringConfig, nil
+//	}
+//}
 
 //=============================================================================
 
-func paramsToRecord(fp *FilteringParams) *db.TsFiltering {
+//func recordToParams(r *db.TradingFilter) *FilteringConfig {
+//	fp := &FilteringConfig{}
+//	fp.LongShort.Enabled      = r.LsEnabled
+//	fp.LongShort.LongPeriod   = r.LsLongPeriod
+//	fp.LongShort.ShortPeriod  = r.LsShortPeriod
+//	fp.LongShort.Threshold    = r.LsThreshold
+//	fp.LongShort.ShortPosPerc = r.LsShortPosPerc
+//	fp.EquityAverage.Enabled  = r.MaEnabled
+//	fp.EquityAverage.Days     = r.MaDays
+//
+//	return fp
+//}
+
+//=============================================================================
+
+func paramsToRecord(fp *FilteringParams) *db.TradingFilter {
 	return nil
 }
 
@@ -137,7 +139,7 @@ func runFiltering(tx *gorm.DB, cost float64, res *FilteringResponse) error {
 
 	//--- Creates slices
 
-	size := len(diList)
+	size := len(*diList)
 
 	e := &res.Equities
 	e.Days              = make([]int, size)
@@ -153,7 +155,7 @@ func runFiltering(tx *gorm.DB, cost float64, res *FilteringResponse) error {
 	maSum  := 0.0
 	maDays := res.EquityAverage.Days
 
-	for i, di := range diList {
+	for i, di := range *diList {
 		currCost      := di.OpenProfit - cost * math.Abs(float64(di.NumTrades * di.Position))
 		currUnfProfit += currCost
 		maSum         += currUnfProfit

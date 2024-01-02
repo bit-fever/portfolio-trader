@@ -22,73 +22,42 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
-
-import (
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
-)
+package messaging
 
 //=============================================================================
 
-func GetInstruments(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Instrument, error) {
-	var list []Instrument
-	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
+type ProductBroker struct {
+	Symbol         string   `json:"symbol"`
+	PointValue     float32  `json:"pointValue"`
+	CostPerTrade   float32  `json:"costPerTrade"`
+	MarginValue    float32  `json:"marginValue"`
 }
 
 //=============================================================================
 
-func GetInstrumentById(tx *gorm.DB, id uint) (*Instrument, error) {
-	var list []Instrument
-	res := tx.Find(&list, id)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	if len(list) == 1 {
-		return &list[0], nil
-	}
-
-	return nil, nil
+type Currency struct {
+	Id   uint   `json:"id"`
+	Code string `json:"code"`
 }
 
 //=============================================================================
 
-func GetInstrumentsAsMap(tx *gorm.DB) (map[uint]*Instrument, error) {
-	var list []Instrument
-	res := tx.Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	instMap := map[uint]*Instrument{}
-
-	for _, inst := range list {
-		inAux := inst
-		instMap[inst.Id] = &inAux
-	}
-
-	return instMap, nil
+type TradingSystem struct {
+	Id                uint    `json:"id"`
+	Username          string  `json:"username"`
+	WorkspaceCode     string  `json:"workspaceCode"`
+	Name              string  `json:"name"`
+	PortfolioId       uint    `json:"portfolioId"`
+	ProductFeedId     uint    `json:"productFeedId"`
+	ProductBrokerId   uint    `json:"productBrokerId"`
+	TradingSessionId  uint    `json:"tradingSessionId"`
 }
 
 //=============================================================================
 
-func GetOrCreateInstrument(tx *gorm.DB, ticker string, i *Instrument) (*Instrument, error) {
-	res := tx.Where(&Instrument{Ticker: ticker}).FirstOrCreate(i)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return i, nil
+type TradingSystemMessage struct {
+	TradingSystem TradingSystem `json:"tradingSystem"`
+	ProductBroker ProductBroker `json:"productBroker"`
+	Currency      Currency      `json:"currency"`
 }
-
 //=============================================================================

@@ -26,54 +26,16 @@ package service
 
 import (
 	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func getPortfolios(c *gin.Context, us *auth.UserSession) {
-	offset, limit, err := req.GetPagingParams(c)
-
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := db.GetPortfolios(tx, nil, offset, limit)
-
-			if err != nil {
-				return err
-			}
-
-			return req.ReturnList(c, list, offset, limit, len(*list))
-		})
-	}
-
-	req.ReturnError(c, err)
-}
-
-//=============================================================================
-
-func getPortfolioTree(c *gin.Context, us *auth.UserSession) {
-	err := db.RunInTransaction(func(tx *gorm.DB) error {
-		list, err := business.GetPortfolioTree(tx)
-
-		if err != nil {
-			return err
-		}
-
-		return req.ReturnObject(c, list)
-	})
-
-	req.ReturnError(c, err)
-}
-
-//=============================================================================
-
-func getPortfolioMonitoring(c *gin.Context, us *auth.UserSession) {
+func getPortfolioMonitoring(c *auth.Context) {
 	params := business.PortfolioMonitoringParams{}
-	err    := req.BindParamsFromBody(c, &params)
+	err    := c.BindParamsFromBody(&params)
 
 	if err == nil {
 		err = db.RunInTransaction(func(tx *gorm.DB) error {
@@ -83,11 +45,11 @@ func getPortfolioMonitoring(c *gin.Context, us *auth.UserSession) {
 				return err
 			}
 
-			return req.ReturnObject(c, result)
+			return c.ReturnObject(result)
 		})
 	}
 
-	req.ReturnError(c, err)
+	c.ReturnError(err)
 }
 
 //=============================================================================

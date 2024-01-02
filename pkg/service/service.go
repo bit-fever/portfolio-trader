@@ -28,29 +28,22 @@ import (
 	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/core/auth/roles"
 	"github.com/bit-fever/core/req"
-	"github.com/bit-fever/portfolio-trader/pkg/model/config"
+	"github.com/bit-fever/portfolio-trader/pkg/app"
 	"github.com/gin-gonic/gin"
-	"log"
+	"log/slog"
 )
 
 //=============================================================================
 
-func Init(router *gin.Engine, cfg *config.Config) {
+func Init(router *gin.Engine, cfg *app.Config, logger *slog.Logger) {
 
-	ctrl, err := auth.NewOidcController(cfg.Authentication.Authority, req.GetClient("bf"))
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctrl := auth.NewOidcController(cfg.Authentication.Authority, req.GetClient("bf"), logger, cfg)
 
-	router.GET ("/api/portfolio/v1/trading-systems",                        ctrl.Secure(getTradingSystemsFull,  roles.Admin_And_User))
-	router.GET ("/api/portfolio/v1/trading-systems/:id/daily-info",         ctrl.Secure(getDailyInfo,           roles.Admin_And_User))
-	router.POST("/api/portfolio/v1/trading-systems/:id/filtering-analysis", ctrl.Secure(getFilteringAnalysis,   roles.Admin_And_User))
+	router.GET ("/api/portfolio/v1/trading-systems",                        ctrl.Secure(getTradingSystems,      roles.Admin_User_Service))
+	router.GET ("/api/portfolio/v1/trading-systems/:id/daily-info",         ctrl.Secure(getDailyInfo,           roles.Admin_User_Service))
+	router.POST("/api/portfolio/v1/trading-systems/:id/filtering-analysis", ctrl.Secure(getFilteringAnalysis,   roles.Admin_User_Service))
 
-	router.GET ("/api/portfolio/v1/instruments",                            ctrl.Secure(getInstruments,         roles.Admin_And_User))
-
-	router.GET ("/api/portfolio/v1/portfolios",                             ctrl.Secure(getPortfolios,          roles.Admin_And_User))
-	router.GET ("/api/portfolio/v1/portfolio/tree",                         ctrl.Secure(getPortfolioTree,       roles.Admin_And_User))
-	router.POST("/api/portfolio/v1/portfolio/monitoring",                   ctrl.Secure(getPortfolioMonitoring, roles.Admin_And_User))
+	router.POST("/api/portfolio/v1/portfolio/monitoring",                   ctrl.Secure(getPortfolioMonitoring, roles.Admin_User_Service))
 }
 
 //=============================================================================

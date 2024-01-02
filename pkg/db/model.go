@@ -24,91 +24,58 @@ THE SOFTWARE.
 
 package db
 
-import "time"
-
 //=============================================================================
 //===
 //=== Entities
 //===
 //=============================================================================
 
-type Portfolio struct {
-	Id        uint      `json:"id" gorm:"primaryKey"`
-	ParentId  uint      `json:"parentId"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
-//=============================================================================
-
-type Instrument struct {
-	Id        uint      `json:"id" gorm:"primaryKey"`
-	Ticker    string    `json:"ticker"`
-	Name      string    `json:"name"`
-	Cost      float32   `json:"cost"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
+const TsStatusEnabled  = "en"
+const TsStatusDisabled = "di"
 
 //=============================================================================
 
 type TradingSystem struct {
-	Id              uint            `json:"id" gorm:"primaryKey"`
-	Code            string          `json:"code"`
-	Name            string          `json:"name"`
-	InstrumentId    uint            `json:"instrumentId"`
-	PortfolioId     uint            `json:"portfolioId"`
-	FirstUpdate     int             `json:"firstUpdate"`
-	LastUpdate      int             `json:"lastUpdate"`
-	LastPl          float64         `json:"lastPl"`
-	TradingDays     int             `json:"tradingDays"`
-	NumTrades       int             `json:"numTrades"`
-	SuggestedAction SuggestedAction `json:"suggestedAction"`
-	CreatedAt       time.Time       `json:"createdAt"`
-	UpdatedAt       time.Time       `json:"updatedAt"`
-}
-
-//-----------------------------------------------------------------------------
-
-type SuggestedAction int
-
-const (
-	Unknown SuggestedAction = iota
-	Activate
-	Deactivate
-)
-
-//=============================================================================
-
-type TradingSystemFull struct {
-	TradingSystem
-	InstrumentTicker string `json:"instrumentTicker"`
-	PortfolioName    string `json:"portfolioName"`
+	Id              uint       `json:"id" gorm:"primaryKey"`
+	SourceId        uint       `json:"sourceId"`
+	Username        string     `json:"username"`
+	WorkspaceCode   string     `json:"workspaceCode"`
+	Name            string     `json:"name"`
+	Status          string     `json:"status"`
+	FirstUpdate     int        `json:"firstUpdate"`
+	LastUpdate      int        `json:"lastUpdate"`
+	ClosedProfit    float64    `json:"closedProfit"`
+	TradingDays     int        `json:"tradingDays"`
+	NumTrades       int        `json:"numTrades"`
+	ProductBrokerId uint       `json:"productBrokerId"`
+	BrokerSymbol    string     `json:"brokerSymbol"`
+	PointValue      float32    `json:"pointValue"`
+	CostPerTrade    float32    `json:"costPerTrade"`
+	MarginValue     float32    `json:"marginValue"`
+	CurrencyId      uint       `json:"currencyId"`
+	CurrencyCode    string     `json:"currencyCode"`
 }
 
 //=============================================================================
 
-type TsDailyInfo struct {
+type TradingFilter struct {
+	Id              uint   `json:"id" gorm:"primaryKey"`
+	TradingSystemId uint   `json:"tradingSystemId"`
+	FilterType      string `json:"filterType"`
+	Enabled         bool   `json:"enabled"`
+	Config          string `json:"config"`
+}
+
+//=============================================================================
+
+type DailyInfo struct {
 	Id              uint    `json:"id" gorm:"primaryKey"`
 	TradingSystemId uint    `json:"tradingSystemId"`
 	Day             int     `json:"day"`
 	OpenProfit      float64 `json:"openProfit"`
+	ClosedProfit    float64 `json:"closedProfit"`
 	Position        int     `json:"position"`
 	NumTrades       int     `json:"numTrades"`
-}
-
-//=============================================================================
-
-type TsFiltering struct {
-	Id             uint
-	LsEnabled      bool
-	LsLongPeriod   int
-	LsShortPeriod  int
-	LsThreshold    float32
-	LsShortPosPerc int
-	MaEnabled      bool
-	MaDays         int
 }
 
 //=============================================================================
@@ -117,32 +84,8 @@ type TsFiltering struct {
 //===
 //=============================================================================
 
-func (Portfolio) TableName() string {
-	return "portfolio"
-}
-
-//=============================================================================
-
-func (Instrument) TableName() string {
-	return "instrument"
-}
-
-//=============================================================================
-
-func (TradingSystem) TableName() string {
-	return "trading_system"
-}
-
-//=============================================================================
-
-func (TsDailyInfo) TableName() string {
-	return "ts_daily_info"
-}
-
-//=============================================================================
-
-func (TsFiltering) TableName() string {
-	return "ts_filtering"
-}
+func (TradingSystem) TableName() string { return "trading_system" }
+func (TradingFilter) TableName() string { return "trading_filter" }
+func (DailyInfo)     TableName() string { return "daily_info"     }
 
 //=============================================================================

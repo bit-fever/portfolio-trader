@@ -26,47 +26,42 @@ package main
 
 import (
 	"github.com/bit-fever/core/boot"
+	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/app"
+	"github.com/bit-fever/portfolio-trader/pkg/core/messaging"
 	"github.com/bit-fever/portfolio-trader/pkg/core/sync"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/model/config"
 	"github.com/bit-fever/portfolio-trader/pkg/service"
-	"github.com/gin-gonic/gin"
-	"log"
+	"log/slog"
 )
 
 //=============================================================================
 
-func main() {
-	cfg := &config.Config{}
-	boot.ReadConfig("portfolio-trader", cfg)
-	file := boot.InitLogs(cfg.General.LogFile)
-	defer file.Close()
+const component = "portfolio-trader"
 
+//=============================================================================
+
+func main() {
+	cfg := &app.Config{}
+	boot.ReadConfig(component, cfg)
+	logger := boot.InitLogger(component, &cfg.Application)
+	engine := boot.InitEngine(logger,    &cfg.Application)
 	initClients()
-	db.InitDatabase(cfg)
-	router := registerServices(cfg)
-	sync.StartPeriodicScan(cfg)
-	boot.RunHttpServer(router, cfg.General.BindAddress)
+	db.InitDatabase(&cfg.Database)
+	msg.InitMessaging(&cfg.Messaging)
+	service.Init(engine, cfg, logger)
+	sync.InitPeriodicScan(cfg)
+	messaging.InitMessageListener()
+	boot.RunHttpServer(engine, &cfg.Application)
 }
 
 //=============================================================================
 
 func initClients() {
-	log.Println("Initializing clients...")
+	slog.Info("Initializing clients...")
 	req.AddClient("bf", "ca.crt",         "server.crt",         "server.key")
 	req.AddClient("ws", "wserver-ca.crt", "wserver-client.crt", "wserver-client.key")
-}
-
-//=============================================================================
-
-func registerServices(cfg *config.Config) *gin.Engine {
-
-	log.Println("Registering services...")
-	router := gin.Default()
-	service.Init(router, cfg)
-
-	return router
 }
 
 //=============================================================================

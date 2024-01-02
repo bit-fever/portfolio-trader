@@ -31,8 +31,8 @@ import (
 
 //=============================================================================
 
-func FindDailyInfoByTsId(tx *gorm.DB, tsId uint) ([]TsDailyInfo, error) {
-	var list []TsDailyInfo
+func FindDailyInfoByTsId(tx *gorm.DB, tsId uint) (*[]DailyInfo, error) {
+	var list []DailyInfo
 
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
@@ -43,21 +43,21 @@ func FindDailyInfoByTsId(tx *gorm.DB, tsId uint) ([]TsDailyInfo, error) {
 		return nil, req.NewServerErrorByError(res.Error)
 	}
 
-	return list, nil
+	return &list, nil
 }
 
 //=============================================================================
 
-func FindDailyInfoByTsIdAsMap(tx *gorm.DB, tsId uint) (map[int]TsDailyInfo, error) {
+func FindDailyInfoByTsIdAsMap(tx *gorm.DB, tsId uint) (map[int]DailyInfo, error) {
 	list,err := FindDailyInfoByTsId(tx, tsId)
 
 	if err != nil {
 		return nil, err
 	}
 
-	diMap := map[int]TsDailyInfo{}
+	diMap := map[int]DailyInfo{}
 
-	for _, di := range list {
+	for _, di := range *list {
 		diMap[di.Day] = di
 	}
 
@@ -66,8 +66,8 @@ func FindDailyInfoByTsIdAsMap(tx *gorm.DB, tsId uint) (map[int]TsDailyInfo, erro
 
 //=============================================================================
 
-func FindDailyInfoFromDay(tx *gorm.DB, tsIds []uint, fromDay int) (*[]TsDailyInfo, error) {
-	var data []TsDailyInfo
+func FindDailyInfoFromDay(tx *gorm.DB, tsIds []uint, fromDay int) (*[]DailyInfo, error) {
+	var data []DailyInfo
 
 	res := tx.Find(&data, "trading_system_id in ? and day >= ?", tsIds, fromDay)
 
@@ -80,7 +80,7 @@ func FindDailyInfoFromDay(tx *gorm.DB, tsIds []uint, fromDay int) (*[]TsDailyInf
 
 //=============================================================================
 
-func AddTsDailyInfo(tx *gorm.DB, di *TsDailyInfo) error {
+func AddDailyInfo(tx *gorm.DB, di *DailyInfo) error {
 	err := tx.Create(di).Error
 	return req.NewServerErrorByError(err)
 }

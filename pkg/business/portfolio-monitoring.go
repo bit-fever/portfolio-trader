@@ -40,14 +40,14 @@ func GetPortfolioMonitoring(tx *gorm.DB, params *PortfolioMonitoringParams) (*Po
 
 	//--- Get list of trading systems and check length
 
-	tsMap, err := db.GetTradingSystemsByIdAsMap(tx, params.TsIds)
+	tsMap, err := db.GetTradingSystemsBySourceIdAsMap(tx, params.TsIds)
 
 	if err != nil {
 		return nil, err
 	}
 
 	if len(tsMap) != len(params.TsIds) {
-		return nil, req.NewRequestError("Missing some trading systems (input:%v. found:%v)", len(params.TsIds), len(tsMap))
+		return nil, req.NewNotFoundError("Missing some trading systems (input:%v. found:%v)", len(params.TsIds), len(tsMap))
 	}
 
 	//--- Get trading systems daily data
@@ -59,14 +59,8 @@ func GetPortfolioMonitoring(tx *gorm.DB, params *PortfolioMonitoringParams) (*Po
 		return nil, err
 	}
 
-	inMap, err := db.GetInstrumentsAsMap(tx)
-
-	if err != nil {
-		return nil, err
-	}
-
 	diMap := buildSortedMapOfInfo(diList)
-	res   := buildMonitoringResult(diMap, &inMap, tsMap)
+	res   := buildMonitoringResult(diMap, tsMap)
 	buildTotalInfo(res)
 
 	return res, nil
@@ -88,15 +82,15 @@ func calcFromDay(period int) int {
 
 //=============================================================================
 
-func buildSortedMapOfInfo(list *[]db.TsDailyInfo) *map[uint][]*db.TsDailyInfo {
-	tsMap := map[uint][]*db.TsDailyInfo{}
+func buildSortedMapOfInfo(list *[]db.DailyInfo) *map[uint][]*db.DailyInfo {
+	tsMap := map[uint][]*db.DailyInfo{}
 
 	for _, di := range *list {
 		diAux := di
 		tsList, ok := tsMap[di.TradingSystemId]
 
 		if !ok {
-			tsList = []*db.TsDailyInfo{}
+			tsList = []*db.DailyInfo{}
 		}
 
 		tsMap[di.TradingSystemId] = append(tsList, &diAux)
@@ -113,7 +107,7 @@ func buildSortedMapOfInfo(list *[]db.TsDailyInfo) *map[uint][]*db.TsDailyInfo {
 
 //=============================================================================
 
-func buildMonitoringResult(diMap *map[uint][]*db.TsDailyInfo, inMap *map[uint]*db.Instrument, tsMap map[int]*db.TradingSystem) *PortfolioMonitoringResponse {
+func buildMonitoringResult(diMap *map[uint][]*db.DailyInfo, tsMap map[uint]*db.TradingSystem) *PortfolioMonitoringResponse {
 	res := &PortfolioMonitoringResponse{}
 
 	if len(*diMap) != 0 {
@@ -124,8 +118,8 @@ func buildMonitoringResult(diMap *map[uint][]*db.TsDailyInfo, inMap *map[uint]*d
 
 	i := 0
 	for key, list := range *diMap {
-		ts := tsMap[int(key)]
-		res.TradingSystems[i] = buildTradingSystemMonitoring(ts, list, inMap)
+		ts := tsMap[key]
+		res.TradingSystems[i] = buildTradingSystemMonitoring(ts, list)
 		i++
 	}
 
@@ -134,7 +128,7 @@ func buildMonitoringResult(diMap *map[uint][]*db.TsDailyInfo, inMap *map[uint]*d
 
 //=============================================================================
 
-func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.TsDailyInfo, inMap *map[uint]*db.Instrument) *TradingSystemMonitoring {
+func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.DailyInfo) *TradingSystemMonitoring {
 	tsa := NewTradingSystemAnalysis(len(list))
 	tsa.Id   = ts.Id
 	tsa.Name = ts.Name
@@ -143,13 +137,11 @@ func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.TsDailyInfo, 
 	currNetProfit := 0.0
 	currTrades    := 0
 
-	cost := float64((*inMap)[ts.InstrumentId].Cost)
-
 	//--- build data for a single trading system
 
 	for i, di := range list {
 		currRawProfit += di.OpenProfit
-		currNetProfit += di.OpenProfit - cost * math.Abs(float64(di.NumTrades * di.Position))
+		currNetProfit += di.OpenProfit - float64(ts.CostPerTrade) * math.Abs(float64(di.NumTrades * di.Position))
 		currTrades += di.NumTrades
 
 		tsa.Days[i]      = di.Day

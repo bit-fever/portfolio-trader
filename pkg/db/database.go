@@ -25,12 +25,12 @@ THE SOFTWARE.
 package db
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/model/config"
+	"github.com/bit-fever/core"
 	"gorm.io/driver/mysql"
+	"log/slog"
 	"time"
 
 	"gorm.io/gorm"
-	"log"
 )
 
 //=============================================================================
@@ -39,10 +39,10 @@ var dbms *gorm.DB
 
 //=============================================================================
 
-func InitDatabase(cfg *config.Config) {
+func InitDatabase(cfg *core.Database) {
 
-	log.Println("Starting database...")
-	url := cfg.Database.Username + ":" + cfg.Database.Password + "@tcp(" + cfg.Database.Address + ")/" + cfg.Database.Name + "?charset=utf8mb4&parseTime=True"
+	slog.Info("Starting database...")
+	url := cfg.Username + ":" + cfg.Password + "@tcp(" + cfg.Address + ")/" + cfg.Name + "?charset=utf8mb4&parseTime=True"
 
 	dialector := mysql.New(mysql.Config{
 		DSN:                       url,
@@ -55,7 +55,7 @@ func InitDatabase(cfg *config.Config) {
 
 	db, err := gorm.Open(dialector, &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		core.ExitWithMessage("Failed to connect to the database: "+ err.Error())
 	}
 
 	sqlDB, err := db.DB()

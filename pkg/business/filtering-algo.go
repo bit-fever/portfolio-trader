@@ -79,7 +79,7 @@ func (e *EquityAverageFilter) init(c *FilteringConfig) error {
 	e.days = c.EquityAverage.Days
 
 	if e.days <1 || e.days > 200 {
-		return req.NewRequestError("Invalid range for Average days (must be 1..200): %d", e.days)
+		return req.NewBadRequestError("Invalid range for Average days (must be 1..200): %d", e.days)
 	}
 
 	return nil

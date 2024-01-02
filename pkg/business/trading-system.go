@@ -22,56 +22,43 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package business
 
 import (
+	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func GetPortfolios(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Portfolio, error) {
-	var list []Portfolio
-	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
+func GetTradingSystems(tx *gorm.DB, c *auth.Context, filter map[string]any, offset int, limit int, details bool) (*[]db.TradingSystem, error) {
+	if ! c.Session.IsAdmin() {
+		filter["username"] = c.Session.Username
 	}
 
-	return &list, nil
+	return db.GetTradingSystems(tx, filter, offset, limit)
 }
 
 //=============================================================================
 
-func GetPortfolioById(tx *gorm.DB, id uint) (*Portfolio, error) {
-	var p Portfolio
-	res := tx.First(&p, id)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
+func GetDailyInfo(tx *gorm.DB, c *auth.Context, tsId uint) (*[]db.DailyInfo, error) {
+	ts, err := db.GetTradingSystemById(tx, tsId)
+	if err != nil {
+		return nil, err
+	}
+	if ts == nil {
+		return nil, req.NewNotFoundError("Trading system not found: %v", tsId)
 	}
 
-	return &p, nil
-}
-
-//=============================================================================
-
-func GetOrCreatePortfolio(tx *gorm.DB, name string, p *Portfolio) (*Portfolio, error) {
-	res := tx.Where(&Portfolio{Name: name}).FirstOrCreate(&p)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
+	if ! c.Session.IsAdmin() {
+		if ts.Username != c.Session.Username {
+			return nil, req.NewForbiddenError("Trading system not owned by user: %v", tsId)
+		}
 	}
 
-	return p, nil
-}
-
-//=============================================================================
-
-func AddPortfolio(tx *gorm.DB, p *Portfolio) error {
-	err := tx.Create(p).Error
-	return req.NewServerErrorByError(err)
+	return db.FindDailyInfoByTsId(tx, tsId)
 }
 
 //=============================================================================
