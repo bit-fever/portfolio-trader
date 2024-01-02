@@ -102,6 +102,8 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 
 		slog.Info("Updating trading system: "+ s.Name)
 
+		deltaProfit := 0.0
+		deltaDays   := 0
 		deltaTrades := 0
 
 		for _, inDi := range s.DailyInfo {
@@ -118,6 +120,8 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 
 				//--- Add entry to map to avoid duplicates
 				diMap[inDi.Day] = *di
+				deltaProfit += inDi.ClosedProfit
+				deltaDays   += inDi.NumTrades
 				deltaTrades++
 
 				//--- Update information on trading system
@@ -127,14 +131,14 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 				}
 
 				if ts.LastUpdate < inDi.Day {
-					ts.LastUpdate   = inDi.Day
-					ts.ClosedProfit = inDi.ClosedProfit
-					ts.NumTrades    = inDi.NumTrades
+					ts.LastUpdate = inDi.Day
 				}
 			}
 		}
 
-		ts.TradingDays += deltaTrades
+		ts.ClosedProfit += deltaProfit
+		ts.TradingDays  += deltaDays
+		ts.NumTrades    += deltaTrades
 		db.UpdateTradingSystem(tx, ts)
 	}
 
