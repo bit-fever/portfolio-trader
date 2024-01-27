@@ -53,7 +53,8 @@ func GetPortfolioMonitoring(tx *gorm.DB, params *PortfolioMonitoringParams) (*Po
 	//--- Get trading systems daily data
 
 	fromDay := calcFromDay(params.Period)
-	diList, err := db.FindDailyInfoFromDay(tx, params.TsIds, fromDay)
+	idsArray:= calcIdsArrayFromSourceIds(tsMap)
+	diList, err := db.FindDailyInfoFromDay(tx, idsArray, fromDay)
 
 	if err != nil {
 		return nil, err
@@ -78,6 +79,18 @@ func calcFromDay(period int) int {
 	y,m,d := ago.Date()
 
 	return y*10000 + int(m)*100 + d
+}
+
+//=============================================================================
+
+func calcIdsArrayFromSourceIds(tsMap map[uint]*db.TradingSystem) []uint {
+	var list []uint
+
+	for k,_ := range tsMap {
+		list = append(list, k)
+	}
+
+	return list
 }
 
 //=============================================================================

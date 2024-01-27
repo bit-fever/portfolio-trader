@@ -24,43 +24,19 @@ THE SOFTWARE.
 
 package business
 
-import "github.com/bit-fever/core/req"
-
 //=============================================================================
 
-type EquityFilter interface {
-	init(c *FilteringConfig) error
-	compute(e *Equities, index int) bool
+type LongShort struct {
+	LongPeriod   int     `json:"longPeriod"`
+	ShortPeriod  int     `json:"shortPeriod"`
+	Threshold    float32 `json:"threshold"`
+	ShortPosPerc int     `json:"shortPosPerc"`
 }
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
-func createFilterChain(c *FilteringConfig) (*[]EquityFilter, error) {
-	var list []EquityFilter
-
-	//--- Append equity average filter
-
-	if c.EquityAverage.Enabled {
-		eaf := EquityAverageFilter{}
-		if err:=eaf.init(c); err != nil {
-			return nil, err
-		}
-
-		list = append(list, &eaf)
-	}
-
-	//--- Append long/short period filter
-
-	if c.LongShort.Enabled {
-		lsf := LongShortPeriodFilter{}
-		if err:=lsf.init(c); err != nil {
-			return nil, err
-		}
-
-		list = append(list, &lsf)
-	}
-
-	return &list, nil
+type EquityAverage struct {
+	Days    int  `json:"days"`
 }
 
 //=============================================================================
@@ -75,15 +51,15 @@ type EquityAverageFilter struct {
 
 //=============================================================================
 
-func (e *EquityAverageFilter) init(c *FilteringConfig) error {
-	e.days = c.EquityAverage.Days
-
-	if e.days <1 || e.days > 200 {
-		return req.NewBadRequestError("Invalid range for Average days (must be 1..200): %d", e.days)
-	}
-
-	return nil
-}
+//func (e *EquityAverageFilter) init(c *FilteringConfig) error {
+//	e.days = c.EquityAverage.Days
+//
+//	if e.days <1 || e.days > 200 {
+//		return req.NewBadRequestError("Invalid range for Average days (must be 1..200): %d", e.days)
+//	}
+//
+//	return nil
+//}
 
 //=============================================================================
 
@@ -101,9 +77,9 @@ type LongShortPeriodFilter struct {}
 
 //=============================================================================
 
-func (e *LongShortPeriodFilter) init(c *FilteringConfig) error {
-	return nil
-}
+//func (e *LongShortPeriodFilter) init(c *FilteringConfig) error {
+//	return nil
+//}
 
 //=============================================================================
 

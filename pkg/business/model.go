@@ -77,39 +77,34 @@ func NewTradingSystemAnalysis(size int) *TradingSystemMonitoring {
 
 //=============================================================================
 //===
-//=== Filtering analysis
+//=== FilterAnalysisRequest
 //===
 //=============================================================================
 
-type LongShort struct {
-	Enabled      bool    `json:"enabled"`
-	LongPeriod   int     `json:"longPeriod"`
-	ShortPeriod  int     `json:"shortPeriod"`
-	Threshold    float32 `json:"threshold"`
-	ShortPosPerc int     `json:"shortPosPerc"`
+type TradingFilters struct {
+	EquAvgEnabled    bool   `json:"equAvgEnabled"`
+	EquAvgDays       int    `json:"equAvgDays"`
+	PosProEnabled    bool   `json:"posProEnabled"`
+	PosProWeeks      int    `json:"posProWeeks"`
+	WinPerEnabled    bool   `json:"winPerEnabled"`
+	WinPerWeeks      int    `json:"winPerWeeks"`
+	WinPerValue      int    `json:"winPerValue"`
+	ShoLonEnabled    bool   `json:"shoLonEnabled"`
+	ShoLonShortWeeks int    `json:"shoLonShortWeeks"`
+	ShoLonLongWeeks  int    `json:"shoLonLongWeeks"`
+	ShoLonLongPerc   int    `json:"shoLonLongPerc"`
 }
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 
-type EquityAverage struct {
-	Enabled bool `json:"enabled"`
-	Days    int  `json:"days"`
+type FilterAnalysisRequest struct {
+	Filters *TradingFilters  `json:"filters,omitempty"`
 }
 
-//-----------------------------------------------------------------------------
-
-type FilteringConfig struct {
-	LongShort     `json:"longShort"`
-	EquityAverage `json:"equityAverage"`
-}
-
-//-----------------------------------------------------------------------------
-
-type FilteringParams struct {
-	NoConfig bool   `json:"noConfig"`
-	FilteringConfig `json:"config"`
-}
-
+//=============================================================================
+//===
+//=== FilterAnalysisResponse
+//===
 //=============================================================================
 
 type TradingSystem struct {
@@ -139,11 +134,11 @@ type Equities struct {
 
 //-----------------------------------------------------------------------------
 
-type FilteringResponse struct {
-	TradingSystem      `json:"tradingSystem"`
-	Summary            `json:"summary"`
-	Equities           `json:"equities"`
-	FilteringConfig    `json:"config"`
+type FilterAnalysisResponse struct {
+	TradingSystem TradingSystem   `json:"tradingSystem"`
+	Filters       TradingFilters  `json:"filters"`
+	Summary       Summary         `json:"summary"`
+	Equities      Equities        `json:"equities"`
 }
 
 //=============================================================================

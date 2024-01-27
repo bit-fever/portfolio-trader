@@ -32,6 +32,7 @@ import (
 )
 
 //=============================================================================
+
 func getTradingSystems(c *auth.Context) {
 	filter := map[string]any{}
 	offset, limit, err := c.GetPagingParams()
@@ -77,16 +78,61 @@ func getDailyInfo(c *auth.Context) {
 
 //=============================================================================
 
-func getFilteringAnalysis(c *auth.Context) {
+func getTradingFilters(c *auth.Context) {
 	tsId, err := c.GetIdFromUrl()
 
 	if err == nil {
-		params := business.FilteringParams{}
-		err = c.BindParamsFromBody(&params)
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			filters, err := business.GetTradingFilters(tx, c, tsId)
+
+			if err != nil {
+				return err
+			}
+
+			return c.ReturnObject(filters)
+		})
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func setTradingFilters(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		filters := business.TradingFilters{}
+		err = c.BindParamsFromBody(&filters)
 
 		if err == nil {
 			err = db.RunInTransaction(func(tx *gorm.DB) error {
-				rep, err := business.GetFilteringAnalysis(tx, c, tsId, &params)
+				err = business.SetTradingFilters(tx, c, tsId, &filters)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject("")
+			})
+		}
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func runFilterAnalysis(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		req := business.FilterAnalysisRequest{}
+		err = c.BindParamsFromBody(&req)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.RunFilterAnalysis(tx, c, tsId, &req)
 
 				if err != nil {
 					return err

@@ -22,30 +22,47 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package service
+package db
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/auth/roles"
 	"github.com/bit-fever/core/req"
-	"github.com/bit-fever/portfolio-trader/pkg/app"
-	"github.com/gin-gonic/gin"
-	"log/slog"
+	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func Init(router *gin.Engine, cfg *app.Config, logger *slog.Logger) {
+func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilters, error) {
+	var list []TradingFilters
 
-	ctrl := auth.NewOidcController(cfg.Authentication.Authority, req.GetClient("bf"), logger, cfg)
+	filter := map[string]any{}
+	filter["trading_system_id"] = tsId
 
-	router.GET ("/api/portfolio/v1/trading-systems",                     ctrl.Secure(getTradingSystems,      roles.Admin_User_Service))
-	router.GET ("/api/portfolio/v1/trading-systems/:id/daily-info",      ctrl.Secure(getDailyInfo,           roles.Admin_User_Service))
-	router.GET ("/api/portfolio/v1/trading-systems/:id/filters",         ctrl.Secure(getTradingFilters,      roles.Admin_User_Service))
-	router.POST("/api/portfolio/v1/trading-systems/:id/filters",         ctrl.Secure(setTradingFilters,      roles.Admin_User_Service))
-	router.POST("/api/portfolio/v1/trading-systems/:id/filter-analysis", ctrl.Secure(runFilterAnalysis,      roles.Admin_User_Service))
+	res := tx.Where(filter).Find(&list)
 
-	router.POST("/api/portfolio/v1/portfolio/monitoring",                ctrl.Secure(getPortfolioMonitoring, roles.Admin_User_Service))
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	if len(list) == 0 {
+		return &TradingFilters{
+			TradingSystemId : tsId,
+			EquAvgDays      :   30,
+			PosProWeeks     :    9,
+			WinPerWeeks     :    9,
+			WinPerValue     :   30,
+			ShoLonShortWeeks:    9,
+			ShoLonLongWeeks :   36,
+			ShoLonLongPerc  :   10,
+		}, nil
+	}
+
+	return &list[0], nil
+}
+
+//=============================================================================
+
+func SetTradingFilters(tx *gorm.DB, tf *TradingFilters) {
+	tx.Save(tf)
 }
 
 //=============================================================================

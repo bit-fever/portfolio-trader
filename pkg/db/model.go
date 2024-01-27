@@ -24,6 +24,13 @@ THE SOFTWARE.
 
 package db
 
+import (
+	"database/sql/driver"
+	"encoding/json"
+	"errors"
+	"fmt"
+)
+
 //=============================================================================
 //===
 //=== Entities
@@ -58,12 +65,19 @@ type TradingSystem struct {
 
 //=============================================================================
 
-type TradingFilter struct {
-	Id              uint   `json:"id" gorm:"primaryKey"`
-	TradingSystemId uint   `json:"tradingSystemId"`
-	FilterType      string `json:"filterType"`
-	Enabled         bool   `json:"enabled"`
-	Config          string `json:"config"`
+type TradingFilters struct {
+	TradingSystemId  uint   `json:"tradingSystemId" gorm:"primaryKey"`
+	EquAvgEnabled    bool   `json:"equAvgEnabled"`
+	EquAvgDays       int    `json:"equAvgDays"`
+	PosProEnabled    bool   `json:"posProEnabled"`
+	PosProWeeks      int    `json:"posProWeeks"`
+	WinPerEnabled    bool   `json:"winPerEnabled"`
+	WinPerWeeks      int    `json:"winPerWeeks"`
+	WinPerValue      int    `json:"winPerValue"`
+	ShoLonEnabled    bool   `json:"shoLonEnabled"`
+	ShoLonShortWeeks int    `json:"shoLonShortWeeks"`
+	ShoLonLongWeeks  int    `json:"shoLonLongWeeks"`
+	ShoLonLongPerc   int    `json:"shoLonLongPerc"`
 }
 
 //=============================================================================
@@ -84,8 +98,35 @@ type DailyInfo struct {
 //===
 //=============================================================================
 
-func (TradingSystem) TableName() string { return "trading_system" }
-func (TradingFilter) TableName() string { return "trading_filter" }
-func (DailyInfo)     TableName() string { return "daily_info"     }
+func (TradingSystem)  TableName() string { return "trading_system" }
+func (TradingFilters) TableName() string { return "trading_filter" }
+func (DailyInfo)      TableName() string { return "daily_info"     }
+
+//=============================================================================
+//===
+//=== ParamMap type
+//===
+//=============================================================================
+
+type ParamMap map[string]any
+
+//=============================================================================
+
+func (pm *ParamMap) Scan(value interface{}) error {
+	bytes, ok := value.([]byte)
+	if !ok {
+		return errors.New(fmt.Sprint("Failed to unmarshal JSONB value:", value))
+	}
+
+	err := json.Unmarshal(bytes, pm)
+
+	return err
+}
+
+//=============================================================================
+
+func (pm ParamMap) Value() (driver.Value, error) {
+	return json.Marshal(pm)
+}
 
 //=============================================================================
