@@ -22,47 +22,24 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
-
-import (
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
-)
+package model
 
 //=============================================================================
+//===
+//=== Plot
+//===
+//=============================================================================
 
-func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilters, error) {
-	var list []TradingFilters
-
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
-
-	res := tx.Where(filter).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	if len(list) == 0 {
-		return &TradingFilters{
-			TradingSystemId : tsId,
-			EquAvgDays      :   30,
-			PosProDays      :   45,
-			WinPerDays      :   45,
-			WinPerValue     :   30,
-			OldNewOldDays   :   45,
-			OldNewOldPerc   :   90,
-			OldNewNewDays   :   45,
-		}, nil
-	}
-
-	return &list[0], nil
+type Plot struct {
+	Days   []int      `json:"days"`
+	Values []float64  `json:"values"`
 }
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
-func SetTradingFilters(tx *gorm.DB, tf *TradingFilters) {
-	tx.Save(tf)
+func (p *Plot) AddPoint(day int, value float64) {
+	p.Days   = append(p.Days,   day)
+	p.Values = append(p.Values, value)
 }
 
 //=============================================================================

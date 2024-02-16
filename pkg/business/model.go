@@ -24,6 +24,11 @@ THE SOFTWARE.
 
 package business
 
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
+	"github.com/bit-fever/portfolio-trader/pkg/model"
+)
+
 //=============================================================================
 //===
 //=== Portfolio monitoring
@@ -82,17 +87,17 @@ func NewTradingSystemAnalysis(size int) *TradingSystemMonitoring {
 //=============================================================================
 
 type TradingFilters struct {
-	EquAvgEnabled    bool   `json:"equAvgEnabled"`
-	EquAvgDays       int    `json:"equAvgDays"`
-	PosProEnabled    bool   `json:"posProEnabled"`
-	PosProWeeks      int    `json:"posProWeeks"`
-	WinPerEnabled    bool   `json:"winPerEnabled"`
-	WinPerWeeks      int    `json:"winPerWeeks"`
-	WinPerValue      int    `json:"winPerValue"`
-	ShoLonEnabled    bool   `json:"shoLonEnabled"`
-	ShoLonShortWeeks int    `json:"shoLonShortWeeks"`
-	ShoLonLongWeeks  int    `json:"shoLonLongWeeks"`
-	ShoLonLongPerc   int    `json:"shoLonLongPerc"`
+	EquAvgEnabled   bool   `json:"equAvgEnabled"`
+	EquAvgDays      int    `json:"equAvgDays"`
+	PosProEnabled   bool   `json:"posProEnabled"`
+	PosProDays      int    `json:"posProDays"`
+	WinPerEnabled   bool   `json:"winPerEnabled"`
+	WinPerDays      int    `json:"winPerDays"`
+	WinPerValue     int    `json:"winPerValue"`
+	OldNewEnabled   bool   `json:"oldNewEnabled"`
+	OldNewOldDays   int    `json:"oldNewOldDays"`
+	OldNewOldPerc   int    `json:"oldNewOldPerc"`
+	OldNewNewDays   int    `json:"oldNewNewDays"`
 }
 
 //=============================================================================
@@ -115,21 +120,36 @@ type TradingSystem struct {
 //-----------------------------------------------------------------------------
 
 type Summary struct {
-	UnfilteredProfit float64 `json:"unfilteredProfit"`
-	FilteredProfit   float64 `json:"filteredProfit"`
-	UnfilteredMaxDD  float64 `json:"unfilteredMaxDD"`
-	FilteredMaxDD    float64 `json:"filteredMaxDD"`
+	UnfProfit       float64 `json:"unfProfit"`
+	FilProfit       float64 `json:"filProfit"`
+	UnfMaxDrawdown  float64 `json:"unfMaxDrawdown"`
+	FilMaxDrawdown  float64 `json:"filMaxDrawdown"`
+	UnfWinningPerc  float64 `json:"unfWinningPerc"`
+	FilWinningPerc  float64 `json:"filWinningPerc"`
+	UnfAverageTrade float64 `json:"unfAverageTrade"`
+	FilAverageTrade float64 `json:"filAverageTrade"`
 }
 
 //-----------------------------------------------------------------------------
 
 type Equities struct {
-	Days               []int      `json:"days"`
-	UnfilteredProfit   []float64  `json:"unfilteredProfit"`
-	FilteredProfit     []float64  `json:"filteredProfit"`
-	UnfilteredDrawdown []float64  `json:"unfilteredDrawdown"`
-	FilteredDrawdown   []float64  `json:"filteredDrawdown"`
-	Average            []float64  `json:"average"`
+	Days               []int       `json:"days"`
+	NetProfits         []float64   `json:"netProfits"`
+	UnfilteredEquity   []float64   `json:"unfilteredEquity"`
+	FilteredEquity     []float64   `json:"filteredEquity"`
+	UnfilteredDrawdown []float64   `json:"unfilteredDrawdown"`
+	FilteredDrawdown   []float64   `json:"filteredDrawdown"`
+	FilterActivation   []int8      `json:"filterActivation"`
+	Average            *model.Plot `json:"average"`
+}
+
+//-----------------------------------------------------------------------------
+
+type Activations struct {
+	EquityVsAverage     *filter.Activation `json:"equityVsAverage"`
+	PositiveProfit      *filter.Activation `json:"positiveProfit"`
+	WinningPercentage   *filter.Activation `json:"winningPercentage"`
+	OldVsNew            *filter.Activation `json:"oldVsNew"`
 }
 
 //-----------------------------------------------------------------------------
@@ -139,6 +159,7 @@ type FilterAnalysisResponse struct {
 	Filters       TradingFilters  `json:"filters"`
 	Summary       Summary         `json:"summary"`
 	Equities      Equities        `json:"equities"`
+	Activations   Activations     `json:"activations"`
 }
 
 //=============================================================================

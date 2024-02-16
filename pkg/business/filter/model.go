@@ -22,47 +22,71 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
-
-import (
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
-)
+package filter
 
 //=============================================================================
+//===
+//=== Activation
+//===
+//=============================================================================
 
-func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilters, error) {
-	var list []TradingFilters
+type Activation struct {
+	Days   []int   `json:"days"`
+	Values []int8  `json:"values"`
+}
 
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
+//-----------------------------------------------------------------------------
 
-	res := tx.Where(filter).Find(&list)
+func (p *Activation) AddDay(day int, value int8) {
+	p.Days   = append(p.Days,   day)
+	p.Values = append(p.Values, value)
+}
 
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
+//=============================================================================
+//===
+//=== ActivationStrategy
+//===
+//=============================================================================
 
-	if len(list) == 0 {
-		return &TradingFilters{
-			TradingSystemId : tsId,
-			EquAvgDays      :   30,
-			PosProDays      :   45,
-			WinPerDays      :   45,
-			WinPerValue     :   30,
-			OldNewOldDays   :   45,
-			OldNewOldPerc   :   90,
-			OldNewNewDays   :   45,
-		}, nil
-	}
-
-	return &list[0], nil
+type ActivationStrategy struct {
+	activation *Activation
+	enabled    bool
+	index      int
 }
 
 //=============================================================================
 
-func SetTradingFilters(tx *gorm.DB, tf *TradingFilters) {
-	tx.Save(tf)
+func (as *ActivationStrategy) IsActive(day int) bool {
+	//--- Strategy not enabled: skip it returning always 1
+	if !as.enabled {
+		return true
+	}
+
+	//--- Strategy not computable: return true because we must align with unfiltered equity
+	if as.activation == nil {
+		return true
+	}
+
+	if day<as.activation.Days[as.index] {
+		return true
+	}
+
+	if day != as.activation.Days[as.index] {
+		panic("Help!")
+	}
+
+	as.index++
+	return as.activation.Values[as.index -1] != 0
+}
+
+//=============================================================================
+
+func NewActivationStrategy(a *Activation, enabled bool) *ActivationStrategy {
+	return &ActivationStrategy{
+		activation: a,
+		enabled: enabled,
+		index: 0,
+	}
 }
 
 //=============================================================================

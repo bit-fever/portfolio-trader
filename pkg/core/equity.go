@@ -26,9 +26,10 @@ package core
 
 //=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) {
+func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
 	maxProfit    := 0.0
 	currDrawDown := 0.0
+	maxDrawDown  := 0.0
 
 	for i, currProfit := range *equity {
 		if currProfit >= maxProfit {
@@ -39,7 +40,51 @@ func CalcDrawDown(equity *[]float64, drawDown *[]float64) {
 		}
 
 		(*drawDown)[i] = currDrawDown
+
+		if currDrawDown < maxDrawDown {
+			maxDrawDown = currDrawDown
+		}
 	}
+
+	return maxDrawDown
+}
+
+//=============================================================================
+
+func CalcWinningPercentage(profits []float64, filter []int8) float64 {
+	tot := 0
+	pos := 0
+
+	for i, profit := range profits {
+		if profit != 0 {
+			if filter == nil || filter[i] == 1 {
+				tot++
+				if profit > 0 {
+					pos++
+				}
+			}
+		}
+	}
+
+	return float64(pos * 10000 / tot) / 100
+}
+
+//=============================================================================
+
+func CalcAverageTrade(profits []float64, filter []int8) float64 {
+	sum := 0.0
+	num := 0.0
+
+	for i, profit := range profits {
+		if profit != 0 {
+			if filter == nil || filter[i] == 1 {
+				sum += profit
+				num++
+			}
+		}
+	}
+
+	return float64(int(sum * 100 / num)) / 100
 }
 
 //=============================================================================

@@ -51,18 +51,18 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *TradingFilter
 	}
 
 	db.SetTradingFilters(tx, &db.TradingFilters{
-		TradingSystemId : tsId,
-		EquAvgEnabled   : f.EquAvgEnabled,
-		EquAvgDays      : f.EquAvgDays,
-		PosProEnabled   : f.PosProEnabled,
-		PosProWeeks     : f.PosProWeeks,
-		WinPerEnabled   : f.WinPerEnabled,
-		WinPerWeeks     : f.WinPerWeeks,
-		WinPerValue     : f.WinPerValue,
-		ShoLonEnabled   : f.ShoLonEnabled,
-		ShoLonShortWeeks: f.ShoLonShortWeeks,
-		ShoLonLongWeeks : f.ShoLonLongWeeks,
-		ShoLonLongPerc  : f.ShoLonLongPerc,
+		TradingSystemId: tsId,
+		EquAvgEnabled  : f.EquAvgEnabled,
+		EquAvgDays     : f.EquAvgDays,
+		PosProEnabled  : f.PosProEnabled,
+		PosProDays     : f.PosProDays,
+		WinPerEnabled  : f.WinPerEnabled,
+		WinPerDays     : f.WinPerDays,
+		WinPerValue    : f.WinPerValue,
+		OldNewEnabled  : f.OldNewEnabled,
+		OldNewOldDays  : f.OldNewOldDays,
+		OldNewOldPerc  : f.OldNewOldPerc,
+		OldNewNewDays  : f.OldNewNewDays,
 	})
 
 	return nil
@@ -87,12 +87,12 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *FilterAnaly
 		far.Filters = convert(filters)
 	}
 
-	res := &FilterAnalysisResponse{}
-	res.TradingSystem.Id   = ts.Id
-	res.TradingSystem.Name = ts.Name
-	res.Filters            = *far.Filters
+	diList, err := db.FindDailyInfoByTsId(tx, ts.Id)
+	if err != nil {
+		return nil,err
+	}
 
-	err = runFiltering(tx, ts, res)
+	res := buildFilterResponse(ts, far.Filters, diList)
 
 	return res, err
 }
@@ -124,90 +124,18 @@ func getTradingSystem(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingSyste
 
 func convert(f *db.TradingFilters) *TradingFilters {
 	return &TradingFilters{
-		EquAvgEnabled   : f.EquAvgEnabled,
-		EquAvgDays      : f.EquAvgDays,
-		PosProEnabled   : f.PosProEnabled,
-		PosProWeeks     : f.PosProWeeks,
-		WinPerEnabled   : f.WinPerEnabled,
-		WinPerWeeks     : f.WinPerWeeks,
-		WinPerValue     : f.WinPerValue,
-		ShoLonEnabled   : f.ShoLonEnabled,
-		ShoLonShortWeeks: f.ShoLonShortWeeks,
-		ShoLonLongWeeks : f.ShoLonLongWeeks,
-		ShoLonLongPerc  : f.ShoLonLongPerc,
+		EquAvgEnabled  : f.EquAvgEnabled,
+		EquAvgDays     : f.EquAvgDays,
+		PosProEnabled  : f.PosProEnabled,
+		PosProDays     : f.PosProDays,
+		WinPerEnabled  : f.WinPerEnabled,
+		WinPerDays     : f.WinPerDays,
+		WinPerValue    : f.WinPerValue,
+		OldNewEnabled  : f.OldNewEnabled,
+		OldNewOldDays  : f.OldNewOldDays,
+		OldNewOldPerc  : f.OldNewOldPerc,
+		OldNewNewDays  : f.OldNewNewDays,
 	}
 }
-
-//=============================================================================
-
-func runFiltering(tx *gorm.DB, ts *db.TradingSystem, res *FilterAnalysisResponse) error {
-
-	//--- Retrieve profits from database
-
-	diList, err := db.FindDailyInfoByTsId(tx, ts.Id)
-	if err != nil {
-		return err
-	}
-
-	//--- Creates slices
-
-	_ = len(*diList)
-
-	//e := &res.Equities
-	//e.Days              = make([]int, size)
-	//e.UnfilteredProfit  = make([]float64, size)
-	//e.FilteredProfit    = make([]float64, size)
-	//e.UnfilteredDrawdown= make([]float64, size)
-	//e.FilteredDrawdown  = make([]float64, size)
-	//e.Average           = make([]float64, size)
-	//
-	//currUnfProfit := 0.0
-	//currFilProfit := 0.0
-	//
-	//maSum  := 0.0
-	//maDays := res.EquityAverage.Days
-	//
-	//for i, di := range *diList {
-	//	currCost      := di.OpenProfit - cost * math.Abs(float64(di.NumTrades * di.Position))
-	//	currUnfProfit += currCost
-	//	maSum         += currUnfProfit
-	//
-	//	e.Days[i]             = di.Day
-	//	e.UnfilteredProfit[i] = currUnfProfit
-	//
-	//	if i < maDays -1 || maDays==0 {
-	//		e.Average[i] = 0
-	//	} else {
-	//		if i>maDays -1 {
-	//			maSum -= e.UnfilteredProfit[i-maDays]
-	//		}
-	//		e.Average[i] = maSum/float64(maDays)
-	//	}
-	//
-	//	if applyFilters(filters, e, i) {
-	//		currFilProfit += currCost
-	//	}
-	//
-	//	e.FilteredProfit[i]   = currFilProfit
-	//}
-	//
-	//core.CalcDrawDown(&e.UnfilteredProfit, &e.UnfilteredDrawdown)
-	//core.CalcDrawDown(&e.FilteredProfit,   &e.FilteredDrawdown)
-
-	return nil
-}
-
-//=============================================================================
-
-//func applyFilters(list *[]EquityFilter, eq *Equities, index int) bool {
-//
-//	for _, ef := range *list {
-//		if !ef.compute(eq, index) {
-//			return false
-//		}
-//	}
-//
-//	return true
-//}
 
 //=============================================================================

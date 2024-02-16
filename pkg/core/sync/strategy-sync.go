@@ -116,6 +116,14 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 					Position       : inDi.Position,
 					NumTrades      : inDi.NumTrades,
 				}
+
+				//--- Handle the case when a trade is closed and reopened in the same
+				//--- bar and in the same direction
+
+				if di.ClosedProfit != 0 && di.NumTrades == 0 {
+					di.NumTrades = 1
+				}
+
 				_ = db.AddDailyInfo(tx, di)
 
 				//--- Add entry to map to avoid duplicates

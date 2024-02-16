@@ -66,18 +66,18 @@ type TradingSystem struct {
 //=============================================================================
 
 type TradingFilters struct {
-	TradingSystemId  uint   `json:"tradingSystemId" gorm:"primaryKey"`
-	EquAvgEnabled    bool   `json:"equAvgEnabled"`
-	EquAvgDays       int    `json:"equAvgDays"`
-	PosProEnabled    bool   `json:"posProEnabled"`
-	PosProWeeks      int    `json:"posProWeeks"`
-	WinPerEnabled    bool   `json:"winPerEnabled"`
-	WinPerWeeks      int    `json:"winPerWeeks"`
-	WinPerValue      int    `json:"winPerValue"`
-	ShoLonEnabled    bool   `json:"shoLonEnabled"`
-	ShoLonShortWeeks int    `json:"shoLonShortWeeks"`
-	ShoLonLongWeeks  int    `json:"shoLonLongWeeks"`
-	ShoLonLongPerc   int    `json:"shoLonLongPerc"`
+	TradingSystemId uint   `json:"tradingSystemId" gorm:"primaryKey"`
+	EquAvgEnabled   bool   `json:"equAvgEnabled"`
+	EquAvgDays      int    `json:"equAvgDays"`
+	PosProEnabled   bool   `json:"posProEnabled"`
+	PosProDays      int    `json:"posProDays"`
+	WinPerEnabled   bool   `json:"winPerEnabled"`
+	WinPerDays      int    `json:"winPerDays"`
+	WinPerValue     int    `json:"winPerValue"`
+	OldNewEnabled   bool   `json:"shoLonEnabled"`
+	OldNewOldDays   int    `json:"oldNewOldDays"`
+	OldNewOldPerc   int    `json:"oldNewOldPerc"`
+	OldNewNewDays   int    `json:"oldNewNewDays"`
 }
 
 //=============================================================================
