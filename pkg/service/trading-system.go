@@ -27,6 +27,7 @@ package service
 import (
 	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
@@ -102,7 +103,7 @@ func setTradingFilters(c *auth.Context) {
 	tsId, err := c.GetIdFromUrl()
 
 	if err == nil {
-		filters := business.TradingFilters{}
+		filters := filter.TradingFilters{}
 		err = c.BindParamsFromBody(&filters)
 
 		if err == nil {
@@ -127,7 +128,7 @@ func runFilterAnalysis(c *auth.Context) {
 	tsId, err := c.GetIdFromUrl()
 
 	if err == nil {
-		req := business.FilterAnalysisRequest{}
+		req := filter.AnalysisRequest{}
 		err = c.BindParamsFromBody(&req)
 
 		if err == nil {
@@ -141,6 +142,71 @@ func runFilterAnalysis(c *auth.Context) {
 				return c.ReturnObject(rep)
 			})
 		}
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func startFilterOptimization(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		req := filter.OptimizationRequest{}
+		err = c.BindParamsFromBody(&req)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				err := business.StartFilterOptimization(tx, c, tsId, &req)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(NewStatusOkResponse())
+			})
+		}
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func stopFilterOptimization(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		err = business.StopFilterOptimization(c, tsId)
+
+		if err != nil {
+			c.ReturnError(err)
+		} else {
+			_ = c.ReturnObject(NewStatusOkResponse())
+		}
+
+		return
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func getFilterOptimizationInfo(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		res, err := business.GetFilterOptimizationInfo(c, tsId)
+
+		if err != nil {
+			c.ReturnError(err)
+		} else {
+			_ = c.ReturnObject(res)
+		}
+
+		return
 	}
 
 	c.ReturnError(err)

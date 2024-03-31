@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,73 +22,32 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package core
+package filter
 
 //=============================================================================
+//===
+//=== AnalysisRequest
+//===
+//=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
-	maxProfit    := 0.0
-	currDrawDown := 0.0
-	maxDrawDown  := 0.0
-
-	for i, currProfit := range *equity {
-		if currProfit >= maxProfit {
-			maxProfit = currProfit
-			currDrawDown = 0
-		} else {
-			currDrawDown = currProfit - maxProfit
-		}
-
-		(*drawDown)[i] = currDrawDown
-
-		if currDrawDown < maxDrawDown {
-			maxDrawDown = currDrawDown
-		}
-	}
-
-	return maxDrawDown
+type AnalysisRequest struct {
+	Filters *TradingFilters  `json:"filters,omitempty"`
 }
 
 //=============================================================================
 
-func CalcWinningPercentage(profits []float64, filter []int8) float64 {
-	tot := 0
-	pos := 0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				tot++
-				if profit > 0 {
-					pos++
-				}
-			}
-		}
-	}
-
-	if tot == 0 {
-		return 0
-	}
-
-	return float64(pos * 10000 / tot) / 100
-}
-
-//=============================================================================
-
-func CalcAverageTrade(profits []float64, filter []int8) float64 {
-	sum := 0.0
-	num := 0.0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				sum += profit
-				num++
-			}
-		}
-	}
-
-	return float64(int(sum * 100 / num)) / 100
+type TradingFilters struct {
+	EquAvgEnabled   bool   `json:"equAvgEnabled"`
+	EquAvgDays      int    `json:"equAvgDays"`
+	PosProEnabled   bool   `json:"posProEnabled"`
+	PosProDays      int    `json:"posProDays"`
+	WinPerEnabled   bool   `json:"winPerEnabled"`
+	WinPerDays      int    `json:"winPerDays"`
+	WinPerValue     int    `json:"winPerValue"`
+	OldNewEnabled   bool   `json:"oldNewEnabled"`
+	OldNewOldDays   int    `json:"oldNewOldDays"`
+	OldNewOldPerc   int    `json:"oldNewOldPerc"`
+	OldNewNewDays   int    `json:"oldNewNewDays"`
 }
 
 //=============================================================================

@@ -26,6 +26,7 @@ package business
 
 import (
 	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/business/inout"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
@@ -36,7 +37,7 @@ import (
 
 //=============================================================================
 
-func GetPortfolioMonitoring(tx *gorm.DB, params *PortfolioMonitoringParams) (*PortfolioMonitoringResponse, error) {
+func GetPortfolioMonitoring(tx *gorm.DB, params *inout.PortfolioMonitoringParams) (*inout.PortfolioMonitoringResponse, error) {
 
 	//--- Get list of trading systems and check length
 
@@ -120,11 +121,11 @@ func buildSortedMapOfInfo(list *[]db.DailyInfo) *map[uint][]*db.DailyInfo {
 
 //=============================================================================
 
-func buildMonitoringResult(diMap *map[uint][]*db.DailyInfo, tsMap map[uint]*db.TradingSystem) *PortfolioMonitoringResponse {
-	res := &PortfolioMonitoringResponse{}
+func buildMonitoringResult(diMap *map[uint][]*db.DailyInfo, tsMap map[uint]*db.TradingSystem) *inout.PortfolioMonitoringResponse {
+	res := &inout.PortfolioMonitoringResponse{}
 
 	if len(*diMap) != 0 {
-		res.TradingSystems = make([]*TradingSystemMonitoring, len(*diMap))
+		res.TradingSystems = make([]*inout.TradingSystemMonitoring, len(*diMap))
 	} else {
 		return res
 	}
@@ -141,8 +142,8 @@ func buildMonitoringResult(diMap *map[uint][]*db.DailyInfo, tsMap map[uint]*db.T
 
 //=============================================================================
 
-func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.DailyInfo) *TradingSystemMonitoring {
-	tsa := NewTradingSystemAnalysis(len(list))
+func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.DailyInfo) *inout.TradingSystemMonitoring {
+	tsa := inout.NewTradingSystemMonitoring(len(list))
 	tsa.Id   = ts.Id
 	tsa.Name = ts.Name
 
@@ -179,7 +180,7 @@ type TotalInfo struct {
 
 //-----------------------------------------------------------------------------
 
-func buildTotalInfo(pm *PortfolioMonitoringResponse) {
+func buildTotalInfo(pm *inout.PortfolioMonitoringResponse) {
 	daySum := map[int]*TotalInfo{}
 
 	//--- Collect all days with associated sums

@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ package business
 import (
 	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
@@ -44,7 +45,7 @@ func GetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingFilt
 
 //=============================================================================
 
-func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *TradingFilters) error {
+func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.TradingFilters) error {
 	_, err := getTradingSystem(tx, c, tsId)
 	if err != nil {
 		return err
@@ -70,7 +71,7 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *TradingFilter
 
 //=============================================================================
 
-func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *FilterAnalysisRequest) (*FilterAnalysisResponse, error){
+func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.AnalysisRequest) (*filter.AnalysisResponse, error){
 	ts, err := getTradingSystem(tx, c, tsId)
 	if err != nil {
 		return nil, err
@@ -92,9 +93,45 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *FilterAnaly
 		return nil,err
 	}
 
-	res := buildFilterResponse(ts, far.Filters, diList)
+	res := filter.RunAnalysis(ts, far.Filters, diList)
 
 	return res, err
+}
+
+//=============================================================================
+
+func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.OptimizationRequest) error {
+	ts, err := getTradingSystem(tx, c, tsId)
+	if err != nil {
+		return err
+	}
+
+	diList, err := db.FindDailyInfoByTsId(tx, ts.Id)
+	if err != nil {
+		return err
+	}
+
+	c.Log.Info("StartFilterOptimization: Starting optimization", "tsId", ts.Id, "tsName", ts.Name)
+	err = filter.StartOptimization(ts, diList, far)
+
+	return err
+}
+
+//=============================================================================
+
+func StopFilterOptimization(c *auth.Context, tsId uint) error {
+	c.Log.Info("StopFilterOptimization: Stopping optimization", "tsId", tsId)
+	err := filter.StopOptimization(tsId)
+
+	return err
+}
+
+//=============================================================================
+
+func GetFilterOptimizationInfo(c *auth.Context, tsId uint) (*filter.OptimizationResponse, error) {
+	info := filter.GetOptimizationInfo(tsId)
+
+	return filter.NewOptimizationResponse(info), nil
 }
 
 //=============================================================================
@@ -122,8 +159,8 @@ func getTradingSystem(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingSyste
 
 //=============================================================================
 
-func convert(f *db.TradingFilters) *TradingFilters {
-	return &TradingFilters{
+func convert(f *db.TradingFilters) *filter.TradingFilters {
+	return &filter.TradingFilters{
 		EquAvgEnabled  : f.EquAvgEnabled,
 		EquAvgDays     : f.EquAvgDays,
 		PosProEnabled  : f.PosProEnabled,

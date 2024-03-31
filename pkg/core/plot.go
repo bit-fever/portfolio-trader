@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,16 +22,24 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package business
-
-import "testing"
+package core
 
 //=============================================================================
+//===
+//=== Plot
+//===
+//=============================================================================
 
-func TestDay(t *testing.T) {
-//	calcFromDay()
-//	t.Error("bla bla bla")
+type Plot struct {
+	Days   []int      `json:"days"`
+	Values []float64  `json:"values"`
+}
+
+//-----------------------------------------------------------------------------
+
+func (p *Plot) AddPoint(day int, value float64) {
+	p.Days   = append(p.Days,   day)
+	p.Values = append(p.Values, value)
 }
 
 //=============================================================================
-

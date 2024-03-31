@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,28 +22,87 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package model
+package core
 
-import "fmt"
+import (
+	"log/slog"
+	"time"
+)
 
 //=============================================================================
 
-type Date int
+type WorkerPool struct {
+	numWorkers int
+	queueSize  int
+	taskQueue  chan func()
+}
 
 //=============================================================================
+//===
+//=== Methods
+//===
+//=============================================================================
 
-func (ed Date) String() string {
-	y := ed / 10000
-	m := (ed / 100) % 100
-	d := ed % 100
+func (p *WorkerPool) Init(numWorkers, queueSize int) {
+	p.numWorkers = numWorkers
+	p.queueSize  = queueSize
+	p.taskQueue  = make(chan func(), queueSize)
 
-	return fmt.Sprintf("%4d-%2d-%2d", y, m, d)
+	for i := 0; i<numWorkers; i++ {
+		go p.worker()
+	}
+
+	slog.Info("Init: Worker pool created", "workers", numWorkers)
 }
 
 //=============================================================================
 
-func (ed Date) IsNil() bool {
-	return ed == 0
+func (p *WorkerPool) ShutDown() bool {
+
+	if p.taskQueue != nil {
+		close(p.taskQueue)
+
+		//--- Wait for task completion
+		for ; len(p.taskQueue) > 0 ; {
+			time.Sleep(time.Millisecond * 500)
+		}
+
+		p.taskQueue = nil
+	}
+
+	slog.Info("ShutDown: Worker pool stopped")
+
+	return true
+}
+
+//=============================================================================
+
+func (p *WorkerPool) Submit(task func()) {
+	p.taskQueue <- task
+}
+
+//=============================================================================
+//===
+//=== Worker
+//===
+//=============================================================================
+
+func (p *WorkerPool) worker() {
+	for {
+		select {
+			case task, ok := <- p.taskQueue:
+				if ok {
+					//--- Run task
+					task()
+				} else {
+					//--- Channel closed. Exit from goroutine
+					return
+				}
+
+			default:
+				time.Sleep(time.Millisecond * 50)
+		}
+	}
 }
 
 //=============================================================================

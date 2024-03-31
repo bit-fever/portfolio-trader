@@ -24,69 +24,95 @@ THE SOFTWARE.
 
 package filter
 
-//=============================================================================
-//===
-//=== Activation
-//===
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"log/slog"
+	"sync"
+)
+
 //=============================================================================
 
-type Activation struct {
-	Days   []int   `json:"days"`
-	Values []int8  `json:"values"`
-}
+var jobs = struct {
+	sync.RWMutex
+	m map[uint]*OptimizationProcess
+}{m: make(map[uint]*OptimizationProcess)}
 
 //-----------------------------------------------------------------------------
 
-func (p *Activation) AddDay(day int, value int8) {
-	p.Days   = append(p.Days,   day)
-	p.Values = append(p.Values, value)
+var workers = core.WorkerPool{}
+
+//=============================================================================
+//===
+//=== Init
+//===
+//=============================================================================
+
+func init() {
+	num := 8
+	workers.Init(num, 100)
 }
 
 //=============================================================================
 //===
-//=== ActivationStrategy
+//=== API methods
 //===
 //=============================================================================
 
-type ActivationStrategy struct {
-	activation *Activation
-	enabled    bool
-	index      int
+func StartOptimization(ts *db.TradingSystem, data *[]db.DailyInfo, params *OptimizationRequest) error {
+	jobs.Lock()
+	defer jobs.Unlock()
+
+	fop, ok := jobs.m[ts.Id]
+	if ok {
+		slog.Error("Stopping a previous optimization process", "tsId", ts.Id)
+		fop.Stop()
+		delete(jobs.m, ts.Id)
+	}
+
+	fop = &OptimizationProcess{
+		ts    : ts,
+		data  : data,
+		params: params,
+	}
+
+	err := fop.Start()
+
+	if err == nil {
+		jobs.m[ts.Id] = fop
+	}
+
+	return err
 }
 
 //=============================================================================
 
-func (as *ActivationStrategy) IsActive(day int) bool {
-	//--- Strategy not enabled: skip it returning always 1
-	if !as.enabled {
-		return true
+func StopOptimization(tsId uint) error {
+	jobs.Lock()
+	defer jobs.Unlock()
+
+	fop, ok := jobs.m[tsId]
+	if ok {
+		fop.Stop()
 	}
 
-	//--- Strategy not computable: return true because we must align with unfiltered equity
-	if as.activation == nil {
-		return true
-	}
-
-	if day<as.activation.Days[as.index] {
-		return true
-	}
-
-	if day != as.activation.Days[as.index] {
-		panic("Help!")
-	}
-
-	as.index++
-	return as.activation.Values[as.index -1] != 0
+	return nil
 }
 
 //=============================================================================
 
-func NewActivationStrategy(a *Activation, enabled bool) *ActivationStrategy {
-	return &ActivationStrategy{
-		activation: a,
-		enabled: enabled,
-		index: 0,
+func GetOptimizationInfo(tsId uint) *OptimizationInfo {
+	jobs.Lock()
+	defer jobs.Unlock()
+
+	fop, ok := jobs.m[tsId]
+	if !ok {
+		return &OptimizationInfo{
+			Status: OptimStatusIdle,
+		}
 	}
+
+	return fop.GetInfo()
 }
 
 //=============================================================================

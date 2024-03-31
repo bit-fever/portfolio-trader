@@ -39,13 +39,25 @@ func Init(router *gin.Engine, cfg *app.Config, logger *slog.Logger) {
 
 	ctrl := auth.NewOidcController(cfg.Authentication.Authority, req.GetClient("bf"), logger, cfg)
 
-	router.GET ("/api/portfolio/v1/trading-systems",                     ctrl.Secure(getTradingSystems,      roles.Admin_User_Service))
-	router.GET ("/api/portfolio/v1/trading-systems/:id/daily-info",      ctrl.Secure(getDailyInfo,           roles.Admin_User_Service))
-	router.GET ("/api/portfolio/v1/trading-systems/:id/filters",         ctrl.Secure(getTradingFilters,      roles.Admin_User_Service))
-	router.POST("/api/portfolio/v1/trading-systems/:id/filters",         ctrl.Secure(setTradingFilters,      roles.Admin_User_Service))
-	router.POST("/api/portfolio/v1/trading-systems/:id/filter-analysis", ctrl.Secure(runFilterAnalysis,      roles.Admin_User_Service))
+	router.GET   ("/api/portfolio/v1/trading-systems",                         ctrl.Secure(getTradingSystems,         roles.Admin_User_Service))
+	router.GET   ("/api/portfolio/v1/trading-systems/:id/daily-info",          ctrl.Secure(getDailyInfo,              roles.Admin_User_Service))
+	router.GET   ("/api/portfolio/v1/trading-systems/:id/filters",             ctrl.Secure(getTradingFilters,         roles.Admin_User_Service))
+	router.POST  ("/api/portfolio/v1/trading-systems/:id/filters",             ctrl.Secure(setTradingFilters,         roles.Admin_User_Service))
+	router.POST  ("/api/portfolio/v1/trading-systems/:id/filter-analysis",     ctrl.Secure(runFilterAnalysis,         roles.Admin_User_Service))
 
-	router.POST("/api/portfolio/v1/portfolio/monitoring",                ctrl.Secure(getPortfolioMonitoring, roles.Admin_User_Service))
+	router.GET   ("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(getFilterOptimizationInfo, roles.Admin_User_Service))
+	router.POST  ("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(startFilterOptimization,   roles.Admin_User_Service))
+	router.DELETE("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(stopFilterOptimization,    roles.Admin_User_Service))
+
+	router.POST  ("/api/portfolio/v1/portfolio/monitoring",                    ctrl.Secure(getPortfolioMonitoring,    roles.Admin_User_Service))
+}
+
+//=============================================================================
+
+func NewStatusOkResponse() any {
+	return struct {
+		status string
+	}{ status: "ok"}
 }
 
 //=============================================================================

@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,73 +22,71 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package core
+package filter
+
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/emirpasic/gods/utils"
+	"time"
+)
 
 //=============================================================================
+//===
+//=== OptimizationInfo
+//===
+//=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
-	maxProfit    := 0.0
-	currDrawDown := 0.0
-	maxDrawDown  := 0.0
+const OptimStatusIdle     = "idle"
+const OptimStatusRunning  = "running"
+const OptimStatusComplete = "complete"
 
-	for i, currProfit := range *equity {
-		if currProfit >= maxProfit {
-			maxProfit = currProfit
-			currDrawDown = 0
-		} else {
-			currDrawDown = currProfit - maxProfit
-		}
+type OptimizationInfo struct {
+	CurrStep  uint
+	MaxSteps  uint
+	StartTime time.Time
+	EndTime   time.Time
+	Status    string
+	Results   *core.SortedResults
 
-		(*drawDown)[i] = currDrawDown
+	BaseValue       float64
+	BestValue       float64
+	FieldToOptimize string
 
-		if currDrawDown < maxDrawDown {
-			maxDrawDown = currDrawDown
-		}
+	Filters struct {
+		PosProfit bool
+		OldVsNew  bool
+		WinPerc   bool
+		EquVsAvg  bool
 	}
-
-	return maxDrawDown
 }
 
 //=============================================================================
 
-func CalcWinningPercentage(profits []float64, filter []int8) float64 {
-	tot := 0
-	pos := 0
+const TypePosProfit = "posProfit"
+const TypeOldVsNew  = "oldVsNew"
+const TypeWinPerc   = "winPerc"
+const TypeEquVsAvg  = "equVsAvg"
 
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				tot++
-				if profit > 0 {
-					pos++
-				}
-			}
-		}
-	}
-
-	if tot == 0 {
-		return 0
-	}
-
-	return float64(pos * 10000 / tot) / 100
+type Run struct {
+	FilterType  string  `json:"filterType"`
+	Days        int     `json:"days"`
+	NewDays     int     `json:"newDays"`
+	Percentage  int     `json:"percentage"`
+	NetProfit   float64 `json:"netProfit"`
+	AvgTrade    float64 `json:"avgTrade"`
+	MaxDrawdown float64 `json:"maxDrawdown"`
 }
 
 //=============================================================================
 
-func CalcAverageTrade(profits []float64, filter []int8) float64 {
-	sum := 0.0
-	num := 0.0
+func NewOptimizationInfo(maxResultSize int, runComparator utils.Comparator) *OptimizationInfo {
+	fop := &OptimizationInfo{}
+	fop.CurrStep  = 0
+	fop.StartTime = time.Now()
+	fop.Status    = OptimStatusRunning
+	fop.Results   = core.NewSortedResults(maxResultSize, runComparator)
 
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				sum += profit
-				num++
-			}
-		}
-	}
-
-	return float64(int(sum * 100 / num)) / 100
+	return fop
 }
 
 //=============================================================================

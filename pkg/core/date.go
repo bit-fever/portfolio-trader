@@ -24,71 +24,26 @@ THE SOFTWARE.
 
 package core
 
+import "fmt"
+
 //=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
-	maxProfit    := 0.0
-	currDrawDown := 0.0
-	maxDrawDown  := 0.0
+type Date int
 
-	for i, currProfit := range *equity {
-		if currProfit >= maxProfit {
-			maxProfit = currProfit
-			currDrawDown = 0
-		} else {
-			currDrawDown = currProfit - maxProfit
-		}
+//=============================================================================
 
-		(*drawDown)[i] = currDrawDown
+func (ed Date) String() string {
+	y := ed / 10000
+	m := (ed / 100) % 100
+	d := ed % 100
 
-		if currDrawDown < maxDrawDown {
-			maxDrawDown = currDrawDown
-		}
-	}
-
-	return maxDrawDown
+	return fmt.Sprintf("%4d-%2d-%2d", y, m, d)
 }
 
 //=============================================================================
 
-func CalcWinningPercentage(profits []float64, filter []int8) float64 {
-	tot := 0
-	pos := 0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				tot++
-				if profit > 0 {
-					pos++
-				}
-			}
-		}
-	}
-
-	if tot == 0 {
-		return 0
-	}
-
-	return float64(pos * 10000 / tot) / 100
-}
-
-//=============================================================================
-
-func CalcAverageTrade(profits []float64, filter []int8) float64 {
-	sum := 0.0
-	num := 0.0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				sum += profit
-				num++
-			}
-		}
-	}
-
-	return float64(int(sum * 100 / num)) / 100
+func (ed Date) IsNil() bool {
+	return ed == 0
 }
 
 //=============================================================================

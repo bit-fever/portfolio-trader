@@ -4,13 +4,12 @@ go 1.21
 
 require (
 	github.com/bit-fever/core v1.7.1
+	github.com/emirpasic/gods v1.18.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	gorm.io/driver/mysql v1.5.2
 	gorm.io/gorm v1.25.5
 )
-
-//replace github.com/bit-fever/core v1.0.0 => ../core
 
 require (
 	github.com/bytedance/sonic v1.9.1 // indirect

@@ -22,23 +22,21 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package business
+package filter
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/model"
 )
 
 //=============================================================================
 //===
-//=== FilterAnalysisResponse building
+//=== AnalysisResponse building
 //===
 //=============================================================================
 
-func buildFilterResponse(ts *db.TradingSystem, filters *TradingFilters, list *[]db.DailyInfo) *FilterAnalysisResponse {
-	res := &FilterAnalysisResponse{}
+func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.DailyInfo) *AnalysisResponse {
+	res := &AnalysisResponse{}
 	res.TradingSystem.Id   = ts.Id
 	res.TradingSystem.Name = ts.Name
 	res.Filters            = *filters
@@ -101,8 +99,8 @@ func calcUnfilteredEquityAndProfit(e *Equities, ts *db.TradingSystem, diList *[]
 //===
 //=============================================================================
 
-func calcAverageEquity(days []int, equity []float64, maDays int) *model.Plot {
-	p := model.Plot{}
+func calcAverageEquity(days []int, equity []float64, maDays int) *core.Plot {
+	p := core.Plot{}
 
 	maSum  := 0.0
 
@@ -131,7 +129,7 @@ func calcAverageEquity(days []int, equity []float64, maDays int) *model.Plot {
 //===
 //=============================================================================
 
-func calcActivations(res *FilterAnalysisResponse) {
+func calcActivations(res *AnalysisResponse) {
 	res.Activations.EquityVsAverage   = calcEquAvgActivation   (res)
 	res.Activations.PositiveProfit    = calcPosProfitActivation(res)
 	res.Activations.WinningPercentage = calcWinPercActivation  (res)
@@ -140,12 +138,12 @@ func calcActivations(res *FilterAnalysisResponse) {
 
 //=============================================================================
 
-func calcEquAvgActivation(res *FilterAnalysisResponse) *filter.Activation {
+func calcEquAvgActivation(res *AnalysisResponse) *Activation {
 	if !res.Filters.EquAvgEnabled || res.Equities.Average == nil {
 		return nil
 	}
 
-	a := filter.Activation{}
+	a := Activation{}
 
 	avg     := res.Equities.Average
 	avgDays := res.Filters.EquAvgDays
@@ -167,12 +165,12 @@ func calcEquAvgActivation(res *FilterAnalysisResponse) *filter.Activation {
 
 //=============================================================================
 
-func calcPosProfitActivation(res *FilterAnalysisResponse) *filter.Activation {
+func calcPosProfitActivation(res *AnalysisResponse) *Activation {
 	if !res.Filters.PosProEnabled {
 		return nil
 	}
 
-	a := filter.Activation{}
+	a := Activation{}
 
 	profSum  := 0.0
 	profDays := res.Filters.PosProDays
@@ -205,12 +203,12 @@ func calcPosProfitActivation(res *FilterAnalysisResponse) *filter.Activation {
 
 //=============================================================================
 
-func calcWinPercActivation(res *FilterAnalysisResponse) *filter.Activation {
+func calcWinPercActivation(res *AnalysisResponse) *Activation {
 	if !res.Filters.WinPerEnabled {
 		return nil
 	}
 
-	a := filter.Activation{}
+	a := Activation{}
 
 	posCount := 0
 	totCount := 0
@@ -239,8 +237,10 @@ func calcWinPercActivation(res *FilterAnalysisResponse) *filter.Activation {
 			}
 
 			value := int8(0)
-			if posCount * 100 / totCount >= percValue {
-				value = 1
+			if totCount > 0 {
+				if posCount * 100 / totCount >= percValue {
+					value = 1
+				}
 			}
 			a.AddDay(day, value)
 		}
@@ -256,12 +256,12 @@ func calcWinPercActivation(res *FilterAnalysisResponse) *filter.Activation {
 
 //=============================================================================
 
-func calcOldVsNewActivation(res *FilterAnalysisResponse) *filter.Activation {
+func calcOldVsNewActivation(res *AnalysisResponse) *Activation {
 	if !res.Filters.OldNewEnabled {
 		return nil
 	}
 
-	a := filter.Activation{}
+	a := Activation{}
 
 	oldSum  := 0.0
 	newSum  := 0.0
@@ -309,15 +309,15 @@ func calcOldVsNewActivation(res *FilterAnalysisResponse) *filter.Activation {
 
 //=============================================================================
 
-func calcFilterActivation(res *FilterAnalysisResponse) {
+func calcFilterActivation(res *AnalysisResponse) {
 	equ := &res.Equities
 	act := &res.Activations
 	fil := &res.Filters
 
-	avgEquStrategy  := filter.NewActivationStrategy(act.EquityVsAverage,   fil.EquAvgEnabled)
-	posProfStrategy := filter.NewActivationStrategy(act.PositiveProfit,    fil.PosProEnabled)
-	winPerStrategy  := filter.NewActivationStrategy(act.WinningPercentage, fil.WinPerEnabled)
-	oldNewStrategy  := filter.NewActivationStrategy(act.OldVsNew,          fil.OldNewEnabled)
+	avgEquStrategy  := NewActivationStrategy(act.EquityVsAverage,   fil.EquAvgEnabled)
+	posProfStrategy := NewActivationStrategy(act.PositiveProfit,    fil.PosProEnabled)
+	winPerStrategy  := NewActivationStrategy(act.WinningPercentage, fil.WinPerEnabled)
+	oldNewStrategy  := NewActivationStrategy(act.OldVsNew,          fil.OldNewEnabled)
 
 	for i, day := range equ.Days {
 		//--- These 4 conditions must be standalone. If we use tot := A && B && C && D
@@ -336,7 +336,7 @@ func calcFilterActivation(res *FilterAnalysisResponse) {
 
 //=============================================================================
 
-func calcFilteredEquity(res *FilterAnalysisResponse) {
+func calcFilteredEquity(res *AnalysisResponse) {
 	equ := &res.Equities
 	sum := 0.0
 
@@ -352,7 +352,7 @@ func calcFilteredEquity(res *FilterAnalysisResponse) {
 
 //=============================================================================
 
-func calcSummary(res *FilterAnalysisResponse, maxUnfDD, maxFilDD float64) {
+func calcSummary(res *AnalysisResponse, maxUnfDD, maxFilDD float64) {
 	sum  := &res.Summary
 	last := len(res.Equities.Days) -1
 

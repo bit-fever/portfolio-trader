@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,73 +22,57 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package core
+package inout
 
 //=============================================================================
+//===
+//=== PortfolioMonitoringResponse
+//===
+//=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
-	maxProfit    := 0.0
-	currDrawDown := 0.0
-	maxDrawDown  := 0.0
-
-	for i, currProfit := range *equity {
-		if currProfit >= maxProfit {
-			maxProfit = currProfit
-			currDrawDown = 0
-		} else {
-			currDrawDown = currProfit - maxProfit
-		}
-
-		(*drawDown)[i] = currDrawDown
-
-		if currDrawDown < maxDrawDown {
-			maxDrawDown = currDrawDown
-		}
-	}
-
-	return maxDrawDown
+type PortfolioMonitoringParams struct {
+	TsIds  []uint `form:"tsIds"  binding:"required,min=1,dive"`
+	Period    int `form:"period" binding:"required,min=1,max=5000"`
 }
 
 //=============================================================================
 
-func CalcWinningPercentage(profits []float64, filter []int8) float64 {
-	tot := 0
-	pos := 0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				tot++
-				if profit > 0 {
-					pos++
-				}
-			}
-		}
-	}
-
-	if tot == 0 {
-		return 0
-	}
-
-	return float64(pos * 10000 / tot) / 100
+type BaseMonitoring struct {
+	Days        []int      `json:"days"`
+	RawProfit   []float64  `json:"rawProfit"`
+	NetProfit   []float64  `json:"netProfit"`
+	RawDrawdown []float64  `json:"rawDrawdown"`
+	NetDrawdown []float64  `json:"netDrawdown"`
+	NumTrades   []int      `json:"numTrades"`
 }
 
 //=============================================================================
 
-func CalcAverageTrade(profits []float64, filter []int8) float64 {
-	sum := 0.0
-	num := 0.0
+type TradingSystemMonitoring struct {
+	BaseMonitoring
+	Id   uint   `json:"id"`
+	Name string `json:"name"`
+}
 
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				sum += profit
-				num++
-			}
-		}
-	}
+//=============================================================================
 
-	return float64(int(sum * 100 / num)) / 100
+func NewTradingSystemMonitoring(size int) *TradingSystemMonitoring {
+	tsa := &TradingSystemMonitoring{}
+	tsa.Days        = make([]int,     size)
+	tsa.RawProfit   = make([]float64, size)
+	tsa.NetProfit   = make([]float64, size)
+	tsa.RawDrawdown = make([]float64, size)
+	tsa.NetDrawdown = make([]float64, size)
+	tsa.NumTrades   = make([]int,     size)
+
+	return tsa
+}
+
+//=============================================================================
+
+type PortfolioMonitoringResponse struct {
+	BaseMonitoring
+	TradingSystems []*TradingSystemMonitoring `json:"tradingSystems"`
 }
 
 //=============================================================================

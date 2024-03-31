@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,24 +22,51 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package model
+package core
+
+import (
+	avl "github.com/emirpasic/gods/trees/avltree"
+	"github.com/emirpasic/gods/utils"
+)
 
 //=============================================================================
-//===
-//=== Plot
-//===
-//=============================================================================
 
-type Plot struct {
-	Days   []int      `json:"days"`
-	Values []float64  `json:"values"`
+type SortedResults struct {
+	Size    int
+	MaxSize int
+	Tree    *avl.Tree
 }
 
-//-----------------------------------------------------------------------------
+//=============================================================================
 
-func (p *Plot) AddPoint(day int, value float64) {
-	p.Days   = append(p.Days,   day)
-	p.Values = append(p.Values, value)
+func NewSortedResults(maxSize int, comparator utils.Comparator) *SortedResults {
+	return &SortedResults{
+		Size   : 0,
+		MaxSize: maxSize,
+		Tree   : avl.NewWith(comparator),
+	}
+}
+
+//=============================================================================
+
+func (sr *SortedResults) Add(item any) {
+	sr.Tree.Put(item, nil)
+	sr.Size++
+
+	if sr.Size > sr.MaxSize {
+		sr.Tree.Remove(sr.Tree.Right().Key)
+		sr.Size--
+	}
+}
+
+//=============================================================================
+
+func (sr *SortedResults) ToList() []any {
+	if sr.Tree == nil {
+		return []any{}
+	}
+
+	return sr.Tree.Keys()
 }
 
 //=============================================================================

@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,73 +22,53 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package core
+package filter
 
 //=============================================================================
+//===
+//=== ActivationStrategy
+//===
+//=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
-	maxProfit    := 0.0
-	currDrawDown := 0.0
-	maxDrawDown  := 0.0
-
-	for i, currProfit := range *equity {
-		if currProfit >= maxProfit {
-			maxProfit = currProfit
-			currDrawDown = 0
-		} else {
-			currDrawDown = currProfit - maxProfit
-		}
-
-		(*drawDown)[i] = currDrawDown
-
-		if currDrawDown < maxDrawDown {
-			maxDrawDown = currDrawDown
-		}
-	}
-
-	return maxDrawDown
+type ActivationStrategy struct {
+	activation *Activation
+	enabled    bool
+	index      int
 }
 
 //=============================================================================
 
-func CalcWinningPercentage(profits []float64, filter []int8) float64 {
-	tot := 0
-	pos := 0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				tot++
-				if profit > 0 {
-					pos++
-				}
-			}
-		}
+func (as *ActivationStrategy) IsActive(day int) bool {
+	//--- Strategy not enabled: skip it returning always 1
+	if !as.enabled {
+		return true
 	}
 
-	if tot == 0 {
-		return 0
+	//--- Strategy not computable: return true because we must align with unfiltered equity
+	if as.activation == nil {
+		return true
 	}
 
-	return float64(pos * 10000 / tot) / 100
+	if day<as.activation.Days[as.index] {
+		return true
+	}
+
+	if day != as.activation.Days[as.index] {
+		panic("Help!")
+	}
+
+	as.index++
+	return as.activation.Values[as.index -1] != 0
 }
 
 //=============================================================================
 
-func CalcAverageTrade(profits []float64, filter []int8) float64 {
-	sum := 0.0
-	num := 0.0
-
-	for i, profit := range profits {
-		if profit != 0 {
-			if filter == nil || filter[i] == 1 {
-				sum += profit
-				num++
-			}
-		}
+func NewActivationStrategy(a *Activation, enabled bool) *ActivationStrategy {
+	return &ActivationStrategy{
+		activation: a,
+		enabled: enabled,
+		index: 0,
 	}
-
-	return float64(int(sum * 100 / num)) / 100
 }
 
 //=============================================================================
