@@ -27,6 +27,7 @@ package filter
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/emirpasic/gods/utils"
+	"sync"
 	"time"
 )
 
@@ -41,12 +42,13 @@ const OptimStatusRunning  = "running"
 const OptimStatusComplete = "complete"
 
 type OptimizationInfo struct {
+	sync.RWMutex
 	CurrStep  uint
 	MaxSteps  uint
 	StartTime time.Time
 	EndTime   time.Time
 	Status    string
-	Results   *core.SortedResults
+	results   *core.SortedResults
 
 	BaseValue       float64
 	BestValue       float64
@@ -84,9 +86,60 @@ func NewOptimizationInfo(maxResultSize int, runComparator utils.Comparator) *Opt
 	fop.CurrStep  = 0
 	fop.StartTime = time.Now()
 	fop.Status    = OptimStatusRunning
-	fop.Results   = core.NewSortedResults(maxResultSize, runComparator)
+	fop.results   = core.NewSortedResults(maxResultSize, runComparator)
 
 	return fop
+}
+
+//=============================================================================
+//===
+//=== Public methods
+//===
+//=============================================================================
+
+func (oi *OptimizationInfo) GetRuns() []any {
+	oi.Lock()
+	defer oi.Unlock()
+
+	if oi.results != nil {
+		return oi.results.ToList()
+	}
+
+	return nil
+}
+
+//=============================================================================
+//===
+//=== Private methods
+//===
+//=============================================================================
+
+func (oi *OptimizationInfo) addResult(r *Run, currValue float64) {
+	oi.Lock()
+	defer oi.Unlock()
+
+	oi.CurrStep++
+	oi.results.Add(r)
+
+	if oi.BestValue < currValue {
+		oi.BestValue = currValue
+	}
+}
+
+//=============================================================================
+
+func (oi *OptimizationInfo) isStatusComplete() bool {
+	oi.Lock()
+	defer oi.Unlock()
+
+	if oi.CurrStep != oi.MaxSteps {
+		return false
+	}
+
+	oi.EndTime = time.Now()
+	oi.Status  = OptimStatusComplete
+
+	return true
 }
 
 //=============================================================================

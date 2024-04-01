@@ -72,6 +72,8 @@ func (f *OptimizationProcess) Start() error {
 	f.info.Filters.WinPerc   = f.params.EnableWinPerc
 	f.info.Filters.EquVsAvg  = f.params.EnableEquAvg
 
+	f.initValues()
+
 	go f.generate()
 
 	return nil
@@ -105,8 +107,10 @@ func (f *OptimizationProcess) generate() {
 		f.generateNotCombined()
 	}
 
-	f.info.EndTime = time.Now()
-	f.info.Status  = OptimStatusComplete
+	for ; !f.info.isStatusComplete(); {
+		time.Sleep(time.Second * 1)
+	}
+
 	slog.Info("Complete.")
 }
 
@@ -118,86 +122,10 @@ func (f *OptimizationProcess) generateCombined() {
 //=============================================================================
 
 func (f *OptimizationProcess) generateNotCombined() {
-
-	f.initValues()
-
-	//--- Positive profit over a period
-
-	if f.params.EnablePosProfit {
-		slog.Info("generateNotCombined: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		filters := &TradingFilters{
-			PosProEnabled: true,
-		}
-
-		for _, posProDays := range f.params.PosProDays.Steps() {
-			filters.PosProDays = posProDays
-			res := RunAnalysis(f.ts, filters, f.data)
-			if f.addResult(TypePosProfit, posProDays, -1, -1, res) {
-				return
-			}
-		}
-	}
-
-	//--- Old vs new periods
-
-	if f.params.EnableOldNew {
-		slog.Info("generateNotCombined: Optimizing old vs new periods", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		filters := &TradingFilters{
-			OldNewEnabled: true,
-		}
-
-		for _, oldNewOldDays := range f.params.OldNewOldDays.Steps() {
-			for _, oldNewNewDays := range f.params.OldNewNewDays.Steps() {
-				for _, oldNewOldPerc := range f.params.OldNewOldPerc.Steps() {
-					filters.OldNewOldDays = oldNewOldDays
-					filters.OldNewNewDays = oldNewNewDays
-					filters.OldNewOldPerc = oldNewOldPerc
-					res := RunAnalysis(f.ts, filters, f.data)
-					if f.addResult(TypeOldVsNew, oldNewOldDays, oldNewNewDays, oldNewOldPerc, res) {
-						return
-					}
-				}
-			}
-		}
-	}
-
-	//--- Winning % greater than
-
-	if f.params.EnableWinPerc {
-		slog.Info("generateNotCombined: Optimizing winning percentage", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		filters := &TradingFilters{
-			WinPerEnabled: true,
-		}
-
-		for _, winPerDays := range f.params.WinPercDays.Steps() {
-			for _, winPerPerc := range f.params.WinPercPerc.Steps() {
-				filters.WinPerDays = winPerDays
-				filters.WinPerValue= winPerPerc
-				res := RunAnalysis(f.ts, filters, f.data)
-				if f.addResult(TypeWinPerc, winPerDays, -1, winPerPerc, res) {
-					return
-				}
-			}
-		}
-	}
-
-	//--- Equity vs its average
-
-	if f.params.EnableEquAvg {
-		slog.Info("generateNotCombined: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		filters := &TradingFilters{
-			EquAvgEnabled: true,
-		}
-
-		for _, equAvgDays := range f.params.EquAvgDays.Steps() {
-			filters.EquAvgDays = equAvgDays
-			res := RunAnalysis(f.ts, filters, f.data)
-			if f.addResult(TypeEquVsAvg, equAvgDays, -1, -1, res) {
-				return
+	if !f.generatePosProfit(){
+		if !f.generateOldVsNew() {
+			if !f.generateWinPerc() {
+				f.generateEquVsAvg()
 			}
 		}
 	}
@@ -205,9 +133,139 @@ func (f *OptimizationProcess) generateNotCombined() {
 
 //=============================================================================
 
-func (f *OptimizationProcess) addResult(filter string, days int, newDays int, percentage int, far *AnalysisResponse) bool {
-	f.info.CurrStep++
+func (f *OptimizationProcess) generatePosProfit() bool {
+	if f.params.EnablePosProfit {
+		slog.Info("generateNotCombined: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
+		for _, posProDays := range f.params.PosProDays.Steps() {
+			filters := &TradingFilters{
+				PosProEnabled: true,
+				PosProDays: posProDays,
+			}
+
+			posProDays := posProDays
+			go func() {
+				res := RunAnalysis(f.ts, filters, f.data)
+				f.addResult(TypePosProfit, posProDays, -1, -1, res)
+			}()
+
+			//--- Check if we have to stop the process
+
+			if f.stopping {
+				slog.Info("generatePosProfit: Got stop request")
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+//=============================================================================
+
+func (f *OptimizationProcess) generateOldVsNew() bool {
+	if f.params.EnableOldNew {
+		slog.Info("generateNotCombined: Optimizing old vs new periods", "tsId", f.ts.Id, "tsName", f.ts.Name)
+
+		for _, oldNewOldDays := range f.params.OldNewOldDays.Steps() {
+			for _, oldNewNewDays := range f.params.OldNewNewDays.Steps() {
+				for _, oldNewOldPerc := range f.params.OldNewOldPerc.Steps() {
+					filters := &TradingFilters{
+						OldNewEnabled: true,
+						OldNewOldDays: oldNewOldDays,
+						OldNewNewDays: oldNewNewDays,
+						OldNewOldPerc: oldNewOldPerc,
+					}
+
+					oldNewOldDays := oldNewOldDays
+					oldNewNewDays := oldNewNewDays
+					oldNewOldPerc := oldNewOldPerc
+					go func() {
+						res := RunAnalysis(f.ts, filters, f.data)
+						f.addResult(TypeOldVsNew, oldNewOldDays, oldNewNewDays, oldNewOldPerc, res)
+					}()
+
+					//--- Check if we have to stop the process
+
+					if f.stopping {
+						slog.Info("generateOldVsNew: Got stop request")
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+//=============================================================================
+
+func (f *OptimizationProcess) generateWinPerc() bool {
+	if f.params.EnableWinPerc {
+		slog.Info("generateNotCombined: Optimizing winning percentage", "tsId", f.ts.Id, "tsName", f.ts.Name)
+
+		for _, winPerDays := range f.params.WinPercDays.Steps() {
+			for _, winPerPerc := range f.params.WinPercPerc.Steps() {
+				filters := &TradingFilters{
+					WinPerEnabled: true,
+					WinPerDays   : winPerDays,
+					WinPerValue  : winPerPerc,
+				}
+
+				winPerDays := winPerDays
+				winPerPerc := winPerPerc
+				go func(){
+					res := RunAnalysis(f.ts, filters, f.data)
+					f.addResult(TypeWinPerc, winPerDays, -1, winPerPerc, res)
+				}()
+
+				//--- Check if we have to stop the process
+
+				if f.stopping {
+					slog.Info("generateWinPerc: Got stop request")
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+//=============================================================================
+
+func (f *OptimizationProcess) generateEquVsAvg() bool {
+	if f.params.EnableEquAvg {
+		slog.Info("generateNotCombined: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
+
+		for _, equAvgDays := range f.params.EquAvgDays.Steps() {
+			filters := &TradingFilters{
+				EquAvgEnabled: true,
+				EquAvgDays   : equAvgDays,
+			}
+
+			equAvgDays := equAvgDays
+			go func(){
+				res := RunAnalysis(f.ts, filters, f.data)
+				f.addResult(TypeEquVsAvg, equAvgDays, -1, -1, res)
+			}()
+
+			//--- Check if we have to stop the process
+
+			if f.stopping {
+				slog.Info("generateEquVsAvg: Got stop request")
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+//=============================================================================
+
+func (f *OptimizationProcess) addResult(filter string, days int, newDays int, percentage int, far *AnalysisResponse) {
 	r := &Run{
 		FilterType: filter,
 		Days      : days,
@@ -219,16 +277,8 @@ func (f *OptimizationProcess) addResult(filter string, days int, newDays int, pe
 	r.AvgTrade    = far.Summary.FilAverageTrade
 	r.MaxDrawdown = far.Summary.FilMaxDrawdown
 
-	f.info.Results.Add(r)
-	f.updateValues(&far.Summary)
-
-	//--- Check if we have to stop the process
-
-	if f.stopping {
-		slog.Info("addResult: Got stop request")
-	}
-
-	return f.stopping
+	value := f.runComparator.getValue(&far.Summary)
+	f.info.addResult(r, value)
 }
 
 //=============================================================================
@@ -241,16 +291,6 @@ func (f *OptimizationProcess) initValues() {
 
 	f.info.BaseValue = f.runComparator.getValue(&res.Summary)
 	f.info.BestValue = f.info.BaseValue
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) updateValues(s *Summary) {
-	value := f.runComparator.getValue(s)
-
-	if f.info.BestValue < value {
-		f.info.BestValue = value
-	}
 }
 
 //=============================================================================

@@ -71,10 +71,7 @@ func NewOptimizationResponse(info *OptimizationInfo) *OptimizationResponse {
 	or.Filters.WinPerc   = info.Filters.WinPerc
 	or.Filters.EquVsAvg  = info.Filters.EquVsAvg
 
-	if info.Results != nil {
-		or.Runs = info.Results.ToList()
-	}
-
+	or.Runs     = info.GetRuns()
 	or.Duration = int64(time.Now().Sub(info.StartTime).Seconds())
 
 	return or

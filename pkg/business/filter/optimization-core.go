@@ -29,6 +29,7 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"log/slog"
 	"sync"
+	"time"
 )
 
 //=============================================================================
@@ -49,8 +50,9 @@ var workers = core.WorkerPool{}
 //=============================================================================
 
 func init() {
-	num := 8
+	num := 1
 	workers.Init(num, 100)
+	go periodicCleanup()
 }
 
 //=============================================================================
@@ -113,6 +115,36 @@ func GetOptimizationInfo(tsId uint) *OptimizationInfo {
 	}
 
 	return fop.GetInfo()
+}
+
+//=============================================================================
+//===
+//=== Cleanup process
+//===
+//=============================================================================
+
+func periodicCleanup() {
+	for {
+		time.Sleep(time.Minute * 5)
+		purge()
+	}
+}
+
+//=============================================================================
+
+func purge() {
+	jobs.Lock()
+	defer jobs.Unlock()
+
+	for tsId, op := range jobs.m {
+		if op.info.Status == OptimStatusComplete {
+			delta := time.Now().Sub(op.info.EndTime)
+			if delta.Minutes() >= 30 {
+				slog.Info("purge: Purging optimization process entry for trading system", "tsId", tsId)
+				delete(jobs.m, tsId)
+			}
+		}
+	}
 }
 
 //=============================================================================

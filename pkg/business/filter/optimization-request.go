@@ -132,10 +132,10 @@ func (f *OptimizationRequest) stepsCountEquAvg(zero uint) uint {
 
 type FieldOptimization struct {
 	Enabled  bool  `json:"enabled"`
-	CurValue int   `json:"curValue"   binding:"min=1,max=200"`
-	MinValue int   `json:"minValue"`
-	MaxValue int   `json:"maxValue"`
-	Step     int   `json:"step"`
+	CurValue int   `json:"curValue"   binding:"min=1,max=600"`
+	MinValue int   `json:"minValue"   binding:"min=1,max=600"`
+	MaxValue int   `json:"maxValue"   binding:"min=1,max=600"`
+	Step     int   `json:"step"       binding:"min=1,max=100"`
 }
 
 //=============================================================================
