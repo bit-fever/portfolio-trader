@@ -27,10 +27,45 @@ package messaging
 //=============================================================================
 
 type ProductBroker struct {
-	Symbol         string   `json:"symbol"`
-	PointValue     float32  `json:"pointValue"`
-	CostPerTrade   float32  `json:"costPerTrade"`
-	MarginValue    float32  `json:"marginValue"`
+	Id            uint     `json:"id"`
+	ConnectionId  uint     `json:"connectionId"`
+	ExchangeId    uint     `json:"exchangeId"`
+	Username      string   `json:"username"`
+	Symbol        string   `json:"symbol"`
+	Name          string   `json:"name"`
+	PointValue    float32  `json:"pointValue"`
+	CostPerTrade  float32  `json:"costPerTrade"`
+	MarginValue   float32  `json:"marginValue"`
+	MarketType    string   `json:"marketType"`
+	ProductType   string   `json:"productType"`
+}
+
+//=============================================================================
+
+type Connection struct {
+	Id                   uint   `json:"id"`
+	Username             string `json:"username"`
+	Code                 string `json:"code"`
+	Name                 string `json:"name"`
+	SystemCode           string `json:"systemCode"`
+	SystemName           string `json:"systemName"`
+	SystemConfig         string `json:"systemConfig"`
+	InstanceCode         string `json:"instanceCode"`
+	SupportsData         bool   `json:"supportsData"`
+	SupportsBroker       bool   `json:"supportsBroker"`
+	SupportsMultipleData bool   `json:"supportsMultipleData"`
+	SupportsInventory    bool   `json:"supportsInventory"`
+}
+
+//=============================================================================
+
+type Exchange struct {
+	Id         uint   `json:"id"`
+	CurrencyId uint   `json:"currencyId"`
+	Code       string `json:"code"`
+	Name       string `json:"name"`
+	Timezone   string `json:"timezone"`
+	Url        string `json:"url"`
 }
 
 //=============================================================================
@@ -48,7 +83,7 @@ type TradingSystem struct {
 	WorkspaceCode     string  `json:"workspaceCode"`
 	Name              string  `json:"name"`
 	PortfolioId       uint    `json:"portfolioId"`
-	ProductFeedId     uint    `json:"productFeedId"`
+	ProductDataId     uint    `json:"productDataId"`
 	ProductBrokerId   uint    `json:"productBrokerId"`
 	TradingSessionId  uint    `json:"tradingSessionId"`
 }
@@ -60,4 +95,13 @@ type TradingSystemMessage struct {
 	ProductBroker ProductBroker `json:"productBroker"`
 	Currency      Currency      `json:"currency"`
 }
+
+//=============================================================================
+
+type ProductBrokerMessage struct {
+	ProductBroker ProductBroker `json:"productBroker"`
+	Connection    Connection    `json:"connection"`
+	Exchange      Exchange      `json:"exchange"`
+}
+
 //=============================================================================

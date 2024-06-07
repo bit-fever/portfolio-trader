@@ -61,6 +61,17 @@ func handleMessage(m *msg.Message) bool {
 			if m.Type == msg.TypeUpdate {
 				return setTradingSystem(&tsm, false)
 			}
+		} else if m.Source == msg.SourceProductBroker {
+			pbm := ProductBrokerMessage{}
+			err := json.Unmarshal(m.Entity, &pbm)
+			if err != nil {
+				slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
+				return true
+			}
+
+			if m.Type == msg.TypeUpdate {
+				return updateProductBroker(&pbm)
+			}
 		}
 	}
 
@@ -114,6 +125,31 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		slog.Error("Raised error while processing message")
 	} else {
 		slog.Info("setTradingSystem: Operation complete")
+	}
+
+	return err == nil
+}
+
+//=============================================================================
+
+func updateProductBroker(pbm *ProductBrokerMessage) bool {
+	slog.Info("updateProductBroker: Product for broker change received", "sourceId", pbm.ProductBroker.Id)
+
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		values := map[string]interface{} {
+			"broker_symbol" : pbm.ProductBroker.Symbol,
+			"point_value"   : pbm.ProductBroker.PointValue,
+			"cost_per_trade": pbm.ProductBroker.CostPerTrade,
+			"margin_value"  : pbm.ProductBroker.MarginValue,
+		}
+
+		return db.UpdateProductBrokerInfo(tx, pbm.ProductBroker.Id, values)
+	})
+
+	if err != nil {
+		slog.Error("Raised error while processing message")
+	} else {
+		slog.Info("updateProductBroker: Operation complete")
 	}
 
 	return err == nil
