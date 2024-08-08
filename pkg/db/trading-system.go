@@ -102,7 +102,7 @@ func AddTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
 //=============================================================================
 
 func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
-	return tx.Updates(ts).Error
+	return tx.Save(ts).Error
 }
 
 //=============================================================================
@@ -130,7 +130,7 @@ func GetTradingSystemsBySourceIdAsMap(tx *gorm.DB, sourceIds []uint) (map[uint]*
 func UpdateProductBrokerInfo(tx *gorm.DB, productBrokerId uint, values map[string]interface{}) error {
 	return tx.Model(&TradingSystem{}).
 		Where("product_broker_id", productBrokerId).
-		Updates(values).Error
+		Save(values).Error
 }
 
 //=============================================================================
