@@ -54,7 +54,7 @@ type TradingSystem struct {
 	ClosedProfit    float64    `json:"closedProfit"`
 	TradingDays     int        `json:"tradingDays"`
 	NumTrades       int        `json:"numTrades"`
-	ProductBrokerId uint       `json:"productBrokerId"`
+	BrokerProductId uint       `json:"brokerProductId"`
 	BrokerSymbol    string     `json:"brokerSymbol"`
 	PointValue      float32    `json:"pointValue"`
 	CostPerTrade    float32    `json:"costPerTrade"`

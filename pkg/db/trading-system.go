@@ -127,9 +127,9 @@ func GetTradingSystemsBySourceIdAsMap(tx *gorm.DB, sourceIds []uint) (map[uint]*
 
 //=============================================================================
 
-func UpdateProductBrokerInfo(tx *gorm.DB, productBrokerId uint, values map[string]interface{}) error {
+func UpdateBrokerProductInfo(tx *gorm.DB, brokerProductId uint, values map[string]interface{}) error {
 	return tx.Model(&TradingSystem{}).
-		Where("product_broker_id", productBrokerId).
+		Where("broker_product_id", brokerProductId).
 		Save(values).Error
 }
 

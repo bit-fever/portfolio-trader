@@ -61,8 +61,8 @@ func handleMessage(m *msg.Message) bool {
 			if m.Type == msg.TypeUpdate {
 				return setTradingSystem(&tsm, false)
 			}
-		} else if m.Source == msg.SourceProductBroker {
-			pbm := ProductBrokerMessage{}
+		} else if m.Source == msg.SourceBrokerProduct {
+			pbm := BrokerProductMessage{}
 			err := json.Unmarshal(m.Entity, &pbm)
 			if err != nil {
 				slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
@@ -70,7 +70,7 @@ func handleMessage(m *msg.Message) bool {
 			}
 
 			if m.Type == msg.TypeUpdate {
-				return updateProductBroker(&pbm)
+				return updateBrokerProduct(&pbm)
 			}
 		}
 	}
@@ -105,11 +105,11 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.Username        = tsm.TradingSystem.Username
 		ts.WorkspaceCode   = tsm.TradingSystem.WorkspaceCode
 		ts.Name            = tsm.TradingSystem.Name
-		ts.ProductBrokerId = tsm.TradingSystem.ProductBrokerId
-		ts.BrokerSymbol    = tsm.ProductBroker.Symbol
-		ts.PointValue      = tsm.ProductBroker.PointValue
-		ts.CostPerTrade    = tsm.ProductBroker.CostPerTrade
-		ts.MarginValue     = tsm.ProductBroker.MarginValue
+		ts.BrokerProductId = tsm.TradingSystem.BrokerProductId
+		ts.BrokerSymbol    = tsm.BrokerProduct.Symbol
+		ts.PointValue      = tsm.BrokerProduct.PointValue
+		ts.CostPerTrade    = tsm.BrokerProduct.CostPerTrade
+		ts.MarginValue     = tsm.BrokerProduct.MarginValue
 		ts.CurrencyId      = tsm.Currency.Id
 		ts.CurrencyCode    = tsm.Currency.Code
 
@@ -132,24 +132,24 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 
 //=============================================================================
 
-func updateProductBroker(pbm *ProductBrokerMessage) bool {
-	slog.Info("updateProductBroker: Product for broker change received", "sourceId", pbm.ProductBroker.Id)
+func updateBrokerProduct(bpm *BrokerProductMessage) bool {
+	slog.Info("updateBrokerProduct: Broker product change received", "sourceId", bpm.BrokerProduct.Id)
 
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
 		values := map[string]interface{} {
-			"broker_symbol" : pbm.ProductBroker.Symbol,
-			"point_value"   : pbm.ProductBroker.PointValue,
-			"cost_per_trade": pbm.ProductBroker.CostPerTrade,
-			"margin_value"  : pbm.ProductBroker.MarginValue,
+			"broker_symbol" : bpm.BrokerProduct.Symbol,
+			"point_value"   : bpm.BrokerProduct.PointValue,
+			"cost_per_trade": bpm.BrokerProduct.CostPerTrade,
+			"margin_value"  : bpm.BrokerProduct.MarginValue,
 		}
 
-		return db.UpdateProductBrokerInfo(tx, pbm.ProductBroker.Id, values)
+		return db.UpdateBrokerProductInfo(tx, bpm.BrokerProduct.Id, values)
 	})
 
 	if err != nil {
 		slog.Error("Raised error while processing message")
 	} else {
-		slog.Info("updateProductBroker: Operation complete")
+		slog.Info("updateBrokerProduct: Operation complete")
 	}
 
 	return err == nil

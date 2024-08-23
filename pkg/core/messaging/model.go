@@ -26,7 +26,7 @@ package messaging
 
 //=============================================================================
 
-type ProductBroker struct {
+type BrokerProduct struct {
 	Id            uint     `json:"id"`
 	ConnectionId  uint     `json:"connectionId"`
 	ExchangeId    uint     `json:"exchangeId"`
@@ -83,8 +83,8 @@ type TradingSystem struct {
 	WorkspaceCode     string  `json:"workspaceCode"`
 	Name              string  `json:"name"`
 	PortfolioId       uint    `json:"portfolioId"`
-	ProductDataId     uint    `json:"productDataId"`
-	ProductBrokerId   uint    `json:"productBrokerId"`
+	DataProductId     uint    `json:"dataProductId"`
+	BrokerProductId   uint    `json:"brokerProductId"`
 	TradingSessionId  uint    `json:"tradingSessionId"`
 }
 
@@ -92,14 +92,14 @@ type TradingSystem struct {
 
 type TradingSystemMessage struct {
 	TradingSystem TradingSystem `json:"tradingSystem"`
-	ProductBroker ProductBroker `json:"productBroker"`
+	BrokerProduct BrokerProduct `json:"brokerProduct"`
 	Currency      Currency      `json:"currency"`
 }
 
 //=============================================================================
 
-type ProductBrokerMessage struct {
-	ProductBroker ProductBroker `json:"productBroker"`
+type BrokerProductMessage struct {
+	BrokerProduct BrokerProduct `json:"brokerProduct"`
 	Connection    Connection    `json:"connection"`
 	Exchange      Exchange      `json:"exchange"`
 }
