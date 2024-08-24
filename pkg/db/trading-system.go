@@ -61,23 +61,6 @@ func GetTradingSystemById(tx *gorm.DB, id uint) (*TradingSystem, error) {
 
 //=============================================================================
 
-func GetTradingSystemBySourceId(tx *gorm.DB, sourceId uint) (*TradingSystem, error) {
-	var list []TradingSystem
-	res := tx.Find(&list, "source_id", sourceId)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	if len(list) == 1 {
-		return &list[0], nil
-	}
-
-	return nil, nil
-}
-
-//=============================================================================
-
 func GetTradingSystemByName(tx *gorm.DB, name string) (*TradingSystem, error) {
 	var list []TradingSystem
 	res := tx.Find(&list, "name = ?", name)
@@ -107,9 +90,9 @@ func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
 
 //=============================================================================
 
-func GetTradingSystemsBySourceIdAsMap(tx *gorm.DB, sourceIds []uint) (map[uint]*TradingSystem, error) {
+func GetTradingSystemsByIdsAsMap(tx *gorm.DB, ids []uint) (map[uint]*TradingSystem, error) {
 	var list []TradingSystem
-	res := tx.Find(&list, "source_id in ?", sourceIds)
+	res := tx.Find(&list, "id in ?", ids)
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)

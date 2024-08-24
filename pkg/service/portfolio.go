@@ -27,7 +27,6 @@ package service
 import (
 	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
-	"github.com/bit-fever/portfolio-trader/pkg/business/inout"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
@@ -35,7 +34,7 @@ import (
 //=============================================================================
 
 func getPortfolioMonitoring(c *auth.Context) {
-	params := inout.PortfolioMonitoringParams{}
+	params := business.PortfolioMonitoringParams{}
 	err    := c.BindParamsFromBody(&params)
 
 	if err == nil {

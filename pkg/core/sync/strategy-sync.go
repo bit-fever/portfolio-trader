@@ -147,7 +147,11 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 		ts.ClosedProfit += deltaProfit
 		ts.TradingDays  += deltaDays
 		ts.NumTrades    += deltaTrades
-		db.UpdateTradingSystem(tx, ts)
+
+		err = db.UpdateTradingSystem(tx, ts)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

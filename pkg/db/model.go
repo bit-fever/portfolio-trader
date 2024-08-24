@@ -44,7 +44,6 @@ const TsStatusDisabled = "di"
 
 type TradingSystem struct {
 	Id              uint       `json:"id" gorm:"primaryKey"`
-	SourceId        uint       `json:"sourceId"`
 	Username        string     `json:"username"`
 	WorkspaceCode   string     `json:"workspaceCode"`
 	Name            string     `json:"name"`

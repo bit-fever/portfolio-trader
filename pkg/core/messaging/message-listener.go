@@ -85,7 +85,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 	slog.Info("setTradingSystem: Trading system change received", "create", create, "sourceId", tsm.TradingSystem.Id)
 
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
-		ts, err := db.GetTradingSystemBySourceId(tx, tsm.TradingSystem.Id)
+		ts, err := db.GetTradingSystemById(tx, tsm.TradingSystem.Id)
 
 		if err != nil {
 			return err
@@ -101,7 +101,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 			}
 		}
 
-		ts.SourceId        = tsm.TradingSystem.Id
+		ts.Id              = tsm.TradingSystem.Id
 		ts.Username        = tsm.TradingSystem.Username
 		ts.WorkspaceCode   = tsm.TradingSystem.WorkspaceCode
 		ts.Name            = tsm.TradingSystem.Name
@@ -113,12 +113,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.CurrencyId      = tsm.Currency.Id
 		ts.CurrencyCode    = tsm.Currency.Code
 
-		if ts.Id == 0 {
-			return db.AddTradingSystem(tx, ts)
-		}
-
-		db.UpdateTradingSystem(tx, ts)
-		return nil
+		return db.UpdateTradingSystem(tx, ts)
 	})
 
 	if err != nil {
