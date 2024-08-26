@@ -58,6 +58,7 @@ type TradingSystem struct {
 	PointValue      float32    `json:"pointValue"`
 	CostPerTrade    float32    `json:"costPerTrade"`
 	MarginValue     float32    `json:"marginValue"`
+	Increment       float64    `json:"increment"`
 	CurrencyId      uint       `json:"currencyId"`
 	CurrencyCode    string     `json:"currencyCode"`
 }

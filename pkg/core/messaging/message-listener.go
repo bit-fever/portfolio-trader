@@ -110,6 +110,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.PointValue      = tsm.BrokerProduct.PointValue
 		ts.CostPerTrade    = tsm.BrokerProduct.CostPerTrade
 		ts.MarginValue     = tsm.BrokerProduct.MarginValue
+		ts.Increment       = tsm.BrokerProduct.Increment
 		ts.CurrencyId      = tsm.Currency.Id
 		ts.CurrencyCode    = tsm.Currency.Code
 
@@ -136,6 +137,7 @@ func updateBrokerProduct(bpm *BrokerProductMessage) bool {
 			"point_value"   : bpm.BrokerProduct.PointValue,
 			"cost_per_trade": bpm.BrokerProduct.CostPerTrade,
 			"margin_value"  : bpm.BrokerProduct.MarginValue,
+			"increment"     : bpm.BrokerProduct.Increment,
 		}
 
 		return db.UpdateBrokerProductInfo(tx, bpm.BrokerProduct.Id, values)
