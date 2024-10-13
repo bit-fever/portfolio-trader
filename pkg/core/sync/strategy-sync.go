@@ -129,8 +129,8 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 				//--- Add entry to map to avoid duplicates
 				diMap[inDi.Day] = *di
 				deltaProfit += inDi.ClosedProfit
-				deltaDays   += inDi.NumTrades
-				deltaTrades++
+				deltaTrades += inDi.NumTrades
+				deltaDays++
 
 				//--- Update information on trading system
 
