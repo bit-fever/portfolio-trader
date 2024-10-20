@@ -31,8 +31,8 @@ import (
 
 //=============================================================================
 
-func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilters, error) {
-	var list []TradingFilters
+func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilter, error) {
+	var list []TradingFilter
 
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
@@ -44,15 +44,15 @@ func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilters, error) {
 	}
 
 	if len(list) == 0 {
-		return &TradingFilters{
+		return &TradingFilter{
 			TradingSystemId : tsId,
-			EquAvgDays      :   30,
-			PosProDays      :   45,
-			WinPerDays      :   45,
+			EquAvgLen       :   30,
+			PosProLen       :   45,
+			WinPerLen       :   45,
 			WinPerValue     :   30,
-			OldNewOldDays   :   45,
+			OldNewOldLen    :   45,
 			OldNewOldPerc   :   90,
-			OldNewNewDays   :   45,
+			OldNewNewLen    :   45,
 		}, nil
 	}
 
@@ -61,7 +61,7 @@ func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilters, error) {
 
 //=============================================================================
 
-func SetTradingFilters(tx *gorm.DB, tf *TradingFilters) {
+func SetTradingFilters(tx *gorm.DB, tf *TradingFilter) {
 	tx.Save(tf)
 }
 

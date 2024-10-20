@@ -27,18 +27,18 @@ package messaging
 //=============================================================================
 
 type BrokerProduct struct {
-	Id            uint     `json:"id"`
-	ConnectionId  uint     `json:"connectionId"`
-	ExchangeId    uint     `json:"exchangeId"`
-	Username      string   `json:"username"`
-	Symbol        string   `json:"symbol"`
-	Name          string   `json:"name"`
-	PointValue    float32  `json:"pointValue"`
-	CostPerTrade  float32  `json:"costPerTrade"`
-	MarginValue   float32  `json:"marginValue"`
-	Increment     float64  `json:"increment"`
-	MarketType    string   `json:"marketType"`
-	ProductType   string   `json:"productType"`
+	Id               uint     `json:"id"`
+	ConnectionId     uint     `json:"connectionId"`
+	ExchangeId       uint     `json:"exchangeId"`
+	Username         string   `json:"username"`
+	Symbol           string   `json:"symbol"`
+	Name             string   `json:"name"`
+	PointValue       float32  `json:"pointValue"`
+	CostPerOperation float32  `json:"costPerOperation"`
+	MarginValue      float32  `json:"marginValue"`
+	Increment        float64  `json:"increment"`
+	MarketType       string   `json:"marketType"`
+	ProductType      string   `json:"productType"`
 }
 
 //=============================================================================

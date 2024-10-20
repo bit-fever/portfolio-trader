@@ -27,6 +27,7 @@ package filter
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
 )
 
 //=============================================================================
@@ -35,7 +36,7 @@ import (
 //===
 //=============================================================================
 
-func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.DailyInfo) *AnalysisResponse {
+func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.Trade) *AnalysisResponse {
 	res := &AnalysisResponse{}
 	res.TradingSystem.Id   = ts.Id
 	res.TradingSystem.Name = ts.Name
@@ -50,19 +51,19 @@ func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.Daily
 	}
 
 	e := &res.Equities
-	e.Days              = make([]int,     size)
-	e.NetProfits        = make([]float64, size)
-	e.UnfilteredEquity  = make([]float64, size)
-	e.FilteredEquity    = make([]float64, size)
-	e.UnfilteredDrawdown= make([]float64, size)
-	e.FilteredDrawdown  = make([]float64, size)
-	e.FilterActivation  = make([]int8,    size)
+	e.Time              = make([]time.Time,size)
+	e.NetProfit         = make([]float64,  size)
+	e.UnfilteredEquity  = make([]float64,  size)
+	e.FilteredEquity    = make([]float64,  size)
+	e.UnfilteredDrawdown= make([]float64,  size)
+	e.FilteredDrawdown  = make([]float64,  size)
+	e.FilterActivation  = make([]int8,     size)
 
 	//--- Calc unfiltered equity and days
 	calcUnfilteredEquityAndProfit(e, ts, list)
 
 	if res.Filters.EquAvgEnabled {
-		e.Average = calcAverageEquity(e.Days, e.UnfilteredEquity, res.Filters.EquAvgDays)
+		e.Average = calcAverageEquity(e.Time, e.UnfilteredEquity, res.Filters.EquAvgLen)
 	}
 
 	calcActivations(res)
@@ -79,17 +80,17 @@ func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.Daily
 
 //=============================================================================
 
-func calcUnfilteredEquityAndProfit(e *Equities, ts *db.TradingSystem, diList *[]db.DailyInfo) {
-	currProfit   := 0.0
-	costPerTrade := float64(ts.CostPerTrade)
+func calcUnfilteredEquityAndProfit(e *Equities, ts *db.TradingSystem, tradeList *[]db.Trade) {
+	currProfit    := 0.0
+	costPerOperat := float64(ts.CostPerOperation)
 
-	for i, di := range *diList {
-		currCost   := di.ClosedProfit - costPerTrade * float64(di.NumTrades)
+	for i, t := range *tradeList {
+		currCost   := t.GrossProfit - costPerOperat * 2
 		currProfit += currCost
 
-		e.Days[i]             = di.Day
+		e.Time[i]             = *t.ExitTime
 		e.UnfilteredEquity[i] = currProfit
-		e.NetProfits[i]       = currCost
+		e.NetProfit[i]        = currCost
 	}
 }
 
@@ -99,24 +100,24 @@ func calcUnfilteredEquityAndProfit(e *Equities, ts *db.TradingSystem, diList *[]
 //===
 //=============================================================================
 
-func calcAverageEquity(days []int, equity []float64, maDays int) *core.Plot {
-	p := core.Plot{}
+func calcAverageEquity(times []time.Time, equity []float64, maLen int) *core.Serie {
+	p := core.Serie{}
 
-	maSum  := 0.0
+	maSum := 0.0
 
-	for i, day := range days {
+	for i, t := range times {
 		maSum += equity[i]
 
-		if i >= maDays -1 {
-			if i>maDays -1 {
-				maSum -= equity[i-maDays]
+		if i >= maLen -1 {
+			if i>maLen -1 {
+				maSum -= equity[i-maLen]
 			}
-			p.AddPoint(day, maSum/float64(maDays))
+			p.AddPoint(t, maSum/float64(maLen))
 		}
 	}
 
 	//--- If we can't calculate the average (days is too high), just return nil
-	if p.Days == nil {
+	if p.Time == nil {
 		return nil
 	}
 
@@ -146,9 +147,9 @@ func calcEquAvgActivation(res *AnalysisResponse) *Activation {
 	a := Activation{}
 
 	avg     := res.Equities.Average
-	avgDays := res.Filters.EquAvgDays
+	avgDays := res.Filters.EquAvgLen
 
-	for i, avgDay := range avg.Days {
+	for i, avgTime := range avg.Time {
 		avgVal := avg.Values[i]
 		equVal := res.Equities.UnfilteredEquity[i + avgDays -1]
 		value  := int8(0)
@@ -157,7 +158,7 @@ func calcEquAvgActivation(res *AnalysisResponse) *Activation {
 			value = 1
 		}
 
-		a.AddDay(avgDay, value)
+		a.AddPoint(avgTime, value)
 	}
 
 	return &a
@@ -173,10 +174,10 @@ func calcPosProfitActivation(res *AnalysisResponse) *Activation {
 	a := Activation{}
 
 	profSum  := 0.0
-	profDays := res.Filters.PosProDays
+	profDays := res.Filters.PosProLen
 	equity   := res.Equities.UnfilteredEquity
 
-	for i, day := range res.Equities.Days {
+	for i, t := range res.Equities.Time {
 		if i >= profDays -1 {
 			profSum = equity[i]
 
@@ -189,12 +190,12 @@ func calcPosProfitActivation(res *AnalysisResponse) *Activation {
 			if profSum >= 0 {
 				value = 1
 			}
-			a.AddDay(day, value)
+			a.AddPoint(t, value)
 		}
 	}
 
 	//--- If we can't calculate the average (days is too high), just return nil
-	if a.Days == nil {
+	if a.Time == nil {
 		return nil
 	}
 
@@ -212,11 +213,11 @@ func calcWinPercActivation(res *AnalysisResponse) *Activation {
 
 	posCount := 0
 	totCount := 0
-	winDays  := res.Filters.WinPerDays
+	winLen   := res.Filters.WinPerLen
 	percValue:= res.Filters.WinPerValue
-	profits  := res.Equities.NetProfits
+	profits  := res.Equities.NetProfit
 
-	for i, day := range res.Equities.Days {
+	for i, t := range res.Equities.Time {
 		if profits[i] != 0 {
 			totCount++
 
@@ -225,12 +226,12 @@ func calcWinPercActivation(res *AnalysisResponse) *Activation {
 			}
 		}
 
-		if i >= winDays -1 {
-			if i>winDays -1 {
-				if profits[i-winDays] != 0 {
+		if i >= winLen -1 {
+			if i>winLen -1 {
+				if profits[i-winLen] != 0 {
 					totCount--
 
-					if profits[i-winDays] > 0 {
+					if profits[i-winLen] > 0 {
 						posCount--
 					}
 				}
@@ -242,12 +243,12 @@ func calcWinPercActivation(res *AnalysisResponse) *Activation {
 					value = 1
 				}
 			}
-			a.AddDay(day, value)
+			a.AddPoint(t, value)
 		}
 	}
 
 	//--- If we can't calculate the average (days is too high), just return nil
-	if a.Days == nil {
+	if a.Time == nil {
 		return nil
 	}
 
@@ -265,28 +266,28 @@ func calcOldVsNewActivation(res *AnalysisResponse) *Activation {
 
 	oldSum  := 0.0
 	newSum  := 0.0
-	oldDays := res.Filters.OldNewOldDays
-	newDays := res.Filters.OldNewNewDays
+	oldLen  := res.Filters.OldNewOldLen
+	newLen  := res.Filters.OldNewNewLen
 	equity  := res.Equities.UnfilteredEquity
 	oldPerc := float64(res.Filters.OldNewOldPerc)/100.0
 
-	for i, day := range res.Equities.Days {
+	for i, t := range res.Equities.Time {
 		//--- New period
 
-		if i >= newDays -1 {
+		if i >= newLen -1 {
 			newSum = equity[i]
 
-			if i>newDays -1 {
-				newSum -= equity[i-newDays]
+			if i>newLen -1 {
+				newSum -= equity[i-newLen]
 			}
 
 			//--- Old period
 
-			if i >= (oldDays+newDays) -1 {
-				oldSum = equity[i-newDays]
+			if i >= (oldLen+newLen) -1 {
+				oldSum = equity[i-newLen]
 
-				if i>(oldDays+newDays) -1 {
-					oldSum -= equity[i-newDays-oldDays]
+				if i>(oldLen+newLen) -1 {
+					oldSum -= equity[i-newLen-oldLen]
 				}
 
 				value := int8(0)
@@ -294,13 +295,13 @@ func calcOldVsNewActivation(res *AnalysisResponse) *Activation {
 				if newSum >= oldSum * oldPerc {
 					value = 1
 				}
-				a.AddDay(day, value)
+				a.AddPoint(t, value)
 			}
 		}
 	}
 
 	//--- If we can't calculate the average (days is too high), just return nil
-	if a.Days == nil {
+	if a.Time == nil {
 		return nil
 	}
 
@@ -319,14 +320,14 @@ func calcFilterActivation(res *AnalysisResponse) {
 	winPerStrategy  := NewActivationStrategy(act.WinningPercentage, fil.WinPerEnabled)
 	oldNewStrategy  := NewActivationStrategy(act.OldVsNew,          fil.OldNewEnabled)
 
-	for i, day := range equ.Days {
+	for i, t := range equ.Time {
 		//--- These 4 conditions must be standalone. If we use tot := A && B && C && D
 		//--- then B, C, D evaluation can be skipped because the && operator is already satisfied
 
-		avgEqu := avgEquStrategy .IsActive(day)
-		posPro := posProfStrategy.IsActive(day)
-		winPer := winPerStrategy .IsActive(day)
-		oldNew := oldNewStrategy .IsActive(day)
+		avgEqu := avgEquStrategy .IsActive(t)
+		posPro := posProfStrategy.IsActive(t)
+		winPer := winPerStrategy .IsActive(t)
+		oldNew := oldNewStrategy .IsActive(t)
 
 		if avgEqu && posPro && winPer && oldNew {
 			equ.FilterActivation[i] = 1
@@ -340,7 +341,7 @@ func calcFilteredEquity(res *AnalysisResponse) {
 	equ := &res.Equities
 	sum := 0.0
 
-	for i, value := range equ.NetProfits {
+	for i, value := range equ.NetProfit {
 		if equ.FilterActivation[i] == 0 {
 			value = float64(0)
 		}
@@ -354,16 +355,16 @@ func calcFilteredEquity(res *AnalysisResponse) {
 
 func calcSummary(res *AnalysisResponse, maxUnfDD, maxFilDD float64) {
 	sum  := &res.Summary
-	last := len(res.Equities.Days) -1
+	last := len(res.Equities.Time) -1
 
 	sum.UnfProfit      = res.Equities.UnfilteredEquity[last]
 	sum.FilProfit      = res.Equities.FilteredEquity[last]
 	sum.UnfMaxDrawdown = maxUnfDD
 	sum.FilMaxDrawdown = maxFilDD
-	sum.UnfWinningPerc = core.CalcWinningPercentage(res.Equities.NetProfits, nil)
-	sum.FilWinningPerc = core.CalcWinningPercentage(res.Equities.NetProfits, res.Equities.FilterActivation)
-	sum.UnfAverageTrade= core.CalcAverageTrade(res.Equities.NetProfits, nil)
-	sum.FilAverageTrade= core.CalcAverageTrade(res.Equities.NetProfits, res.Equities.FilterActivation)
+	sum.UnfWinningPerc = core.CalcWinningPercentage(res.Equities.NetProfit, nil)
+	sum.FilWinningPerc = core.CalcWinningPercentage(res.Equities.NetProfit, res.Equities.FilterActivation)
+	sum.UnfAverageTrade= core.CalcAverageTrade(res.Equities.NetProfit, nil)
+	sum.FilAverageTrade= core.CalcAverageTrade(res.Equities.NetProfit, res.Equities.FilterActivation)
 }
 
 //=============================================================================

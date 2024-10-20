@@ -58,7 +58,7 @@ func run(cfg *app.Config) {
 	url := cfg.Scan.Address
 	slog.Info("Starting to fetch strategies from: "+ url)
 
-	var data []strategy
+	var data []Strategy
 
 	err := req.DoGet(req.GetClient("ws"), url, &data, "")
 
@@ -77,10 +77,10 @@ func run(cfg *app.Config) {
 
 //=============================================================================
 
-func updateDb(tx *gorm.DB, inStrategies []strategy) error {
+func updateDb(tx *gorm.DB, strategies []Strategy) error {
 	slog.Info("Updating database...")
 
-	for _, s := range inStrategies {
+	for _, s := range strategies {
 		ts, err := db.GetTradingSystemByName(tx, s.Name)
 
 		if err != nil {
@@ -93,60 +93,43 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 			continue
 		}
 
-		diMap, err := db.FindDailyInfoByTsIdAsMap(tx, ts.Id)
-
+		lastTrade, err := db.FindLastTrade(tx, ts.Id)
 		if err != nil {
-			slog.Error("Cannot retrieve DailyInfo list for trading system '"+ s.Name +"': "+ err.Error())
+			slog.Error("Cannot retrieve last trade for trading system '"+ s.Name +"': "+ err.Error())
 			return err
+		}
+
+		lastTradeTime := time.Unix(0, 0)
+		if lastTrade != nil {
+			lastTradeTime = *lastTrade.EntryTime
 		}
 
 		slog.Info("Updating trading system: "+ s.Name)
 
-		deltaProfit := 0.0
-		deltaDays   := 0
-		deltaTrades := 0
+		for _, di := range s.DailyInfo {
+			tr := createTrade(ts.Id, &di)
 
-		for _, inDi := range s.DailyInfo {
-			if _, ok := diMap[inDi.Day]; !ok {
-				di := &db.DailyInfo{
-					TradingSystemId: ts.Id,
-					Day            : inDi.Day,
-					OpenProfit     : inDi.OpenProfit,
-					ClosedProfit   : inDi.ClosedProfit,
-					Position       : inDi.Position,
-					NumTrades      : inDi.NumTrades,
+			if lastTradeTime.Before(*tr.EntryTime) && tr.GrossProfit != 0 {
+				lastTradeTime = *tr.EntryTime
+				err = db.AddTrade(tx, tr)
+				if err != nil {
+					slog.Error("Cannot write trade into database for strategy '"+ s.Name +"': "+ err.Error())
+					return err
 				}
-
-				//--- Handle the case when a trade is closed and reopened in the same
-				//--- bar and in the same direction
-
-				if di.ClosedProfit != 0 && di.NumTrades == 0 {
-					di.NumTrades = 1
-				}
-
-				_ = db.AddDailyInfo(tx, di)
-
-				//--- Add entry to map to avoid duplicates
-				diMap[inDi.Day] = *di
-				deltaProfit += inDi.ClosedProfit
-				deltaTrades += inDi.NumTrades
-				deltaDays++
 
 				//--- Update information on trading system
 
-				if ts.FirstUpdate == 0 || ts.FirstUpdate > inDi.Day {
-					ts.FirstUpdate = inDi.Day
+				if ts.FirstTrade == nil || ts.FirstTrade.After(lastTradeTime) {
+					t := lastTradeTime
+					ts.FirstTrade = &t
 				}
 
-				if ts.LastUpdate < inDi.Day {
-					ts.LastUpdate = inDi.Day
+				if ts.LastTrade == nil || ts.LastTrade.Before(lastTradeTime) {
+					t := lastTradeTime
+					ts.LastTrade = &t
 				}
 			}
 		}
-
-		ts.ClosedProfit += deltaProfit
-		ts.TradingDays  += deltaDays
-		ts.NumTrades    += deltaTrades
 
 		err = db.UpdateTradingSystem(tx, ts)
 		if err != nil {
@@ -155,6 +138,29 @@ func updateDb(tx *gorm.DB, inStrategies []strategy) error {
 	}
 
 	return nil
+}
+
+//=============================================================================
+
+func createTrade(tsId uint, di *DailyInfo) *db.Trade {
+	y := di.Day / 10000
+	m := di.Day / 100 % 100
+	d := di.Day % 100
+
+	loc, _ := time.LoadLocation("UTC")
+
+	t := time.Date(y, time.Month(m), d, 8,0,0,0, loc)
+
+	return &db.Trade{
+		TradingSystemId: tsId,
+		TradeType   : db.TradeTypeLong,
+		EntryTime   : &t,
+		EntryValue  : 0,
+		ExitTime    : &t,
+		ExitValue   : 0,
+		GrossProfit : di.ClosedProfit,
+		NumContracts: 1,
+	}
 }
 
 //=============================================================================

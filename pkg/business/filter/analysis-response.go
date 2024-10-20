@@ -24,7 +24,10 @@ THE SOFTWARE.
 
 package filter
 
-import "github.com/bit-fever/portfolio-trader/pkg/core"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"time"
+)
 
 //=============================================================================
 //===
@@ -63,27 +66,27 @@ type Summary struct {
 //=============================================================================
 
 type Equities struct {
-	Days               []int       `json:"days"`
-	NetProfits         []float64   `json:"netProfits"`
+	Time               []time.Time `json:"time"`
+	NetProfit          []float64   `json:"netProfit"`
 	UnfilteredEquity   []float64   `json:"unfilteredEquity"`
 	FilteredEquity     []float64   `json:"filteredEquity"`
 	UnfilteredDrawdown []float64   `json:"unfilteredDrawdown"`
 	FilteredDrawdown   []float64   `json:"filteredDrawdown"`
 	FilterActivation   []int8      `json:"filterActivation"`
-	Average            *core.Plot  `json:"average"`
+	Average            *core.Serie `json:"average"`
 }
 
 //=============================================================================
 
 type Activation struct {
-	Days   []int   `json:"days"`
-	Values []int8  `json:"values"`
+	Time   []time.Time `json:"time"`
+	Values []int8      `json:"values"`
 }
 
 //-----------------------------------------------------------------------------
 
-func (p *Activation) AddDay(day int, value int8) {
-	p.Days   = append(p.Days,   day)
+func (p *Activation) AddPoint(time time.Time, value int8) {
+	p.Time   = append(p.Time,   time)
 	p.Values = append(p.Values, value)
 }
 

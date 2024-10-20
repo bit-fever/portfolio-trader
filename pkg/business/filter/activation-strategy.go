@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 package filter
 
+import "time"
+
 //=============================================================================
 //===
 //=== ActivationStrategy
@@ -38,7 +40,7 @@ type ActivationStrategy struct {
 
 //=============================================================================
 
-func (as *ActivationStrategy) IsActive(day int) bool {
+func (as *ActivationStrategy) IsActive(t time.Time) bool {
 	//--- Strategy not enabled: skip it returning always 1
 	if !as.enabled {
 		return true
@@ -49,11 +51,11 @@ func (as *ActivationStrategy) IsActive(day int) bool {
 		return true
 	}
 
-	if day<as.activation.Days[as.index] {
+	if t.Before(as.activation.Time[as.index]) {
 		return true
 	}
 
-	if day != as.activation.Days[as.index] {
+	if t != as.activation.Time[as.index] {
 		panic("Help!")
 	}
 

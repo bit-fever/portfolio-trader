@@ -43,7 +43,7 @@ func GetTradingSystems(tx *gorm.DB, c *auth.Context, filter map[string]any, offs
 
 //=============================================================================
 
-func GetDailyInfo(tx *gorm.DB, c *auth.Context, tsId uint) (*[]db.DailyInfo, error) {
+func GetTrades(tx *gorm.DB, c *auth.Context, tsId uint) (*[]db.Trade, error) {
 	ts, err := db.GetTradingSystemById(tx, tsId)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func GetDailyInfo(tx *gorm.DB, c *auth.Context, tsId uint) (*[]db.DailyInfo, err
 		}
 	}
 
-	return db.FindDailyInfoByTsId(tx, tsId)
+	return db.FindTradesByTsId(tx, tsId)
 }
 
 //=============================================================================

@@ -42,7 +42,7 @@ const MaxResultSize = 1000
 
 type OptimizationProcess struct {
 	ts            *db.TradingSystem
-	data          *[]db.DailyInfo
+	data          *[]db.Trade
 	params        *OptimizationRequest
 	info          *OptimizationInfo
 	runComparator *RunComparator
@@ -137,16 +137,15 @@ func (f *OptimizationProcess) generatePosProfit() bool {
 	if f.params.EnablePosProfit {
 		slog.Info("generateNotCombined: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
-		for _, posProDays := range f.params.PosProDays.Steps() {
+		for _, posProLen := range f.params.PosProLen.Steps() {
 			filters := &TradingFilters{
 				PosProEnabled: true,
-				PosProDays: posProDays,
+				PosProLen: posProLen,
 			}
 
-			posProDays := posProDays
 			go func() {
 				res := RunAnalysis(f.ts, filters, f.data)
-				f.addResult(TypePosProfit, posProDays, -1, -1, res)
+				f.addResult(TypePosProfit, posProLen, -1, -1, res)
 			}()
 
 			//--- Check if we have to stop the process
@@ -167,22 +166,19 @@ func (f *OptimizationProcess) generateOldVsNew() bool {
 	if f.params.EnableOldNew {
 		slog.Info("generateNotCombined: Optimizing old vs new periods", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
-		for _, oldNewOldDays := range f.params.OldNewOldDays.Steps() {
-			for _, oldNewNewDays := range f.params.OldNewNewDays.Steps() {
+		for _, oldNewOldLen := range f.params.OldNewOldLen.Steps() {
+			for _, oldNewNewLen := range f.params.OldNewNewLen.Steps() {
 				for _, oldNewOldPerc := range f.params.OldNewOldPerc.Steps() {
 					filters := &TradingFilters{
 						OldNewEnabled: true,
-						OldNewOldDays: oldNewOldDays,
-						OldNewNewDays: oldNewNewDays,
+						OldNewOldLen : oldNewOldLen,
+						OldNewNewLen : oldNewNewLen,
 						OldNewOldPerc: oldNewOldPerc,
 					}
 
-					oldNewOldDays := oldNewOldDays
-					oldNewNewDays := oldNewNewDays
-					oldNewOldPerc := oldNewOldPerc
 					go func() {
 						res := RunAnalysis(f.ts, filters, f.data)
-						f.addResult(TypeOldVsNew, oldNewOldDays, oldNewNewDays, oldNewOldPerc, res)
+						f.addResult(TypeOldVsNew, oldNewOldLen, oldNewNewLen, oldNewOldPerc, res)
 					}()
 
 					//--- Check if we have to stop the process
@@ -205,19 +201,17 @@ func (f *OptimizationProcess) generateWinPerc() bool {
 	if f.params.EnableWinPerc {
 		slog.Info("generateNotCombined: Optimizing winning percentage", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
-		for _, winPerDays := range f.params.WinPercDays.Steps() {
+		for _, winPerLen := range f.params.WinPercLen.Steps() {
 			for _, winPerPerc := range f.params.WinPercPerc.Steps() {
 				filters := &TradingFilters{
 					WinPerEnabled: true,
-					WinPerDays   : winPerDays,
+					WinPerLen    : winPerLen,
 					WinPerValue  : winPerPerc,
 				}
 
-				winPerDays := winPerDays
-				winPerPerc := winPerPerc
 				go func(){
 					res := RunAnalysis(f.ts, filters, f.data)
-					f.addResult(TypeWinPerc, winPerDays, -1, winPerPerc, res)
+					f.addResult(TypeWinPerc, winPerLen, -1, winPerPerc, res)
 				}()
 
 				//--- Check if we have to stop the process
@@ -239,16 +233,15 @@ func (f *OptimizationProcess) generateEquVsAvg() bool {
 	if f.params.EnableEquAvg {
 		slog.Info("generateNotCombined: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
-		for _, equAvgDays := range f.params.EquAvgDays.Steps() {
+		for _, equAvgLen := range f.params.EquAvgLen.Steps() {
 			filters := &TradingFilters{
 				EquAvgEnabled: true,
-				EquAvgDays   : equAvgDays,
+				EquAvgLen    : equAvgLen,
 			}
 
-			equAvgDays := equAvgDays
 			go func(){
 				res := RunAnalysis(f.ts, filters, f.data)
-				f.addResult(TypeEquVsAvg, equAvgDays, -1, -1, res)
+				f.addResult(TypeEquVsAvg, equAvgLen, -1, -1, res)
 			}()
 
 			//--- Check if we have to stop the process
@@ -265,11 +258,11 @@ func (f *OptimizationProcess) generateEquVsAvg() bool {
 
 //=============================================================================
 
-func (f *OptimizationProcess) addResult(filter string, days int, newDays int, percentage int, far *AnalysisResponse) {
+func (f *OptimizationProcess) addResult(filter string, len int, newLen int, percentage int, far *AnalysisResponse) {
 	r := &Run{
 		FilterType: filter,
-		Days      : days,
-		NewDays   : newDays,
+		Length    : len,
+		NewLength : newLen,
 		Percentage: percentage,
 	}
 

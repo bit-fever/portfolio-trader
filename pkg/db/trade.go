@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,17 +27,18 @@ package db
 import (
 	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
+	"time"
 )
 
 //=============================================================================
 
-func FindDailyInfoByTsId(tx *gorm.DB, tsId uint) (*[]DailyInfo, error) {
-	var list []DailyInfo
+func FindTradesByTsId(tx *gorm.DB, tsId uint) (*[]Trade, error) {
+	var list []Trade
 
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
 
-	res := tx.Where(filter).Find(&list).Order("day")
+	res := tx.Where(filter).Find(&list).Order("exit_time")
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
@@ -48,28 +49,10 @@ func FindDailyInfoByTsId(tx *gorm.DB, tsId uint) (*[]DailyInfo, error) {
 
 //=============================================================================
 
-func FindDailyInfoByTsIdAsMap(tx *gorm.DB, tsId uint) (map[int]DailyInfo, error) {
-	list,err := FindDailyInfoByTsId(tx, tsId)
+func FindTradesFromTime(tx *gorm.DB, tsIds []uint, fromTime time.Time) (*[]Trade, error) {
+	var data []Trade
 
-	if err != nil {
-		return nil, err
-	}
-
-	diMap := map[int]DailyInfo{}
-
-	for _, di := range *list {
-		diMap[di.Day] = di
-	}
-
-	return diMap, nil
-}
-
-//=============================================================================
-
-func FindDailyInfoFromDay(tx *gorm.DB, tsIds []uint, fromDay int) (*[]DailyInfo, error) {
-	var data []DailyInfo
-
-	res := tx.Find(&data, "trading_system_id in ? and day >= ?", tsIds, fromDay)
+	res := tx.Find(&data, "trading_system_id in ? and exit_time >= ?", tsIds, fromTime)
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
@@ -80,8 +63,25 @@ func FindDailyInfoFromDay(tx *gorm.DB, tsIds []uint, fromDay int) (*[]DailyInfo,
 
 //=============================================================================
 
-func AddDailyInfo(tx *gorm.DB, di *DailyInfo) error {
-	err := tx.Create(di).Error
+func FindLastTrade(tx *gorm.DB, tsId uint) (*Trade, error) {
+	var data []Trade
+
+	res := tx.Order("entry_time DESC").Limit(1).Find(&data, "trading_system_id = ?", tsId)
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	if len(data) == 0 {
+		return nil, nil
+	}
+
+	return &data[0], nil
+}
+
+//=============================================================================
+
+func AddTrade(tx *gorm.DB, tr *Trade) error {
+	err := tx.Create(tr).Error
 	return req.NewServerErrorByError(err)
 }
 

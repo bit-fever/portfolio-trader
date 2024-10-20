@@ -111,11 +111,11 @@ func compareOtherFields(a,b *Run) int {
 	if a.FilterType < b.FilterType { return -1 }
 	if a.FilterType > b.FilterType { return +1 }
 
-	if a.Days < b.Days { return -1 }
-	if a.Days > b.Days { return +1 }
+	if a.Length < b.Length { return -1 }
+	if a.Length > b.Length { return +1 }
 
-	if a.NewDays < b.NewDays { return -1 }
-	if a.NewDays > b.NewDays { return +1 }
+	if a.NewLength < b.NewLength { return -1 }
+	if a.NewLength > b.NewLength { return +1 }
 
 	if a.Percentage < b.Percentage { return -1 }
 	if a.Percentage > b.Percentage { return +1 }

@@ -34,7 +34,7 @@ import (
 
 //=============================================================================
 
-func GetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingFilters, error) {
+func GetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingFilter, error) {
 	_, err := getTradingSystem(tx, c, tsId)
 	if err != nil {
 		return nil, err
@@ -51,19 +51,19 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.Tradin
 		return err
 	}
 
-	db.SetTradingFilters(tx, &db.TradingFilters{
+	db.SetTradingFilters(tx, &db.TradingFilter{
 		TradingSystemId: tsId,
 		EquAvgEnabled  : f.EquAvgEnabled,
-		EquAvgDays     : f.EquAvgDays,
+		EquAvgLen      : f.EquAvgLen,
 		PosProEnabled  : f.PosProEnabled,
-		PosProDays     : f.PosProDays,
+		PosProLen      : f.PosProLen,
 		WinPerEnabled  : f.WinPerEnabled,
-		WinPerDays     : f.WinPerDays,
+		WinPerLen      : f.WinPerLen,
 		WinPerValue    : f.WinPerValue,
 		OldNewEnabled  : f.OldNewEnabled,
-		OldNewOldDays  : f.OldNewOldDays,
+		OldNewOldLen   : f.OldNewOldLen,
 		OldNewOldPerc  : f.OldNewOldPerc,
-		OldNewNewDays  : f.OldNewNewDays,
+		OldNewNewLen   : f.OldNewNewLen,
 	})
 
 	return nil
@@ -88,7 +88,7 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.Anal
 		far.Filters = convert(filters)
 	}
 
-	diList, err := db.FindDailyInfoByTsId(tx, ts.Id)
+	diList, err := db.FindTradesByTsId(tx, ts.Id)
 	if err != nil {
 		return nil,err
 	}
@@ -106,13 +106,13 @@ func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, far *filte
 		return err
 	}
 
-	diList, err := db.FindDailyInfoByTsId(tx, ts.Id)
+	tradeList, err := db.FindTradesByTsId(tx, ts.Id)
 	if err != nil {
 		return err
 	}
 
 	c.Log.Info("StartFilterOptimization: Starting optimization", "tsId", ts.Id, "tsName", ts.Name)
-	err = filter.StartOptimization(ts, diList, far)
+	err = filter.StartOptimization(ts, tradeList, far)
 
 	return err
 }
@@ -159,19 +159,19 @@ func getTradingSystem(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingSyste
 
 //=============================================================================
 
-func convert(f *db.TradingFilters) *filter.TradingFilters {
+func convert(f *db.TradingFilter) *filter.TradingFilters {
 	return &filter.TradingFilters{
-		EquAvgEnabled  : f.EquAvgEnabled,
-		EquAvgDays     : f.EquAvgDays,
-		PosProEnabled  : f.PosProEnabled,
-		PosProDays     : f.PosProDays,
-		WinPerEnabled  : f.WinPerEnabled,
-		WinPerDays     : f.WinPerDays,
-		WinPerValue    : f.WinPerValue,
-		OldNewEnabled  : f.OldNewEnabled,
-		OldNewOldDays  : f.OldNewOldDays,
-		OldNewOldPerc  : f.OldNewOldPerc,
-		OldNewNewDays  : f.OldNewNewDays,
+		EquAvgEnabled : f.EquAvgEnabled,
+		EquAvgLen     : f.EquAvgLen,
+		PosProEnabled : f.PosProEnabled,
+		PosProLen     : f.PosProLen,
+		WinPerEnabled : f.WinPerEnabled,
+		WinPerLen     : f.WinPerLen,
+		WinPerValue   : f.WinPerValue,
+		OldNewEnabled : f.OldNewEnabled,
+		OldNewOldLen  : f.OldNewOldLen,
+		OldNewOldPerc : f.OldNewOldPerc,
+		OldNewNewLen  : f.OldNewNewLen,
 	}
 }
 

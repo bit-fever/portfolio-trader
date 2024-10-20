@@ -78,12 +78,6 @@ func GetTradingSystemByName(tx *gorm.DB, name string) (*TradingSystem, error) {
 
 //=============================================================================
 
-func AddTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
-	return tx.Create(ts).Error
-}
-
-//=============================================================================
-
 func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
 	return tx.Save(ts).Error
 }

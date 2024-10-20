@@ -61,7 +61,7 @@ func init() {
 //===
 //=============================================================================
 
-func StartOptimization(ts *db.TradingSystem, data *[]db.DailyInfo, params *OptimizationRequest) error {
+func StartOptimization(ts *db.TradingSystem, data *[]db.Trade, params *OptimizationRequest) error {
 	jobs.Lock()
 	defer jobs.Unlock()
 

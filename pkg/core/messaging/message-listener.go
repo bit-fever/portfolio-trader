@@ -69,9 +69,17 @@ func handleMessage(m *msg.Message) bool {
 				return true
 			}
 
+			if m.Type == msg.TypeCreate {
+				//--- If the broker product is new, there are no trading systems to update. Just return 'true'
+				return true
+			}
+
 			if m.Type == msg.TypeUpdate {
 				return updateBrokerProduct(&pbm)
 			}
+		} else if m.Source == msg.SourceDataProduct {
+			//--- We are not interested into data products
+			return true
 		}
 	}
 
@@ -108,7 +116,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.BrokerProductId = tsm.TradingSystem.BrokerProductId
 		ts.BrokerSymbol    = tsm.BrokerProduct.Symbol
 		ts.PointValue      = tsm.BrokerProduct.PointValue
-		ts.CostPerTrade    = tsm.BrokerProduct.CostPerTrade
+		ts.CostPerOperation= tsm.BrokerProduct.CostPerOperation
 		ts.MarginValue     = tsm.BrokerProduct.MarginValue
 		ts.Increment       = tsm.BrokerProduct.Increment
 		ts.CurrencyId      = tsm.Currency.Id
@@ -133,11 +141,11 @@ func updateBrokerProduct(bpm *BrokerProductMessage) bool {
 
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
 		values := map[string]interface{} {
-			"broker_symbol" : bpm.BrokerProduct.Symbol,
-			"point_value"   : bpm.BrokerProduct.PointValue,
-			"cost_per_trade": bpm.BrokerProduct.CostPerTrade,
-			"margin_value"  : bpm.BrokerProduct.MarginValue,
-			"increment"     : bpm.BrokerProduct.Increment,
+			"broker_symbol"     : bpm.BrokerProduct.Symbol,
+			"point_value"       : bpm.BrokerProduct.PointValue,
+			"cost_per_operation": bpm.BrokerProduct.CostPerOperation,
+			"margin_value"      : bpm.BrokerProduct.MarginValue,
+			"increment"         : bpm.BrokerProduct.Increment,
 		}
 
 		return db.UpdateBrokerProductInfo(tx, bpm.BrokerProduct.Id, values)

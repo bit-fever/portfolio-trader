@@ -26,17 +26,21 @@ package sync
 
 //=============================================================================
 
-type strategy struct {
+type DailyInfo struct {
+	Day           int
+	OpenProfit    float64
+	ClosedProfit  float64
+	Position      int
+	NumTrades     int
+}
+
+//=============================================================================
+
+type Strategy struct {
 	Name   string
 	Ticker string
 
-	DailyInfo []struct {
-		Day           int
-		OpenProfit    float64
-		ClosedProfit  float64
-		Position      int
-		NumTrades     int
-	}
+	DailyInfo []DailyInfo
 }
 
 //=============================================================================

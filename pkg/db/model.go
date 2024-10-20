@@ -29,6 +29,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 )
 
 //=============================================================================
@@ -43,53 +44,62 @@ const TsStatusDisabled = "di"
 //=============================================================================
 
 type TradingSystem struct {
-	Id              uint       `json:"id" gorm:"primaryKey"`
-	Username        string     `json:"username"`
-	WorkspaceCode   string     `json:"workspaceCode"`
-	Name            string     `json:"name"`
-	Status          string     `json:"status"`
-	FirstUpdate     int        `json:"firstUpdate"`
-	LastUpdate      int        `json:"lastUpdate"`
-	ClosedProfit    float64    `json:"closedProfit"`
-	TradingDays     int        `json:"tradingDays"`
-	NumTrades       int        `json:"numTrades"`
-	BrokerProductId uint       `json:"brokerProductId"`
-	BrokerSymbol    string     `json:"brokerSymbol"`
-	PointValue      float32    `json:"pointValue"`
-	CostPerTrade    float32    `json:"costPerTrade"`
-	MarginValue     float32    `json:"marginValue"`
-	Increment       float64    `json:"increment"`
-	CurrencyId      uint       `json:"currencyId"`
-	CurrencyCode    string     `json:"currencyCode"`
+	Id               uint        `json:"id" gorm:"primaryKey"`
+	Username         string      `json:"username"`
+	WorkspaceCode    string      `json:"workspaceCode"`
+	Name             string      `json:"name"`
+	Status           string      `json:"status"`
+	FirstTrade       *time.Time  `json:"firstTrade"`
+	LastTrade        *time.Time  `json:"lastTrade"`
+	LmNetProfit      float64     `json:"lmNetProfit"`
+	LmAvgTrade       float64     `json:"lmAvgTrade"`
+	LmNumTrades      int         `json:"lmNumTrades"`
+	BrokerProductId  uint        `json:"brokerProductId"`
+	BrokerSymbol     string      `json:"brokerSymbol"`
+	PointValue       float32     `json:"pointValue"`
+	CostPerOperation float32     `json:"costPerOperation"`
+	MarginValue      float32     `json:"marginValue"`
+	Increment        float64     `json:"increment"`
+	CurrencyId       uint        `json:"currencyId"`
+	CurrencyCode     string      `json:"currencyCode"`
 }
 
 //=============================================================================
 
-type TradingFilters struct {
+type TradingFilter struct {
 	TradingSystemId uint   `json:"tradingSystemId" gorm:"primaryKey"`
 	EquAvgEnabled   bool   `json:"equAvgEnabled"`
-	EquAvgDays      int    `json:"equAvgDays"`
+	EquAvgLen       int    `json:"equAvgLen"`
 	PosProEnabled   bool   `json:"posProEnabled"`
-	PosProDays      int    `json:"posProDays"`
+	PosProLen       int    `json:"posProLen"`
 	WinPerEnabled   bool   `json:"winPerEnabled"`
-	WinPerDays      int    `json:"winPerDays"`
+	WinPerLen       int    `json:"winPerLen"`
 	WinPerValue     int    `json:"winPerValue"`
 	OldNewEnabled   bool   `json:"shoLonEnabled"`
-	OldNewOldDays   int    `json:"oldNewOldDays"`
+	OldNewOldLen    int    `json:"oldNewOldLen"`
 	OldNewOldPerc   int    `json:"oldNewOldPerc"`
-	OldNewNewDays   int    `json:"oldNewNewDays"`
+	OldNewNewLen    int    `json:"oldNewNewLen"`
 }
 
 //=============================================================================
 
-type DailyInfo struct {
-	Id              uint    `json:"id" gorm:"primaryKey"`
-	TradingSystemId uint    `json:"tradingSystemId"`
-	Day             int     `json:"day"`
-	OpenProfit      float64 `json:"openProfit"`
-	ClosedProfit    float64 `json:"closedProfit"`
-	Position        int     `json:"position"`
-	NumTrades       int     `json:"numTrades"`
+type TradeType int8
+
+const (
+	TradeTypeLong  TradeType = 0
+	TradeTypeShort TradeType = 1
+)
+
+type Trade struct {
+	Id              uint       `json:"id" gorm:"primaryKey"`
+	TradingSystemId uint       `json:"tradingSystemId"`
+	TradeType       TradeType  `json:"tradeType"`
+	EntryTime       *time.Time `json:"entryTime"`
+	EntryValue      float64    `json:"entryValue"`
+	ExitTime        *time.Time `json:"exitTime"`
+	ExitValue       float64    `json:"exitValue"`
+	GrossProfit     float64    `json:"grossProfit"`
+	NumContracts    int        `json:"numContracts"`
 }
 
 //=============================================================================
@@ -98,9 +108,9 @@ type DailyInfo struct {
 //===
 //=============================================================================
 
-func (TradingSystem)  TableName() string { return "trading_system" }
-func (TradingFilters) TableName() string { return "trading_filter" }
-func (DailyInfo)      TableName() string { return "daily_info"     }
+func (TradingSystem) TableName() string { return "trading_system" }
+func (TradingFilter) TableName() string { return "trading_filter" }
+func (Trade)         TableName() string { return "trade"          }
 
 //=============================================================================
 //===

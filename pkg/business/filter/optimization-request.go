@@ -46,13 +46,13 @@ type OptimizationRequest struct {
 	EnableEquAvg    bool   `json:"enableEquAvg"`
 	CombineFilters  bool   `json:"combineFilters"`
 
-	PosProDays     FieldOptimization  `json:"posProDays"`
-	OldNewOldDays  FieldOptimization  `json:"oldNewOldDays"`
-	OldNewNewDays  FieldOptimization  `json:"oldNewNewDays"`
-	OldNewOldPerc  FieldOptimization  `json:"oldNewOldPerc"`
-	WinPercDays    FieldOptimization  `json:"winPercDays"`
-	WinPercPerc    FieldOptimization  `json:"winPercPerc"`
-	EquAvgDays     FieldOptimization  `json:"equAvgDays"`
+	PosProLen     FieldOptimization  `json:"posProLen"`
+	OldNewOldLen  FieldOptimization  `json:"oldNewOldLen"`
+	OldNewNewLen  FieldOptimization  `json:"oldNewNewLen"`
+	OldNewOldPerc FieldOptimization  `json:"oldNewOldPerc"`
+	WinPercLen    FieldOptimization  `json:"winPercLen"`
+	WinPercPerc   FieldOptimization  `json:"winPercPerc"`
+	EquAvgLen     FieldOptimization  `json:"equAvgLen"`
 }
 
 //=============================================================================
@@ -88,7 +88,7 @@ func (f *OptimizationRequest) Validate() error {
 
 func (f *OptimizationRequest) stepsCountPosProfit(zero uint) uint {
 	if f.EnablePosProfit {
-		return f.PosProDays.StepsCount()
+		return f.PosProLen.StepsCount()
 	}
 
 	return zero
@@ -98,7 +98,7 @@ func (f *OptimizationRequest) stepsCountPosProfit(zero uint) uint {
 
 func (f *OptimizationRequest) stepsCountOldNew(zero uint) uint {
 	if f.EnableOldNew {
-		return f.OldNewOldDays.StepsCount() * f.OldNewNewDays.StepsCount() * f.OldNewOldPerc.StepsCount()
+		return f.OldNewOldLen.StepsCount() * f.OldNewNewLen.StepsCount() * f.OldNewOldPerc.StepsCount()
 	}
 
 	return zero
@@ -108,7 +108,7 @@ func (f *OptimizationRequest) stepsCountOldNew(zero uint) uint {
 
 func (f *OptimizationRequest) stepsCountWinPerc(zero uint) uint {
 	if f.EnableWinPerc {
-		return f.WinPercDays.StepsCount() * f.WinPercPerc.StepsCount()
+		return f.WinPercLen.StepsCount() * f.WinPercPerc.StepsCount()
 	}
 
 	return zero
@@ -118,7 +118,7 @@ func (f *OptimizationRequest) stepsCountWinPerc(zero uint) uint {
 
 func (f *OptimizationRequest) stepsCountEquAvg(zero uint) uint {
 	if f.EnableEquAvg {
-		return f.EquAvgDays.StepsCount()
+		return f.EquAvgLen.StepsCount()
 	}
 
 	return zero

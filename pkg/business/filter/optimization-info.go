@@ -71,8 +71,8 @@ const TypeEquVsAvg  = "equVsAvg"
 
 type Run struct {
 	FilterType  string  `json:"filterType"`
-	Days        int     `json:"days"`
-	NewDays     int     `json:"newDays"`
+	Length      int     `json:"length"`
+	NewLength   int     `json:"newLength"`
 	Percentage  int     `json:"percentage"`
 	NetProfit   float64 `json:"netProfit"`
 	AvgTrade    float64 `json:"avgTrade"`

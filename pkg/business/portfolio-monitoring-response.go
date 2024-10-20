@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 package business
 
+import "time"
+
 //=============================================================================
 //===
 //=== PortfolioMonitoringResponse
@@ -38,12 +40,11 @@ type PortfolioMonitoringParams struct {
 //=============================================================================
 
 type BaseMonitoring struct {
-	Days        []int      `json:"days"`
-	RawProfit   []float64  `json:"rawProfit"`
-	NetProfit   []float64  `json:"netProfit"`
-	RawDrawdown []float64  `json:"rawDrawdown"`
-	NetDrawdown []float64  `json:"netDrawdown"`
-	NumTrades   []int      `json:"numTrades"`
+	Time          []time.Time `json:"time"`
+	GrossProfit   []float64   `json:"grossProfit"`
+	NetProfit     []float64   `json:"netProfit"`
+	GrossDrawdown []float64   `json:"grossDrawdown"`
+	NetDrawdown   []float64   `json:"netDrawdown"`
 }
 
 //=============================================================================
@@ -58,12 +59,11 @@ type TradingSystemMonitoring struct {
 
 func NewTradingSystemMonitoring(size int) *TradingSystemMonitoring {
 	tsa := &TradingSystemMonitoring{}
-	tsa.Days        = make([]int,     size)
-	tsa.RawProfit   = make([]float64, size)
-	tsa.NetProfit   = make([]float64, size)
-	tsa.RawDrawdown = make([]float64, size)
-	tsa.NetDrawdown = make([]float64, size)
-	tsa.NumTrades   = make([]int,     size)
+	tsa.Time          = make([]time.Time, size)
+	tsa.GrossProfit   = make([]float64,   size)
+	tsa.NetProfit     = make([]float64,   size)
+	tsa.GrossDrawdown = make([]float64,   size)
+	tsa.NetDrawdown   = make([]float64,   size)
 
 	return tsa
 }

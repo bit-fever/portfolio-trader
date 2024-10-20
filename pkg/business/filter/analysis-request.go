@@ -38,16 +38,16 @@ type AnalysisRequest struct {
 
 type TradingFilters struct {
 	EquAvgEnabled   bool   `json:"equAvgEnabled"`
-	EquAvgDays      int    `json:"equAvgDays"`
+	EquAvgLen       int    `json:"equAvgLen"`
 	PosProEnabled   bool   `json:"posProEnabled"`
-	PosProDays      int    `json:"posProDays"`
+	PosProLen       int    `json:"posProLen"`
 	WinPerEnabled   bool   `json:"winPerEnabled"`
-	WinPerDays      int    `json:"winPerDays"`
+	WinPerLen       int    `json:"winPerLen"`
 	WinPerValue     int    `json:"winPerValue"`
 	OldNewEnabled   bool   `json:"oldNewEnabled"`
-	OldNewOldDays   int    `json:"oldNewOldDays"`
+	OldNewOldLen    int    `json:"oldNewOldLen"`
 	OldNewOldPerc   int    `json:"oldNewOldPerc"`
-	OldNewNewDays   int    `json:"oldNewNewDays"`
+	OldNewNewLen    int    `json:"oldNewNewLen"`
 }
 
 //=============================================================================

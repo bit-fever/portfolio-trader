@@ -59,12 +59,12 @@ func getTradingSystems(c *auth.Context) {
 
 //=============================================================================
 
-func getDailyInfo(c *auth.Context) {
+func getTrades(c *auth.Context) {
 	tsId, err := c.GetIdFromUrl()
 
 	if err == nil {
 		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := business.GetDailyInfo(tx, c, tsId)
+			list, err := business.GetTrades(tx, c, tsId)
 
 			if err != nil {
 				return err

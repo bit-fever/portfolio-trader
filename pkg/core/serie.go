@@ -24,21 +24,23 @@ THE SOFTWARE.
 
 package core
 
+import "time"
+
 //=============================================================================
 //===
 //=== Plot
 //===
 //=============================================================================
 
-type Plot struct {
-	Days   []int      `json:"days"`
-	Values []float64  `json:"values"`
+type Serie struct {
+	Time   []time.Time `json:"time"`
+	Values []float64   `json:"values"`
 }
 
 //-----------------------------------------------------------------------------
 
-func (p *Plot) AddPoint(day int, value float64) {
-	p.Days   = append(p.Days,   day)
+func (p *Serie) AddPoint(t time.Time, value float64) {
+	p.Time   = append(p.Time,   t)
 	p.Values = append(p.Values, value)
 }
 
