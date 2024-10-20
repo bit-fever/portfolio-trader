@@ -81,16 +81,16 @@ func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.Trade
 //=============================================================================
 
 func calcUnfilteredEquityAndProfit(e *Equities, ts *db.TradingSystem, tradeList *[]db.Trade) {
-	currProfit    := 0.0
+	netEquity     := 0.0
 	costPerOperat := float64(ts.CostPerOperation)
 
 	for i, t := range *tradeList {
-		currCost   := t.GrossProfit - costPerOperat * 2
-		currProfit += currCost
+		netProfit := t.GrossProfit - costPerOperat * 2
+		netEquity += netProfit
 
 		e.Time[i]             = *t.ExitTime
-		e.UnfilteredEquity[i] = currProfit
-		e.NetProfit[i]        = currCost
+		e.UnfilteredEquity[i] = netEquity
+		e.NetProfit[i]        = netProfit
 	}
 }
 
@@ -113,6 +113,8 @@ func calcAverageEquity(times []time.Time, equity []float64, maLen int) *core.Ser
 				maSum -= equity[i-maLen]
 			}
 			p.AddPoint(t, maSum/float64(maLen))
+		} else {
+			p.AddPoint(t, equity[i])
 		}
 	}
 
@@ -146,19 +148,22 @@ func calcEquAvgActivation(res *AnalysisResponse) *Activation {
 
 	a := Activation{}
 
-	avg     := res.Equities.Average
-	avgDays := res.Filters.EquAvgLen
+	avg := res.Equities.Average
 
 	for i, avgTime := range avg.Time {
-		avgVal := avg.Values[i]
-		equVal := res.Equities.UnfilteredEquity[i + avgDays -1]
-		value  := int8(0)
+		if i == 0 {
+			a.AddPoint(avgTime, 1)
+		} else {
+			avgVal := avg.Values[i]
+			equVal := res.Equities.UnfilteredEquity[i]
+			value  := int8(0)
 
-		if equVal >= avgVal {
-			value = 1
+			if equVal >= avgVal {
+				value = 1
+			}
+
+			a.AddPoint(avgTime, value)
 		}
-
-		a.AddPoint(avgTime, value)
 	}
 
 	return &a
@@ -342,8 +347,11 @@ func calcFilteredEquity(res *AnalysisResponse) {
 	sum := 0.0
 
 	for i, value := range equ.NetProfit {
-		if equ.FilterActivation[i] == 0 {
-			value = float64(0)
+		if i>0 {
+			//--- We have to use the activation at time [i-1]
+			if equ.FilterActivation[i-1] == 0 {
+				value = float64(0)
+			}
 		}
 
 		sum += value
@@ -363,8 +371,8 @@ func calcSummary(res *AnalysisResponse, maxUnfDD, maxFilDD float64) {
 	sum.FilMaxDrawdown = maxFilDD
 	sum.UnfWinningPerc = core.CalcWinningPercentage(res.Equities.NetProfit, nil)
 	sum.FilWinningPerc = core.CalcWinningPercentage(res.Equities.NetProfit, res.Equities.FilterActivation)
-	sum.UnfAverageTrade= core.CalcAverageTrade(res.Equities.NetProfit, nil)
-	sum.FilAverageTrade= core.CalcAverageTrade(res.Equities.NetProfit, res.Equities.FilterActivation)
+	sum.UnfAverageTrade= core.CalcAverageTrade     (res.Equities.NetProfit, nil)
+	sum.FilAverageTrade= core.CalcAverageTrade     (res.Equities.NetProfit, res.Equities.FilterActivation)
 }
 
 //=============================================================================
