@@ -32,15 +32,48 @@ import (
 
 //=============================================================================
 //===
+//=== Filter activation calculation
+//===
+//=============================================================================
+
+func CalcActivation(ts *db.TradingSystem, filter *db.TradingFilter, list []db.Trade) bool {
+	size := len(list)
+
+	if size == 0 {
+		return true
+	}
+
+	//--- Creates slices
+
+	e := &Equities{}
+	e.Time              = make([]time.Time,size)
+	e.NetProfit         = make([]float64,  size)
+	e.UnfilteredEquity  = make([]float64,  size)
+	e.FilterActivation  = make([]int8,     size)
+
+	//--- Calc unfiltered equity and days
+	calcUnfilteredEquityAndProfit(e, ts, &list)
+
+	if filter.EquAvgEnabled {
+		e.Average = calcAverageEquity(e.Time, e.UnfilteredEquity, filter.EquAvgLen)
+	}
+
+	a := calcActivations(e, filter)
+
+	return a.IsLastActive()
+}
+
+//=============================================================================
+//===
 //=== AnalysisResponse building
 //===
 //=============================================================================
 
-func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.Trade) *AnalysisResponse {
+func RunAnalysis(ts *db.TradingSystem, filter *db.TradingFilter, list *[]db.Trade) *AnalysisResponse {
 	res := &AnalysisResponse{}
 	res.TradingSystem.Id   = ts.Id
 	res.TradingSystem.Name = ts.Name
-	res.Filters            = *filters
+	res.Filter             = filter
 
 	//--- Creates slices
 
@@ -62,12 +95,12 @@ func RunAnalysis(ts *db.TradingSystem, filters *TradingFilters, list *[]db.Trade
 	//--- Calc unfiltered equity and days
 	calcUnfilteredEquityAndProfit(e, ts, list)
 
-	if res.Filters.EquAvgEnabled {
-		e.Average = calcAverageEquity(e.Time, e.UnfilteredEquity, res.Filters.EquAvgLen)
+	if res.Filter.EquAvgEnabled {
+		e.Average = calcAverageEquity(e.Time, e.UnfilteredEquity, res.Filter.EquAvgLen)
 	}
 
-	calcActivations(res)
-	calcFilterActivation(res)
+	res.Activations = calcActivations(e, filter)
+	calcFilterActivation(e, res.Activations, filter)
 	calcFilteredEquity(res)
 
 	maxUnfDD := core.CalcDrawDown(&e.UnfilteredEquity, &e.UnfilteredDrawdown)
@@ -132,30 +165,33 @@ func calcAverageEquity(times []time.Time, equity []float64, maLen int) *core.Ser
 //===
 //=============================================================================
 
-func calcActivations(res *AnalysisResponse) {
-	res.Activations.EquityVsAverage   = calcEquAvgActivation   (res)
-	res.Activations.PositiveProfit    = calcPosProfitActivation(res)
-	res.Activations.WinningPercentage = calcWinPercActivation  (res)
-	res.Activations.OldVsNew          = calcOldVsNewActivation (res)
+func calcActivations(e *Equities, f *db.TradingFilter) *Activations {
+	a := &Activations{}
+	a.EquityVsAverage   = calcEquAvgActivation   (e, f)
+	a.PositiveProfit    = calcPosProfitActivation(e, f)
+	a.WinningPercentage = calcWinPercActivation  (e, f)
+	a.OldVsNew          = calcOldVsNewActivation (e, f)
+
+	return a
 }
 
 //=============================================================================
 
-func calcEquAvgActivation(res *AnalysisResponse) *Activation {
-	if !res.Filters.EquAvgEnabled || res.Equities.Average == nil {
+func calcEquAvgActivation(e *Equities, f *db.TradingFilter) *Activation {
+	if !f.EquAvgEnabled || e.Average == nil {
 		return nil
 	}
 
 	a := Activation{}
 
-	avg := res.Equities.Average
+	avg := e.Average
 
 	for i, avgTime := range avg.Time {
 		if i == 0 {
 			a.AddPoint(avgTime, 1)
 		} else {
 			avgVal := avg.Values[i]
-			equVal := res.Equities.UnfilteredEquity[i]
+			equVal := e.UnfilteredEquity[i]
 			value  := int8(0)
 
 			if equVal >= avgVal {
@@ -171,18 +207,18 @@ func calcEquAvgActivation(res *AnalysisResponse) *Activation {
 
 //=============================================================================
 
-func calcPosProfitActivation(res *AnalysisResponse) *Activation {
-	if !res.Filters.PosProEnabled {
+func calcPosProfitActivation(e *Equities, f *db.TradingFilter) *Activation {
+	if !f.PosProEnabled {
 		return nil
 	}
 
 	a := Activation{}
 
 	profSum  := 0.0
-	profDays := res.Filters.PosProLen
-	equity   := res.Equities.UnfilteredEquity
+	profDays := f.PosProLen
+	equity   := e.UnfilteredEquity
 
-	for i, t := range res.Equities.Time {
+	for i, t := range e.Time {
 		if i >= profDays -1 {
 			profSum = equity[i]
 
@@ -209,8 +245,8 @@ func calcPosProfitActivation(res *AnalysisResponse) *Activation {
 
 //=============================================================================
 
-func calcWinPercActivation(res *AnalysisResponse) *Activation {
-	if !res.Filters.WinPerEnabled {
+func calcWinPercActivation(e *Equities, f *db.TradingFilter) *Activation {
+	if !f.WinPerEnabled {
 		return nil
 	}
 
@@ -218,11 +254,11 @@ func calcWinPercActivation(res *AnalysisResponse) *Activation {
 
 	posCount := 0
 	totCount := 0
-	winLen   := res.Filters.WinPerLen
-	percValue:= res.Filters.WinPerValue
-	profits  := res.Equities.NetProfit
+	winLen   := f.WinPerLen
+	percValue:= f.WinPerValue
+	profits  := e.NetProfit
 
-	for i, t := range res.Equities.Time {
+	for i, t := range e.Time {
 		if profits[i] != 0 {
 			totCount++
 
@@ -262,8 +298,8 @@ func calcWinPercActivation(res *AnalysisResponse) *Activation {
 
 //=============================================================================
 
-func calcOldVsNewActivation(res *AnalysisResponse) *Activation {
-	if !res.Filters.OldNewEnabled {
+func calcOldVsNewActivation(e *Equities, f *db.TradingFilter) *Activation {
+	if !f.OldNewEnabled {
 		return nil
 	}
 
@@ -271,12 +307,12 @@ func calcOldVsNewActivation(res *AnalysisResponse) *Activation {
 
 	oldSum  := 0.0
 	newSum  := 0.0
-	oldLen  := res.Filters.OldNewOldLen
-	newLen  := res.Filters.OldNewNewLen
-	equity  := res.Equities.UnfilteredEquity
-	oldPerc := float64(res.Filters.OldNewOldPerc)/100.0
+	oldLen  := f.OldNewOldLen
+	newLen  := f.OldNewNewLen
+	equity  := e.UnfilteredEquity
+	oldPerc := float64(f.OldNewOldPerc)/100.0
 
-	for i, t := range res.Equities.Time {
+	for i, t := range e.Time {
 		//--- New period
 
 		if i >= newLen -1 {
@@ -315,17 +351,13 @@ func calcOldVsNewActivation(res *AnalysisResponse) *Activation {
 
 //=============================================================================
 
-func calcFilterActivation(res *AnalysisResponse) {
-	equ := &res.Equities
-	act := &res.Activations
-	fil := &res.Filters
+func calcFilterActivation(e *Equities, a*Activations, f *db.TradingFilter) {
+	avgEquStrategy  := NewActivationStrategy(a.EquityVsAverage,   f.EquAvgEnabled)
+	posProfStrategy := NewActivationStrategy(a.PositiveProfit,    f.PosProEnabled)
+	winPerStrategy  := NewActivationStrategy(a.WinningPercentage, f.WinPerEnabled)
+	oldNewStrategy  := NewActivationStrategy(a.OldVsNew,          f.OldNewEnabled)
 
-	avgEquStrategy  := NewActivationStrategy(act.EquityVsAverage,   fil.EquAvgEnabled)
-	posProfStrategy := NewActivationStrategy(act.PositiveProfit,    fil.PosProEnabled)
-	winPerStrategy  := NewActivationStrategy(act.WinningPercentage, fil.WinPerEnabled)
-	oldNewStrategy  := NewActivationStrategy(act.OldVsNew,          fil.OldNewEnabled)
-
-	for i, t := range equ.Time {
+	for i, t := range e.Time {
 		//--- These 4 conditions must be standalone. If we use tot := A && B && C && D
 		//--- then B, C, D evaluation can be skipped because the && operator is already satisfied
 
@@ -335,7 +367,7 @@ func calcFilterActivation(res *AnalysisResponse) {
 		oldNew := oldNewStrategy .IsActive(t)
 
 		if avgEqu && posPro && winPer && oldNew {
-			equ.FilterActivation[i] = 1
+			e.FilterActivation[i] = 1
 		}
 	}
 }

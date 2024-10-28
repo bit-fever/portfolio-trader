@@ -138,13 +138,13 @@ func (f *OptimizationProcess) generatePosProfit() bool {
 		slog.Info("generateNotCombined: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
 		for _, posProLen := range f.params.PosProLen.Steps() {
-			filters := &TradingFilters{
+			filter := &db.TradingFilter{
 				PosProEnabled: true,
 				PosProLen: posProLen,
 			}
 
 			go func() {
-				res := RunAnalysis(f.ts, filters, f.data)
+				res := RunAnalysis(f.ts, filter, f.data)
 				f.addResult(TypePosProfit, posProLen, -1, -1, res)
 			}()
 
@@ -169,7 +169,7 @@ func (f *OptimizationProcess) generateOldVsNew() bool {
 		for _, oldNewOldLen := range f.params.OldNewOldLen.Steps() {
 			for _, oldNewNewLen := range f.params.OldNewNewLen.Steps() {
 				for _, oldNewOldPerc := range f.params.OldNewOldPerc.Steps() {
-					filters := &TradingFilters{
+					filter := &db.TradingFilter{
 						OldNewEnabled: true,
 						OldNewOldLen : oldNewOldLen,
 						OldNewNewLen : oldNewNewLen,
@@ -177,7 +177,7 @@ func (f *OptimizationProcess) generateOldVsNew() bool {
 					}
 
 					go func() {
-						res := RunAnalysis(f.ts, filters, f.data)
+						res := RunAnalysis(f.ts, filter, f.data)
 						f.addResult(TypeOldVsNew, oldNewOldLen, oldNewNewLen, oldNewOldPerc, res)
 					}()
 
@@ -203,14 +203,14 @@ func (f *OptimizationProcess) generateWinPerc() bool {
 
 		for _, winPerLen := range f.params.WinPercLen.Steps() {
 			for _, winPerPerc := range f.params.WinPercPerc.Steps() {
-				filters := &TradingFilters{
+				filter := &db.TradingFilter{
 					WinPerEnabled: true,
 					WinPerLen    : winPerLen,
 					WinPerValue  : winPerPerc,
 				}
 
 				go func(){
-					res := RunAnalysis(f.ts, filters, f.data)
+					res := RunAnalysis(f.ts, filter, f.data)
 					f.addResult(TypeWinPerc, winPerLen, -1, winPerPerc, res)
 				}()
 
@@ -234,13 +234,13 @@ func (f *OptimizationProcess) generateEquVsAvg() bool {
 		slog.Info("generateNotCombined: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
 		for _, equAvgLen := range f.params.EquAvgLen.Steps() {
-			filters := &TradingFilters{
+			filter := &db.TradingFilter{
 				EquAvgEnabled: true,
 				EquAvgLen    : equAvgLen,
 			}
 
 			go func(){
-				res := RunAnalysis(f.ts, filters, f.data)
+				res := RunAnalysis(f.ts, filter, f.data)
 				f.addResult(TypeEquVsAvg, equAvgLen, -1, -1, res)
 			}()
 
@@ -280,7 +280,7 @@ func (f *OptimizationProcess) initValues() {
 
 	//--- Run without filters to get the baseline
 
-	res := RunAnalysis(f.ts, &TradingFilters{}, f.data)
+	res := RunAnalysis(f.ts, &db.TradingFilter{}, f.data)
 
 	f.info.BaseValue = f.runComparator.getValue(&res.Summary)
 	f.info.BestValue = f.info.BaseValue

@@ -38,30 +38,64 @@ import (
 //===
 //=============================================================================
 
-const TsStatusEnabled  = "en"
-const TsStatusDisabled = "di"
+type TsActivation int8
 
-//=============================================================================
+const (
+	TsActivationManual TsActivation = 0
+	TsActivationAuto   TsActivation = 1
+)
+
+//-----------------------------------------------------------------------------
+
+type TsStatus int8
+
+const (
+	TsStatusOff     TsStatus = 0
+	TsStatusWaiting TsStatus = 1
+	TsStatusRunning TsStatus = 2
+	TsStatusIdle    TsStatus = 3
+	TsStatusBroken  TsStatus = 4
+)
+
+//-----------------------------------------------------------------------------
+
+type TsSuggAction int8
+
+const (
+	TsActionNone            TsSuggAction = 0
+	TsActionTurnOff         TsSuggAction = 1
+	TsActionTurnOn          TsSuggAction = 2
+	TsActionCheck           TsSuggAction = 3
+	TsActionTurnOffAndCheck TsSuggAction = 4
+	TsActionNoneTurnedOff   TsSuggAction = 5
+	TsActionNoneTurnedOn    TsSuggAction = 6
+)
+
+//-----------------------------------------------------------------------------
 
 type TradingSystem struct {
-	Id               uint        `json:"id" gorm:"primaryKey"`
-	Username         string      `json:"username"`
-	WorkspaceCode    string      `json:"workspaceCode"`
-	Name             string      `json:"name"`
-	Status           string      `json:"status"`
-	FirstTrade       *time.Time  `json:"firstTrade"`
-	LastTrade        *time.Time  `json:"lastTrade"`
-	LmNetProfit      float64     `json:"lmNetProfit"`
-	LmAvgTrade       float64     `json:"lmAvgTrade"`
-	LmNumTrades      int         `json:"lmNumTrades"`
-	BrokerProductId  uint        `json:"brokerProductId"`
-	BrokerSymbol     string      `json:"brokerSymbol"`
-	PointValue       float32     `json:"pointValue"`
-	CostPerOperation float32     `json:"costPerOperation"`
-	MarginValue      float32     `json:"marginValue"`
-	Increment        float64     `json:"increment"`
-	CurrencyId       uint        `json:"currencyId"`
-	CurrencyCode     string      `json:"currencyCode"`
+	Id               uint         `json:"id" gorm:"primaryKey"`
+	Username         string       `json:"username"`
+	WorkspaceCode    string       `json:"workspaceCode"`
+	Name             string       `json:"name"`
+	Running          bool         `json:"running"`
+	Activation       TsActivation `json:"activation"`
+	Active           bool         `json:"active"`
+	Status           TsStatus     `json:"status"`
+	SuggestedAction  TsSuggAction `json:"suggestedAction"`
+	FirstTrade       *time.Time   `json:"firstTrade"`
+	LastTrade        *time.Time   `json:"lastTrade"`
+	LmNetProfit      float64      `json:"lmNetProfit"`
+	LmNetAvgTrade    float64      `json:"lmNetAvgTrade"`
+	LmNumTrades      int          `json:"lmNumTrades"`
+	BrokerProductId  uint         `json:"brokerProductId"`
+	BrokerSymbol     string       `json:"brokerSymbol"`
+	PointValue       float32      `json:"pointValue"`
+	CostPerOperation float32      `json:"costPerOperation"`
+	MarginValue      float32      `json:"marginValue"`
+	Increment        float64      `json:"increment"`
+	CurrencyId       uint         `json:"currencyId"`
+	CurrencyCode     string       `json:"currencyCode"`
 }
 
 //=============================================================================
@@ -75,7 +109,7 @@ type TradingFilter struct {
 	WinPerEnabled   bool   `json:"winPerEnabled"`
 	WinPerLen       int    `json:"winPerLen"`
 	WinPerValue     int    `json:"winPerValue"`
-	OldNewEnabled   bool   `json:"shoLonEnabled"`
+	OldNewEnabled   bool   `json:"oldNewEnabled"`
 	OldNewOldLen    int    `json:"oldNewOldLen"`
 	OldNewOldPerc   int    `json:"oldNewOldPerc"`
 	OldNewNewLen    int    `json:"oldNewNewLen"`
@@ -89,6 +123,8 @@ const (
 	TradeTypeLong  TradeType = 0
 	TradeTypeShort TradeType = 1
 )
+
+//-----------------------------------------------------------------------------
 
 type Trade struct {
 	Id              uint       `json:"id" gorm:"primaryKey"`

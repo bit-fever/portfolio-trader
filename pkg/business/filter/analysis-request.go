@@ -31,12 +31,12 @@ package filter
 //=============================================================================
 
 type AnalysisRequest struct {
-	Filters *TradingFilters  `json:"filters,omitempty"`
+	Filter *TradingFilter  `json:"filter,omitempty"`
 }
 
 //=============================================================================
 
-type TradingFilters struct {
+type TradingFilter struct {
 	EquAvgEnabled   bool   `json:"equAvgEnabled"`
 	EquAvgLen       int    `json:"equAvgLen"`
 	PosProEnabled   bool   `json:"posProEnabled"`

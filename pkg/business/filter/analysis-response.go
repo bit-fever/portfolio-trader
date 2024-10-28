@@ -26,6 +26,7 @@ package filter
 
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"time"
 )
 
@@ -36,11 +37,11 @@ import (
 //=============================================================================
 
 type AnalysisResponse struct {
-	TradingSystem TradingSystem   `json:"tradingSystem"`
-	Filters       TradingFilters  `json:"filters"`
-	Summary       Summary         `json:"summary"`
-	Equities      Equities        `json:"equities"`
-	Activations   Activations     `json:"activations"`
+	TradingSystem TradingSystem     `json:"tradingSystem"`
+	Filter        *db.TradingFilter `json:"filter"`
+	Summary       Summary           `json:"summary"`
+	Equities      Equities          `json:"equities"`
+	Activations   *Activations      `json:"activations"`
 }
 
 //=============================================================================
@@ -90,6 +91,12 @@ func (p *Activation) AddPoint(time time.Time, value int8) {
 	p.Values = append(p.Values, value)
 }
 
+//-----------------------------------------------------------------------------
+
+func (p *Activation) IsLastActive() bool {
+	return p.Values[len(p.Values) -1] != 0
+}
+
 //=============================================================================
 
 type Activations struct {
@@ -97,6 +104,33 @@ type Activations struct {
 	PositiveProfit      *Activation `json:"positiveProfit"`
 	WinningPercentage   *Activation `json:"winningPercentage"`
 	OldVsNew            *Activation `json:"oldVsNew"`
+}
+
+//-----------------------------------------------------------------------------
+
+func (a *Activations) IsLastActive() bool {
+	equVsAvg := true
+	posProf  := true
+	winPerc  := true
+	oldNew   := true
+
+	if a.EquityVsAverage != nil {
+		equVsAvg = a.EquityVsAverage.IsLastActive()
+	}
+
+	if a.PositiveProfit != nil {
+		posProf = a.PositiveProfit.IsLastActive()
+	}
+
+	if a.WinningPercentage != nil {
+		winPerc = a.WinningPercentage.IsLastActive()
+	}
+
+	if a.OldVsNew != nil {
+		oldNew = a.OldVsNew.IsLastActive()
+	}
+
+	return equVsAvg && posProf && winPerc && oldNew
 }
 
 //=============================================================================

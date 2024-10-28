@@ -44,6 +44,7 @@ func Init(router *gin.Engine, cfg *app.Config, logger *slog.Logger) {
 	router.GET   ("/api/portfolio/v1/trading-systems/:id/filters",             ctrl.Secure(getTradingFilters,         roles.Admin_User_Service))
 	router.POST  ("/api/portfolio/v1/trading-systems/:id/filters",             ctrl.Secure(setTradingFilters,         roles.Admin_User_Service))
 	router.POST  ("/api/portfolio/v1/trading-systems/:id/filter-analysis",     ctrl.Secure(runFilterAnalysis,         roles.Admin_User_Service))
+	router.POST  ("/api/portfolio/v1/trading-systems/:id/properties",          ctrl.Secure(setTradingSystemProperty,  roles.Admin_User_Service))
 
 	router.GET   ("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(getFilterOptimizationInfo, roles.Admin_User_Service))
 	router.POST  ("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(startFilterOptimization,   roles.Admin_User_Service))

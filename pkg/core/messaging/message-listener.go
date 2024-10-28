@@ -101,7 +101,10 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 
 		if ts == nil {
 			ts = &db.TradingSystem{}
-			ts.Status = db.TsStatusDisabled
+			ts.Running    = false
+			ts.Activation = db.TsActivationManual
+			ts.Status     = db.TsStatusOff
+			ts.Active     = false
 		} else {
 			if ts.Username != tsm.TradingSystem.Username {
 				slog.Error("Trading system '%v' not owned by user '%v'! Dropping message", tsm.TradingSystem.Id, tsm.TradingSystem.Username)

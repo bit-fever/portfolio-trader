@@ -103,7 +103,7 @@ func setTradingFilters(c *auth.Context) {
 	tsId, err := c.GetIdFromUrl()
 
 	if err == nil {
-		filters := filter.TradingFilters{}
+		filters := filter.TradingFilter{}
 		err = c.BindParamsFromBody(&filters)
 
 		if err == nil {

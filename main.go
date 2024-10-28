@@ -29,6 +29,7 @@ import (
 	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/app"
+	"github.com/bit-fever/portfolio-trader/pkg/core/manager"
 	"github.com/bit-fever/portfolio-trader/pkg/core/messaging"
 	"github.com/bit-fever/portfolio-trader/pkg/core/sync"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
@@ -52,6 +53,7 @@ func main() {
 	msg.InitMessaging(&cfg.Messaging)
 	service.Init(engine, cfg, logger)
 	sync.InitPeriodicScan(cfg)
+	manager.InitTradingSystemManager(cfg)
 	messaging.InitMessageListener()
 	boot.RunHttpServer(engine, &cfg.Application)
 }

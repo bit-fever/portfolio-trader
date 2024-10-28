@@ -78,8 +78,28 @@ func GetTradingSystemByName(tx *gorm.DB, name string) (*TradingSystem, error) {
 
 //=============================================================================
 
-func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
-	return tx.Save(ts).Error
+func GetTradingSystemsByUser(tx *gorm.DB, name string) (*[]TradingSystem, error) {
+	var list []TradingSystem
+	res := tx.Find(&list, "username = ?", name)
+
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	return &list, nil
+}
+
+//=============================================================================
+
+func GetUsersWithTradingSystems(tx *gorm.DB) ([]string, error) {
+	var list []string
+	res := tx.Table("trading_system").Distinct("username").Scan(&list)
+
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	return list, nil
 }
 
 //=============================================================================
@@ -100,6 +120,12 @@ func GetTradingSystemsByIdsAsMap(tx *gorm.DB, ids []uint) (map[uint]*TradingSyst
 	}
 
 	return tsMap, nil
+}
+
+//=============================================================================
+
+func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
+	return tx.Save(ts).Error
 }
 
 //=============================================================================

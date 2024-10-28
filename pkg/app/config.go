@@ -42,6 +42,10 @@ type Config struct {
 		Address string
 		PeriodHour time.Duration
 	}
+
+	Update struct {
+		PeriodHour time.Duration
+	}
 }
 
 //=============================================================================

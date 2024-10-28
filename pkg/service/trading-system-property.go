@@ -22,64 +22,38 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package service
 
 import (
-	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/core/auth"
+	"github.com/bit-fever/portfolio-trader/pkg/business"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func GetTradingFiltersByTsId(tx *gorm.DB, tsId uint) (*TradingFilter, error) {
-	var list []TradingFilter
+func setTradingSystemProperty(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
 
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
+	if err == nil {
+		req := business.TradingSystemPropertyRequest{}
+		err = c.BindParamsFromBody(&req)
 
-	res := tx.Where(filter).Find(&list)
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.SetTradingSystemProperty(tx, c, tsId, &req)
 
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(rep)
+			})
+		}
 	}
 
-	if len(list) == 0 {
-		return &TradingFilter{
-			TradingSystemId : tsId,
-			EquAvgLen       :   30,
-			PosProLen       :   45,
-			WinPerLen       :   45,
-			WinPerValue     :   30,
-			OldNewOldLen    :   45,
-			OldNewOldPerc   :   90,
-			OldNewNewLen    :   45,
-		}, nil
-	}
-
-	return &list[0], nil
-}
-
-//=============================================================================
-
-func GetTradingFiltersByTsIds(tx *gorm.DB, tsIds []uint) (*[]TradingFilter, error) {
-	var list []TradingFilter
-
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsIds
-
-	res := tx.Where(filter).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
-}
-
-//=============================================================================
-
-func SetTradingFilters(tx *gorm.DB, tf *TradingFilter) {
-	tx.Save(tf)
+	c.ReturnError(err)
 }
 
 //=============================================================================
