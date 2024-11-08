@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,40 +22,30 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package runtime
 
 import (
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
 )
 
 //=============================================================================
 
-func GetTradingFilterByTsId(tx *gorm.DB, tsId uint) (*TradingFilter, error) {
-	var list []TradingFilter
-
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
-
-	res := tx.Where(filter).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	if len(list) == 0 {
-		return &TradingFilter{
-			TradingSystemId : tsId,
-		}, nil
-	}
-
-	return &list[0], nil
+type TradeMessage struct {
+	TradingSystemId uint     `json:"tradingSystemId"`
+	Trades          []*Trade `json:"trades"`
 }
 
 //=============================================================================
 
-func SetTradingFilter(tx *gorm.DB, tf *TradingFilter) {
-	tx.Save(tf)
+type Trade struct {
+	TradeType       db.TradeType `json:"tradeType"`
+	EntryTime       *time.Time   `json:"entryTime"`
+	EntryValue      float64      `json:"entryValue"`
+	ExitTime        *time.Time   `json:"exitTime"`
+	ExitValue       float64      `json:"exitValue"`
+	GrossProfit     float64      `json:"grossProfit"`
+	NumContracts    int          `json:"numContracts"`
 }
 
 //=============================================================================

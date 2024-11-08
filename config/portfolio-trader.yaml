@@ -18,5 +18,3 @@ messaging:
 scan:
   address: https://158.69.26.216:8443/api/v1/strategies
   periodHour: 2
-update:
-  periodHour: 24

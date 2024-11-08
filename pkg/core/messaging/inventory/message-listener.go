@@ -22,7 +22,7 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package messaging
+package inventory
 
 import (
 	"encoding/json"
@@ -35,55 +35,53 @@ import (
 //=============================================================================
 
 func InitMessageListener() {
-	slog.Info("Starting message listeners...")
+	slog.Info("Starting inventory message listener...")
 
-	go msg.ReceiveMessages(msg.QuInventoryUpdatesToPortfolio, handleMessage)
+	go msg.ReceiveMessages(msg.QuInventoryToPortfolio, handleMessage)
 }
 
 //=============================================================================
 
 func handleMessage(m *msg.Message) bool {
 
-	slog.Info("New message received", "origin", m.Origin, "type", m.Type, "source", m.Source)
+	slog.Info("New message received", "source", m.Source, "type", m.Type)
 
-	if m.Origin == msg.OriginDb {
-		if m.Source == msg.SourceTradingSystem {
-			tsm := TradingSystemMessage{}
-			err := json.Unmarshal(m.Entity, &tsm)
-			if err != nil {
-				slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
-				return true
-			}
-
-			if m.Type == msg.TypeCreate {
-				return setTradingSystem(&tsm, true)
-			}
-			if m.Type == msg.TypeUpdate {
-				return setTradingSystem(&tsm, false)
-			}
-		} else if m.Source == msg.SourceBrokerProduct {
-			pbm := BrokerProductMessage{}
-			err := json.Unmarshal(m.Entity, &pbm)
-			if err != nil {
-				slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
-				return true
-			}
-
-			if m.Type == msg.TypeCreate {
-				//--- If the broker product is new, there are no trading systems to update. Just return 'true'
-				return true
-			}
-
-			if m.Type == msg.TypeUpdate {
-				return updateBrokerProduct(&pbm)
-			}
-		} else if m.Source == msg.SourceDataProduct {
-			//--- We are not interested into data products
+	if m.Source == msg.SourceTradingSystem {
+		tsm := TradingSystemMessage{}
+		err := json.Unmarshal(m.Entity, &tsm)
+		if err != nil {
+			slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
 			return true
 		}
+
+		if m.Type == msg.TypeCreate {
+			return setTradingSystem(&tsm, true)
+		}
+		if m.Type == msg.TypeUpdate {
+			return setTradingSystem(&tsm, false)
+		}
+	} else if m.Source == msg.SourceBrokerProduct {
+		pbm := BrokerProductMessage{}
+		err := json.Unmarshal(m.Entity, &pbm)
+		if err != nil {
+			slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
+			return true
+		}
+
+		if m.Type == msg.TypeCreate {
+			//--- If the broker product is new, there are no trading systems to update. Just return 'true'
+			return true
+		}
+
+		if m.Type == msg.TypeUpdate {
+			return updateBrokerProduct(&pbm)
+		}
+	} else if m.Source == msg.SourceDataProduct {
+		//--- We are not interested into data products
+		return true
 	}
 
-	slog.Error("Dropping message with unknown origin/type!", "origin", m.Origin, "type", m.Type)
+	slog.Error("Dropping message with unknown source/type!", "source", m.Source, "type", m.Type)
 	return true
 }
 

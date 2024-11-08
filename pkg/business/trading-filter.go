@@ -40,7 +40,7 @@ func GetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingFilt
 		return nil, err
 	}
 
-	return db.GetTradingFiltersByTsId(tx, tsId)
+	return db.GetTradingFilterByTsId(tx, tsId)
 }
 
 //=============================================================================
@@ -51,7 +51,7 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.Tradin
 		return err
 	}
 
-	db.SetTradingFilters(tx, &db.TradingFilter{
+	db.SetTradingFilter(tx, &db.TradingFilter{
 		TradingSystemId: tsId,
 		EquAvgEnabled  : f.EquAvgEnabled,
 		EquAvgLen      : f.EquAvgLen,
@@ -81,7 +81,7 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.Anal
 	var filters *db.TradingFilter
 
 	if far.Filter == nil {
-		filters, err = db.GetTradingFiltersByTsId(tx, tsId)
+		filters, err = db.GetTradingFilterByTsId(tx, tsId)
 		if err != nil {
 			return nil, err
 		}

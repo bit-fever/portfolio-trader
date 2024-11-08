@@ -51,7 +51,7 @@ type TsStatus int8
 
 const (
 	TsStatusOff     TsStatus = 0
-	TsStatusWaiting TsStatus = 1
+	TsStatusPaused  TsStatus = 1
 	TsStatusRunning TsStatus = 2
 	TsStatusIdle    TsStatus = 3
 	TsStatusBroken  TsStatus = 4
@@ -85,6 +85,7 @@ type TradingSystem struct {
 	SuggestedAction  TsSuggAction `json:"suggestedAction"`
 	FirstTrade       *time.Time   `json:"firstTrade"`
 	LastTrade        *time.Time   `json:"lastTrade"`
+	LastUpdate       *time.Time   `json:"lastUpdate"`
 	LmNetProfit      float64      `json:"lmNetProfit"`
 	LmNetAvgTrade    float64      `json:"lmNetAvgTrade"`
 	LmNumTrades      int          `json:"lmNumTrades"`

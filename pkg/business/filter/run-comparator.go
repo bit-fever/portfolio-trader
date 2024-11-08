@@ -66,6 +66,13 @@ func NewRunComparator(field string) *RunComparator {
 		}
 	}
 
+	if field == FieldToOptimizeNetProfitAndAvgTrade {
+		return &RunComparator{
+			compare : compareNetProfitAndAvgTrade,
+			getValue: func(s *Summary) float64{ return s.FilMaxDrawdown },
+		}
+	}
+
 	return nil
 }
 
@@ -107,18 +114,33 @@ func compareDrawDown(a any, b any) int {
 
 //=============================================================================
 
+func compareNetProfitAndAvgTrade(a any, b any) int {
+	v1 := a.(*Run)
+	v2 := b.(*Run)
+
+	if v1.NetProfit*v1.AvgTrade < v2.NetProfit*v2.AvgTrade { return +1 }
+	if v1.NetProfit*v1.AvgTrade > v2.NetProfit*v2.AvgTrade { return -1 }
+
+	return compareOtherFields(v1, v2)
+}
+
+//=============================================================================
+
 func compareOtherFields(a,b *Run) int {
-	if a.FilterType < b.FilterType { return -1 }
-	if a.FilterType > b.FilterType { return +1 }
+	//--- Let's give priority to higher values
 
-	if a.Length < b.Length { return -1 }
-	if a.Length > b.Length { return +1 }
+	if a.Length < b.Length { return +1 }
+	if a.Length > b.Length { return -1 }
 
-	if a.NewLength < b.NewLength { return -1 }
-	if a.NewLength > b.NewLength { return +1 }
+	//--- Let's give priority to higher values
 
-	if a.Percentage < b.Percentage { return -1 }
-	if a.Percentage > b.Percentage { return +1 }
+	if a.NewLength < b.NewLength { return +1 }
+	if a.NewLength > b.NewLength { return -1 }
+
+	//--- Let's give priority to higher percentages
+
+	if a.Percentage < b.Percentage { return +1 }
+	if a.Percentage > b.Percentage { return -1 }
 
 	return 0
 }

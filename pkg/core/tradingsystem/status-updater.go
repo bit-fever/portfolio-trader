@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,40 +22,27 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package tradingsystem
 
 import (
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
 )
 
 //=============================================================================
 
-func GetTradingFilterByTsId(tx *gorm.DB, tsId uint) (*TradingFilter, error) {
-	var list []TradingFilter
+func UpdateStatus(ts *db.TradingSystem) {
+	now := time.Now()
+	ts.SuggestedAction = db.TsActionNone
+	ts.LastUpdate      = &now
 
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
-
-	res := tx.Where(filter).Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
+	if ! ts.Running {
+		ts.Status = db.TsStatusOff
+	} else if ts.Active {
+		ts.Status = db.TsStatusRunning
+	} else {
+		ts.Status = db.TsStatusPaused
 	}
-
-	if len(list) == 0 {
-		return &TradingFilter{
-			TradingSystemId : tsId,
-		}, nil
-	}
-
-	return &list[0], nil
 }
 
-//=============================================================================
-
-func SetTradingFilter(tx *gorm.DB, tf *TradingFilter) {
-	tx.Save(tf)
-}
-
-//=============================================================================
+//============================================================================

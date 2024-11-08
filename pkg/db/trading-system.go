@@ -27,6 +27,7 @@ package db
 import (
 	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
+	"time"
 )
 
 //=============================================================================
@@ -120,6 +121,25 @@ func GetTradingSystemsByIdsAsMap(tx *gorm.DB, ids []uint) (map[uint]*TradingSyst
 	}
 
 	return tsMap, nil
+}
+
+//=============================================================================
+
+func GetTradingSystemsInIdle(tx *gorm.DB, days int) (*[]TradingSystem, error) {
+	var list []TradingSystem
+	date := time.Now().Add(-time.Hour * 24 * time.Duration(days))
+
+	res := tx.
+		Where("running    = ?", true).
+		Where("active     = ?", true).
+		Where("last_trade < ?", date).
+		Find(&list)
+
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	return &list, nil
 }
 
 //=============================================================================

@@ -32,9 +32,10 @@ import "errors"
 //===
 //=============================================================================
 
-const FieldToOptimizeNetProfit = "net-profit"
-const FieldToOptimizeAvgTrade  = "avg-trade"
-const FieldToOptimizeDrawDown  = "drawdown"
+const FieldToOptimizeNetProfit            = "net-profit"
+const FieldToOptimizeAvgTrade             = "avg-trade"
+const FieldToOptimizeDrawDown             = "drawdown"
+const FieldToOptimizeNetProfitAndAvgTrade = "net-profit*avg-trade"
 
 //=============================================================================
 
@@ -75,7 +76,8 @@ func (f *OptimizationRequest) StepsCount() uint {
 func (f *OptimizationRequest) Validate() error {
 	if  f.FieldToOptimize != FieldToOptimizeNetProfit &&
 		f.FieldToOptimize != FieldToOptimizeAvgTrade &&
-		f.FieldToOptimize != FieldToOptimizeDrawDown {
+		f.FieldToOptimize != FieldToOptimizeDrawDown &&
+		f.FieldToOptimize != FieldToOptimizeNetProfitAndAvgTrade {
 		return errors.New("Invalid field to optimize: "+ f.FieldToOptimize)
 	}
 

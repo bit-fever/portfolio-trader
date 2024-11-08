@@ -27,6 +27,7 @@ package business
 import (
 	"errors"
 	"github.com/bit-fever/core/auth"
+	"github.com/bit-fever/portfolio-trader/pkg/core/tradingsystem"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
@@ -104,16 +105,23 @@ func handleRunningProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem, v
 		}, nil
 	}
 
+
 	if !oldValue && newValue {
 		//--- Enabling
-		c.Log.Info("handleRunningProperty: Enabling trading system", "tsId", ts.Id)
+		c.Log.Info("handleRunningProperty: Starting trading system", "tsId", ts.Id)
 	} else {
 		//--- Disabling
-		c.Log.Info("handleRunningProperty: Disabling trading system", "tsId", ts.Id)
+		c.Log.Info("handleRunningProperty: Stopping trading system", "tsId", ts.Id)
 	}
 
 	ts.Running = newValue
+	tradingsystem.UpdateStatus(ts)
 	err = db.UpdateTradingSystem(tx, ts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateRewind(ts)
 
 	return &TradingSystemPropertyResponse{
 		Status: ResponseStatusOk,
@@ -172,16 +180,29 @@ func handleActiveProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem, va
 		}, nil
 	}
 
+	if ts.Activation == db.TsActivationAuto {
+		return &TradingSystemPropertyResponse{
+			Status : ResponseStatusError,
+			Message: "Trading system is in AUTOMATIC mode. Switch to MANUAL to pause",
+		}, nil
+	}
+
 	if !oldValue && newValue {
 		//--- Activating
 		c.Log.Info("handleActiveProperty: Activating trading system", "tsId", ts.Id)
 	} else {
 		//--- Deactivating
-		c.Log.Info("handleActiveProperty: Deactivating trading system", "tsId", ts.Id)
+		c.Log.Info("handleActiveProperty: Pausing trading system", "tsId", ts.Id)
 	}
 
 	ts.Active = newValue
+	tradingsystem.UpdateStatus(ts)
 	err = db.UpdateTradingSystem(tx, ts)
+	if err != nil {
+		return nil, err
+	}
+
+	err = updateRewind(ts)
 
 	return &TradingSystemPropertyResponse{
 		Status: ResponseStatusOk,
@@ -212,6 +233,12 @@ func getActivation(value string) (db.TsActivation, error) {
 	}
 
 	return 0, errors.New("Unknown activation value : "+ value)
+}
+
+//=============================================================================
+
+func updateRewind(ts *db.TradingSystem) error {
+	return nil
 }
 
 //=============================================================================
