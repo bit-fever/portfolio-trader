@@ -51,7 +51,7 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.Tradin
 		return err
 	}
 
-	db.SetTradingFilter(tx, &db.TradingFilter{
+	return db.SetTradingFilter(tx, &db.TradingFilter{
 		TradingSystemId: tsId,
 		EquAvgEnabled  : f.EquAvgEnabled,
 		EquAvgLen      : f.EquAvgLen,
@@ -65,8 +65,6 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.Tradin
 		OldNewOldPerc  : f.OldNewOldPerc,
 		OldNewNewLen   : f.OldNewNewLen,
 	})
-
-	return nil
 }
 
 //=============================================================================

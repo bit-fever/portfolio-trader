@@ -54,8 +54,10 @@ func GetTradingFilterByTsId(tx *gorm.DB, tsId uint) (*TradingFilter, error) {
 
 //=============================================================================
 
-func SetTradingFilter(tx *gorm.DB, tf *TradingFilter) {
-	tx.Save(tf)
+func SetTradingFilter(tx *gorm.DB, tf *TradingFilter) error {
+	res := tx.Save(tf)
+
+	return res.Error
 }
 
 //=============================================================================
