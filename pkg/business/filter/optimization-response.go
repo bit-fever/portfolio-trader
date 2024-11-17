@@ -50,6 +50,7 @@ type OptimizationResponse struct {
 		OldVsNew  bool `json:"oldVsNew"`
 		WinPerc   bool `json:"winPerc"`
 		EquVsAvg  bool `json:"equVsAvg"`
+		Trendline bool `json:"trendline"`
 	} `json:"filters"`
 }
 
@@ -70,6 +71,7 @@ func NewOptimizationResponse(info *OptimizationInfo) *OptimizationResponse {
 	or.Filters.OldVsNew  = info.Filters.OldVsNew
 	or.Filters.WinPerc   = info.Filters.WinPerc
 	or.Filters.EquVsAvg  = info.Filters.EquVsAvg
+	or.Filters.Trendline = info.Filters.Trendline
 
 	or.Runs     = info.GetRuns()
 	or.Duration = int64(time.Now().Sub(info.StartTime).Seconds())

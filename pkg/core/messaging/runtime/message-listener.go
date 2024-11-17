@@ -29,6 +29,7 @@ import (
 	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/bit-fever/portfolio-trader/pkg/core/tradingsystem"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
@@ -154,6 +155,16 @@ func toDbTrade(tsId uint, t *Trade) *db.Trade {
 func updateTradingSystem(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, filter *db.TradingFilter) error {
 	updateLastMonthStats(ts, trades)
 	updateActivationStatus(ts, trades, filter)
+
+	//--- If we got new trades, probably we have to set an idle/broken state to running
+
+	if ts.Status == db.TsStatusIdle || ts.Status == db.TsStatusBroken {
+		idleStart := time.Now().Add(-time.Hour * 24 * time.Duration(tradingsystem.IdleDays))
+
+		if ts.LastTrade.After(idleStart) {
+			ts.Status = db.TsStatusRunning
+		}
+	}
 
 	now := time.Now()
 	ts.LastUpdate = &now

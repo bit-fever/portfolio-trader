@@ -102,18 +102,21 @@ type TradingSystem struct {
 //=============================================================================
 
 type TradingFilter struct {
-	TradingSystemId uint   `json:"tradingSystemId" gorm:"primaryKey"`
-	EquAvgEnabled   bool   `json:"equAvgEnabled"`
-	EquAvgLen       int    `json:"equAvgLen"`
-	PosProEnabled   bool   `json:"posProEnabled"`
-	PosProLen       int    `json:"posProLen"`
-	WinPerEnabled   bool   `json:"winPerEnabled"`
-	WinPerLen       int    `json:"winPerLen"`
-	WinPerValue     int    `json:"winPerValue"`
-	OldNewEnabled   bool   `json:"oldNewEnabled"`
-	OldNewOldLen    int    `json:"oldNewOldLen"`
-	OldNewOldPerc   int    `json:"oldNewOldPerc"`
-	OldNewNewLen    int    `json:"oldNewNewLen"`
+	TradingSystemId  uint   `json:"tradingSystemId" gorm:"primaryKey"`
+	EquAvgEnabled    bool   `json:"equAvgEnabled"`
+	EquAvgLen        int    `json:"equAvgLen"`
+	PosProEnabled    bool   `json:"posProEnabled"`
+	PosProLen        int    `json:"posProLen"`
+	WinPerEnabled    bool   `json:"winPerEnabled"`
+	WinPerLen        int    `json:"winPerLen"`
+	WinPerValue      int    `json:"winPerValue"`
+	OldNewEnabled    bool   `json:"oldNewEnabled"`
+	OldNewOldLen     int    `json:"oldNewOldLen"`
+	OldNewOldPerc    int    `json:"oldNewOldPerc"`
+	OldNewNewLen     int    `json:"oldNewNewLen"`
+	TrendlineEnabled bool   `json:"trendlineEnabled"`
+	TrendlineLen     int    `json:"trendlineLen"`
+	TrendlineValue   int    `json:"trendlineValue"`
 }
 
 //=============================================================================

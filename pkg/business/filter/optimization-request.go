@@ -45,15 +45,18 @@ type OptimizationRequest struct {
 	EnableOldNew    bool   `json:"enableOldNew"`
 	EnableWinPerc   bool   `json:"enableWinPerc"`
 	EnableEquAvg    bool   `json:"enableEquAvg"`
+	EnableTrendline bool   `json:"enableTrendline"`
 	CombineFilters  bool   `json:"combineFilters"`
 
-	PosProLen     FieldOptimization  `json:"posProLen"`
-	OldNewOldLen  FieldOptimization  `json:"oldNewOldLen"`
-	OldNewNewLen  FieldOptimization  `json:"oldNewNewLen"`
-	OldNewOldPerc FieldOptimization  `json:"oldNewOldPerc"`
-	WinPercLen    FieldOptimization  `json:"winPercLen"`
-	WinPercPerc   FieldOptimization  `json:"winPercPerc"`
-	EquAvgLen     FieldOptimization  `json:"equAvgLen"`
+	PosProLen      FieldOptimization  `json:"posProLen"`
+	OldNewOldLen   FieldOptimization  `json:"oldNewOldLen"`
+	OldNewNewLen   FieldOptimization  `json:"oldNewNewLen"`
+	OldNewOldPerc  FieldOptimization  `json:"oldNewOldPerc"`
+	WinPercLen     FieldOptimization  `json:"winPercLen"`
+	WinPercPerc    FieldOptimization  `json:"winPercPerc"`
+	EquAvgLen      FieldOptimization  `json:"equAvgLen"`
+	TrendlineLen   FieldOptimization  `json:"trendlineLen"`
+	TrendlineValue FieldOptimization  `json:"trendlineValue"`
 }
 
 //=============================================================================
@@ -63,12 +66,14 @@ func (f *OptimizationRequest) StepsCount() uint {
 		return	f.stepsCountPosProfit(1) *
 				f.stepsCountOldNew   (1) *
 				f.stepsCountWinPerc  (1) *
-				f.stepsCountEquAvg   (1)
+				f.stepsCountEquAvg   (1) *
+				f.stepsCountTrendline(1)
 	} else {
 		return	f.stepsCountPosProfit(0) +
 				f.stepsCountOldNew   (0) +
 				f.stepsCountWinPerc  (0) +
-				f.stepsCountEquAvg   (0)
+				f.stepsCountEquAvg   (0) +
+				f.stepsCountTrendline(0)
 	}
 }
 //=============================================================================
@@ -121,6 +126,16 @@ func (f *OptimizationRequest) stepsCountWinPerc(zero uint) uint {
 func (f *OptimizationRequest) stepsCountEquAvg(zero uint) uint {
 	if f.EnableEquAvg {
 		return f.EquAvgLen.StepsCount()
+	}
+
+	return zero
+}
+
+//=============================================================================
+
+func (f *OptimizationRequest) stepsCountTrendline(zero uint) uint {
+	if f.EnableTrendline {
+		return f.TrendlineLen.StepsCount() * f.TrendlineValue.StepsCount()
 	}
 
 	return zero

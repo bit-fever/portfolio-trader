@@ -59,6 +59,7 @@ type OptimizationInfo struct {
 		OldVsNew  bool
 		WinPerc   bool
 		EquVsAvg  bool
+		Trendline bool
 	}
 }
 
@@ -68,6 +69,7 @@ const TypePosProfit = "posProfit"
 const TypeOldVsNew  = "oldVsNew"
 const TypeWinPerc   = "winPerc"
 const TypeEquVsAvg  = "equVsAvg"
+const TypeTrendline = "trendline"
 
 type Run struct {
 	FilterType  string  `json:"filterType"`

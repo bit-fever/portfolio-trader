@@ -171,6 +171,7 @@ func calcActivations(e *Equities, f *db.TradingFilter) *Activations {
 	a.PositiveProfit    = calcPosProfitActivation(e, f)
 	a.WinningPercentage = calcWinPercActivation  (e, f)
 	a.OldVsNew          = calcOldVsNewActivation (e, f)
+	a.Trendline         = calcTrendlineActivation(e, f)
 
 	return a
 }
@@ -351,11 +352,45 @@ func calcOldVsNewActivation(e *Equities, f *db.TradingFilter) *Activation {
 
 //=============================================================================
 
+func calcTrendlineActivation(e *Equities, f *db.TradingFilter) *Activation {
+	if !f.TrendlineEnabled {
+		return nil
+	}
+
+	a := Activation{}
+
+	trendLen:= f.TrendlineLen
+	thresh  := float64(f.TrendlineValue) / 100
+	equity  := e.UnfilteredEquity
+
+	for i, t := range e.Time {
+		if i >= trendLen -1 {
+			slope := core.LinearRegression(e.Time[i -trendLen +1:i], equity[i -trendLen +1:i])
+			value := int8(0)
+
+			if slope >= thresh {
+				value = 1
+			}
+			a.AddPoint(t, value)
+		}
+	}
+
+	//--- If we can't calculate the average (days is too high), just return nil
+	if a.Time == nil {
+		return nil
+	}
+
+	return &a
+}
+
+//=============================================================================
+
 func calcFilterActivation(e *Equities, a*Activations, f *db.TradingFilter) {
 	avgEquStrategy  := NewActivationStrategy(a.EquityVsAverage,   f.EquAvgEnabled)
 	posProfStrategy := NewActivationStrategy(a.PositiveProfit,    f.PosProEnabled)
 	winPerStrategy  := NewActivationStrategy(a.WinningPercentage, f.WinPerEnabled)
 	oldNewStrategy  := NewActivationStrategy(a.OldVsNew,          f.OldNewEnabled)
+	trendStrategy   := NewActivationStrategy(a.Trendline,         f.TrendlineEnabled)
 
 	for i, t := range e.Time {
 		//--- These 4 conditions must be standalone. If we use tot := A && B && C && D
@@ -365,8 +400,9 @@ func calcFilterActivation(e *Equities, a*Activations, f *db.TradingFilter) {
 		posPro := posProfStrategy.IsActive(t)
 		winPer := winPerStrategy .IsActive(t)
 		oldNew := oldNewStrategy .IsActive(t)
+		trend  := trendStrategy  .IsActive(t)
 
-		if avgEqu && posPro && winPer && oldNew {
+		if avgEqu && posPro && winPer && oldNew && trend {
 			e.FilterActivation[i] = 1
 		}
 	}

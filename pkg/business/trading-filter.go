@@ -51,20 +51,10 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.Tradin
 		return err
 	}
 
-	return db.SetTradingFilter(tx, &db.TradingFilter{
-		TradingSystemId: tsId,
-		EquAvgEnabled  : f.EquAvgEnabled,
-		EquAvgLen      : f.EquAvgLen,
-		PosProEnabled  : f.PosProEnabled,
-		PosProLen      : f.PosProLen,
-		WinPerEnabled  : f.WinPerEnabled,
-		WinPerLen      : f.WinPerLen,
-		WinPerValue    : f.WinPerValue,
-		OldNewEnabled  : f.OldNewEnabled,
-		OldNewOldLen   : f.OldNewOldLen,
-		OldNewOldPerc  : f.OldNewOldPerc,
-		OldNewNewLen   : f.OldNewNewLen,
-	})
+	tf := convert(f)
+	tf.TradingSystemId = tsId
+
+	return db.SetTradingFilter(tx, tf)
 }
 
 //=============================================================================
@@ -161,17 +151,20 @@ func getTradingSystem(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingSyste
 
 func convert(f *filter.TradingFilter) *db.TradingFilter {
 	return &db.TradingFilter{
-		EquAvgEnabled : f.EquAvgEnabled,
-		EquAvgLen     : f.EquAvgLen,
-		PosProEnabled : f.PosProEnabled,
-		PosProLen     : f.PosProLen,
-		WinPerEnabled : f.WinPerEnabled,
-		WinPerLen     : f.WinPerLen,
-		WinPerValue   : f.WinPerValue,
-		OldNewEnabled : f.OldNewEnabled,
-		OldNewOldLen  : f.OldNewOldLen,
-		OldNewOldPerc : f.OldNewOldPerc,
-		OldNewNewLen  : f.OldNewNewLen,
+		EquAvgEnabled   : f.EquAvgEnabled,
+		EquAvgLen       : f.EquAvgLen,
+		PosProEnabled   : f.PosProEnabled,
+		PosProLen       : f.PosProLen,
+		WinPerEnabled   : f.WinPerEnabled,
+		WinPerLen       : f.WinPerLen,
+		WinPerValue     : f.WinPerValue,
+		OldNewEnabled   : f.OldNewEnabled,
+		OldNewOldLen    : f.OldNewOldLen,
+		OldNewOldPerc   : f.OldNewOldPerc,
+		OldNewNewLen    : f.OldNewNewLen,
+		TrendlineEnabled: f.TrendlineEnabled,
+		TrendlineLen    : f.TrendlineLen,
+		TrendlineValue  : f.TrendlineValue,
 	}
 }
 

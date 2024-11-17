@@ -118,8 +118,22 @@ func compareNetProfitAndAvgTrade(a any, b any) int {
 	v1 := a.(*Run)
 	v2 := b.(*Run)
 
-	if v1.NetProfit*v1.AvgTrade < v2.NetProfit*v2.AvgTrade { return +1 }
-	if v1.NetProfit*v1.AvgTrade > v2.NetProfit*v2.AvgTrade { return -1 }
+	n1 := v1.NetProfit*v1.AvgTrade
+	n2 := v2.NetProfit*v2.AvgTrade
+
+	//--- We have to push down results where both netProfit and avgTrade are negative
+	//--- because their product is positive
+
+	if v1.NetProfit < 0 && v1.AvgTrade < 0 {
+		n1 *= -1
+	}
+
+	if v2.NetProfit < 0 && v2.AvgTrade < 0 {
+		n2 *= -1
+	}
+
+	if n1 < n2 { return +1 }
+	if n1 > n2 { return -1 }
 
 	return compareOtherFields(v1, v2)
 }

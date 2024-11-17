@@ -24,10 +24,68 @@ THE SOFTWARE.
 
 package core
 
+import "time"
+
 //=============================================================================
 
 func Trunc2d(value float64) float64 {
 	return float64(int(value * 100)) / 100
+}
+
+//=============================================================================
+
+func LinearRegression(x []time.Time, y []float64) float64 {
+	xAxis := calcXAxis(x)
+	xMean := calcMean(xAxis)
+	yMean := calcMean(y)
+
+	num := 0.0
+	den := 0.0
+	aux := 0.0
+
+	for i,_ := range y {
+		aux = xAxis[i] - xMean
+		num += aux * (y[i] - yMean)
+		den += aux * aux
+	}
+
+	return num / den
+}
+
+//=============================================================================
+//===
+//=== Private functions
+//===
+//=============================================================================
+
+func calcXAxis(time []time.Time) []float64 {
+	var x []float64
+
+	for _, t := range time {
+		v := calcHours(t, time[0])
+		x = append(x, v)
+	}
+
+	return x
+}
+
+//=============================================================================
+
+func calcHours(t,t0 time.Time) float64 {
+	delta := t.UnixMilli() - t0.UnixMilli()
+	return float64(delta / 1000 / 3600)
+}
+
+//=============================================================================
+
+func calcMean(data []float64) float64 {
+	sum := 0.0
+
+	for _,value := range data {
+		sum += value
+	}
+
+	return sum/float64(len(data))
 }
 
 //=============================================================================

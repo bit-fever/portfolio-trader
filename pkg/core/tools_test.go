@@ -22,35 +22,74 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package filter
+package core
+
+import (
+	"golang.org/x/exp/slices"
+	"testing"
+	"time"
+)
 
 //=============================================================================
-//===
-//=== AnalysisRequest
-//===
+
+var days = []time.Time{
+	time.Date(2024, 1 , 1, 10, 11, 12, 0, time.UTC),
+	time.Date(2024, 2 ,21,  3, 11, 12, 0, time.UTC),
+	time.Date(2024, 7 ,11, 14, 11, 12, 0, time.UTC),
+	time.Date(2025, 1 ,23, 22, 11, 12, 0, time.UTC),
+}
+
+var xAxis = []float64{ 0, 1217, 4612, 9324 }
+
+var yAxis1= []float64{ 125,  87,  90, 130 }
+var yAxis2= []float64{ 250, -30, 120, -12 }
+
 //=============================================================================
 
-type AnalysisRequest struct {
-	Filter *TradingFilter  `json:"filter,omitempty"`
+func TestMean(t *testing.T) {
+	mean := calcMean(xAxis)
+
+	if mean != 3788.25 {
+		t.Errorf("Bad mean: Expected 3788.25 and got %v", mean)
+	}
+
+	mean = calcMean(yAxis1)
+
+	if mean != 108 {
+		t.Errorf("Bad mean: Expected 108 and got %v", mean)
+	}
+
+	mean = calcMean(yAxis2)
+
+	if mean != 82 {
+		t.Errorf("Bad mean: Expected 82 and got %v", mean)
+	}
 }
 
 //=============================================================================
 
-type TradingFilter struct {
-	EquAvgEnabled    bool   `json:"equAvgEnabled"`
-	EquAvgLen        int    `json:"equAvgLen"`
-	PosProEnabled    bool   `json:"posProEnabled"`
-	PosProLen        int    `json:"posProLen"`
-	WinPerEnabled    bool   `json:"winPerEnabled"`
-	WinPerLen        int    `json:"winPerLen"`
-	WinPerValue      int    `json:"winPerValue"`
-	OldNewEnabled    bool   `json:"oldNewEnabled"`
-	OldNewOldLen     int    `json:"oldNewOldLen"`
-	OldNewOldPerc    int    `json:"oldNewOldPerc"`
-	OldNewNewLen     int    `json:"oldNewNewLen"`
-	TrendlineEnabled bool   `json:"trendlineEnabled"`
-	TrendlineLen     int    `json:"trendlineLen"`
-	TrendlineValue   int    `json:"trendlineValue"`
+func TestXAxisCalculation(t *testing.T) {
+	axis := calcXAxis(days)
+
+	if !slices.Equal(axis, xAxis) {
+		t.Errorf("Bad xAxis result. Got %v", axis)
+	}
+}
+
+//=============================================================================
+
+func TestLinearRegression(t *testing.T) {
+	slope := LinearRegression(days, yAxis1)
+
+	if slope < 0.00184 || slope > 0.00185 {
+		t.Errorf("Bad linear regression: Expected ~0.00184 and got %v", slope)
+	}
+
+	slope = LinearRegression(days, yAxis2)
+
+	if slope < -0.01602 || slope > -0.01601 {
+		t.Errorf("Bad linear regression: Expected ~-0.01601 and got %v", slope)
+	}
 }
 
 //=============================================================================

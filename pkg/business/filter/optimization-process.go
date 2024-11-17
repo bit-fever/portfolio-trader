@@ -71,6 +71,7 @@ func (f *OptimizationProcess) Start() error {
 	f.info.Filters.OldVsNew  = f.params.EnableOldNew
 	f.info.Filters.WinPerc   = f.params.EnableWinPerc
 	f.info.Filters.EquVsAvg  = f.params.EnableEquAvg
+	f.info.Filters.Trendline = f.params.EnableTrendline
 
 	f.initValues()
 
@@ -125,7 +126,9 @@ func (f *OptimizationProcess) generateNotCombined() {
 	if !f.generatePosProfit(){
 		if !f.generateOldVsNew() {
 			if !f.generateWinPerc() {
-				f.generateEquVsAvg()
+				if !f.generateEquVsAvg() {
+					f.generateTrendline()
+				}
 			}
 		}
 	}
@@ -135,7 +138,7 @@ func (f *OptimizationProcess) generateNotCombined() {
 
 func (f *OptimizationProcess) generatePosProfit() bool {
 	if f.params.EnablePosProfit {
-		slog.Info("generateNotCombined: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
+		slog.Info("generatePosProfit: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
 		for _, posProLen := range f.params.PosProLen.Steps() {
 			filter := &db.TradingFilter{
@@ -164,7 +167,7 @@ func (f *OptimizationProcess) generatePosProfit() bool {
 
 func (f *OptimizationProcess) generateOldVsNew() bool {
 	if f.params.EnableOldNew {
-		slog.Info("generateNotCombined: Optimizing old vs new periods", "tsId", f.ts.Id, "tsName", f.ts.Name)
+		slog.Info("generateOldVsNew: Optimizing old vs new periods", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
 		for _, oldNewOldLen := range f.params.OldNewOldLen.Steps() {
 			for _, oldNewNewLen := range f.params.OldNewNewLen.Steps() {
@@ -199,7 +202,7 @@ func (f *OptimizationProcess) generateOldVsNew() bool {
 
 func (f *OptimizationProcess) generateWinPerc() bool {
 	if f.params.EnableWinPerc {
-		slog.Info("generateNotCombined: Optimizing winning percentage", "tsId", f.ts.Id, "tsName", f.ts.Name)
+		slog.Info("generateWinPerc: Optimizing winning percentage", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
 		for _, winPerLen := range f.params.WinPercLen.Steps() {
 			for _, winPerPerc := range f.params.WinPercPerc.Steps() {
@@ -231,7 +234,7 @@ func (f *OptimizationProcess) generateWinPerc() bool {
 
 func (f *OptimizationProcess) generateEquVsAvg() bool {
 	if f.params.EnableEquAvg {
-		slog.Info("generateNotCombined: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
+		slog.Info("generateEquVsAvg: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
 
 		for _, equAvgLen := range f.params.EquAvgLen.Steps() {
 			filter := &db.TradingFilter{
@@ -249,6 +252,38 @@ func (f *OptimizationProcess) generateEquVsAvg() bool {
 			if f.stopping {
 				slog.Info("generateEquVsAvg: Got stop request")
 				return true
+			}
+		}
+	}
+
+	return false
+}
+
+//=============================================================================
+
+func (f *OptimizationProcess) generateTrendline() bool {
+	if f.params.EnableTrendline {
+		slog.Info("generateTrendline: Optimizing trendline", "tsId", f.ts.Id, "tsName", f.ts.Name)
+
+		for _, trendLen := range f.params.TrendlineLen.Steps() {
+			for _, trendValue := range f.params.TrendlineValue.Steps() {
+				filter := &db.TradingFilter{
+					TrendlineEnabled: true,
+					TrendlineLen    : trendLen,
+					TrendlineValue  : trendValue,
+				}
+
+				go func(){
+					res := RunAnalysis(f.ts, filter, f.data)
+					f.addResult(TypeTrendline, trendLen, -1, trendValue, res)
+				}()
+
+				//--- Check if we have to stop the process
+
+				if f.stopping {
+					slog.Info("generateTrendline: Got stop request")
+					return true
+				}
 			}
 		}
 	}
