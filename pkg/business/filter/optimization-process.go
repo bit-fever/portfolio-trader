@@ -51,14 +51,7 @@ type OptimizationProcess struct {
 
 //=============================================================================
 
-func (f *OptimizationProcess) Start() error {
-	err := f.params.Validate()
-	if err != nil {
-		return err
-	}
-
-	//--- Start optimization process
-
+func (f *OptimizationProcess) Start() {
 	field := f.params.FieldToOptimize
 
 	f.runComparator = NewRunComparator(field)
@@ -76,8 +69,6 @@ func (f *OptimizationProcess) Start() error {
 	f.initValues()
 
 	go f.generate()
-
-	return nil
 }
 
 //=============================================================================
@@ -100,13 +91,13 @@ func (f *OptimizationProcess) GetInfo() *OptimizationInfo {
 //=============================================================================
 
 func (f *OptimizationProcess) generate() {
-	slog.Info("generate: Started", "tsId", f.ts.Id, "tsName", f.ts.Name, "combine", f.params.CombineFilters)
+	slog.Info("generate: Started", "tsId", f.ts.Id, "tsName", f.ts.Name, "algorithm", f.params.Algorithm)
 
-	if f.params.CombineFilters {
-		f.generateCombined()
-	} else {
+	//if f.params.CombineFilters {
+	//	f.generateCombined()
+	//} else {
 		f.generateNotCombined()
-	}
+	//}
 
 	for ; !f.info.isStatusComplete(); {
 		time.Sleep(time.Second * 1)

@@ -90,7 +90,7 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.Anal
 
 //=============================================================================
 
-func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.OptimizationRequest) error {
+func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, oreq *filter.OptimizationRequest) error {
 	ts, err := getTradingSystem(tx, c, tsId)
 	if err != nil {
 		return err
@@ -101,10 +101,15 @@ func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, far *filte
 		return err
 	}
 
-	c.Log.Info("StartFilterOptimization: Starting optimization", "tsId", ts.Id, "tsName", ts.Name)
-	err = filter.StartOptimization(ts, tradeList, far)
+	err = oreq.Validate()
+	if err != nil {
+		return err
+	}
 
-	return err
+	c.Log.Info("StartFilterOptimization: Starting optimization", "tsId", ts.Id, "tsName", ts.Name)
+	filter.StartOptimization(ts, tradeList, oreq)
+
+	return nil
 }
 
 //=============================================================================

@@ -24,7 +24,10 @@ THE SOFTWARE.
 
 package filter
 
-import "errors"
+import (
+	"errors"
+	"strconv"
+)
 
 //=============================================================================
 //===
@@ -32,21 +35,29 @@ import "errors"
 //===
 //=============================================================================
 
+const AlgorithmSimple  = "simple"
+const AlgorithmGenetic = "genetic"
+
 const FieldToOptimizeNetProfit            = "net-profit"
 const FieldToOptimizeAvgTrade             = "avg-trade"
 const FieldToOptimizeDrawDown             = "drawdown"
 const FieldToOptimizeNetProfitAndAvgTrade = "net-profit*avg-trade"
 
+const MaxTradesLength     = 300
+const MaxTrendlineValue   = 200
+const MaxOldNewPercentage = 200
+const MaxWinningPercentage= 100
+
 //=============================================================================
 
 type OptimizationRequest struct {
-	FieldToOptimize string `json:"fieldToOptimize"       binding:"required"`
+	FieldToOptimize string `json:"fieldToOptimize"`
+	Algorithm       string `json:"algorithm"`
 	EnablePosProfit bool   `json:"enablePosProfit"`
 	EnableOldNew    bool   `json:"enableOldNew"`
 	EnableWinPerc   bool   `json:"enableWinPerc"`
 	EnableEquAvg    bool   `json:"enableEquAvg"`
 	EnableTrendline bool   `json:"enableTrendline"`
-	CombineFilters  bool   `json:"combineFilters"`
 
 	PosProLen      FieldOptimization  `json:"posProLen"`
 	OldNewOldLen   FieldOptimization  `json:"oldNewOldLen"`
@@ -61,41 +72,91 @@ type OptimizationRequest struct {
 
 //=============================================================================
 
-func (f *OptimizationRequest) StepsCount() uint {
-	if f.CombineFilters {
-		return	f.stepsCountPosProfit(1) *
-				f.stepsCountOldNew   (1) *
-				f.stepsCountWinPerc  (1) *
-				f.stepsCountEquAvg   (1) *
-				f.stepsCountTrendline(1)
-	} else {
-		return	f.stepsCountPosProfit(0) +
-				f.stepsCountOldNew   (0) +
-				f.stepsCountWinPerc  (0) +
-				f.stepsCountEquAvg   (0) +
-				f.stepsCountTrendline(0)
+func (r *OptimizationRequest) StepsCount() uint {
+	switch r.Algorithm {
+		case AlgorithmSimple:
+			return	r.stepsCountPosProfit(0) +
+					r.stepsCountOldNew   (0) +
+					r.stepsCountWinPerc  (0) +
+					r.stepsCountEquAvg   (0) +
+					r.stepsCountTrendline(0)
+
+		case AlgorithmGenetic:
+			return 0
+
+		//case FullScan:
+		//	return	r.stepsCountPosProfit(1) *
+		//			r.stepsCountOldNew   (1) *
+		//			r.stepsCountWinPerc  (1) *
+		//			r.stepsCountEquAvg   (1) *
+		//			r.stepsCountTrendline(1)
+
+		default:
+			panic("Unknown algorithm: "+ r.Algorithm)
 	}
 }
+
 //=============================================================================
 
-func (f *OptimizationRequest) Validate() error {
-	if  f.FieldToOptimize != FieldToOptimizeNetProfit &&
-		f.FieldToOptimize != FieldToOptimizeAvgTrade &&
-		f.FieldToOptimize != FieldToOptimizeDrawDown &&
-		f.FieldToOptimize != FieldToOptimizeNetProfitAndAvgTrade {
-		return errors.New("Invalid field to optimize: "+ f.FieldToOptimize)
+func (r *OptimizationRequest) Validate() error {
+	if  r.FieldToOptimize != FieldToOptimizeNetProfit &&
+		r.FieldToOptimize != FieldToOptimizeAvgTrade &&
+		r.FieldToOptimize != FieldToOptimizeDrawDown &&
+		r.FieldToOptimize != FieldToOptimizeNetProfitAndAvgTrade {
+		return errors.New("Invalid field to optimize: "+ r.FieldToOptimize)
 	}
 
-	//TODO: validate the other params here
+	if  r.Algorithm != AlgorithmSimple &&
+		r.Algorithm != AlgorithmGenetic {
+		return errors.New("Invalid optimization algorithm: "+ r.Algorithm)
+	}
+
+	//--- Validate fields
+
+	if err := r.PosProLen.Validate(1, MaxTradesLength); err != nil {
+		return err
+	}
+
+	if err := r.OldNewOldLen.Validate(1, MaxTradesLength); err != nil {
+		return err
+	}
+
+	if err := r.OldNewNewLen.Validate(1, MaxTradesLength); err != nil {
+		return err
+	}
+
+	if err := r.OldNewOldPerc.Validate(1, MaxOldNewPercentage); err != nil {
+		return err
+	}
+
+	if err := r.WinPercLen.Validate(1, MaxTradesLength); err != nil {
+		return err
+	}
+
+	if err := r.WinPercPerc.Validate(1, MaxWinningPercentage); err != nil {
+		return err
+	}
+
+	if err := r.EquAvgLen.Validate(1, MaxTradesLength); err != nil {
+		return err
+	}
+
+	if err := r.TrendlineLen.Validate(1, MaxTradesLength); err != nil {
+		return err
+	}
+
+	if err := r.TrendlineValue.Validate(1, MaxTrendlineValue); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 //=============================================================================
 
-func (f *OptimizationRequest) stepsCountPosProfit(zero uint) uint {
-	if f.EnablePosProfit {
-		return f.PosProLen.StepsCount()
+func (r *OptimizationRequest) stepsCountPosProfit(zero uint) uint {
+	if r.EnablePosProfit {
+		return r.PosProLen.StepsCount()
 	}
 
 	return zero
@@ -103,9 +164,9 @@ func (f *OptimizationRequest) stepsCountPosProfit(zero uint) uint {
 
 //=============================================================================
 
-func (f *OptimizationRequest) stepsCountOldNew(zero uint) uint {
-	if f.EnableOldNew {
-		return f.OldNewOldLen.StepsCount() * f.OldNewNewLen.StepsCount() * f.OldNewOldPerc.StepsCount()
+func (r *OptimizationRequest) stepsCountOldNew(zero uint) uint {
+	if r.EnableOldNew {
+		return r.OldNewOldLen.StepsCount() * r.OldNewNewLen.StepsCount() * r.OldNewOldPerc.StepsCount()
 	}
 
 	return zero
@@ -113,9 +174,9 @@ func (f *OptimizationRequest) stepsCountOldNew(zero uint) uint {
 
 //=============================================================================
 
-func (f *OptimizationRequest) stepsCountWinPerc(zero uint) uint {
-	if f.EnableWinPerc {
-		return f.WinPercLen.StepsCount() * f.WinPercPerc.StepsCount()
+func (r *OptimizationRequest) stepsCountWinPerc(zero uint) uint {
+	if r.EnableWinPerc {
+		return r.WinPercLen.StepsCount() * r.WinPercPerc.StepsCount()
 	}
 
 	return zero
@@ -123,9 +184,9 @@ func (f *OptimizationRequest) stepsCountWinPerc(zero uint) uint {
 
 //=============================================================================
 
-func (f *OptimizationRequest) stepsCountEquAvg(zero uint) uint {
-	if f.EnableEquAvg {
-		return f.EquAvgLen.StepsCount()
+func (r *OptimizationRequest) stepsCountEquAvg(zero uint) uint {
+	if r.EnableEquAvg {
+		return r.EquAvgLen.StepsCount()
 	}
 
 	return zero
@@ -133,9 +194,9 @@ func (f *OptimizationRequest) stepsCountEquAvg(zero uint) uint {
 
 //=============================================================================
 
-func (f *OptimizationRequest) stepsCountTrendline(zero uint) uint {
-	if f.EnableTrendline {
-		return f.TrendlineLen.StepsCount() * f.TrendlineValue.StepsCount()
+func (r *OptimizationRequest) stepsCountTrendline(zero uint) uint {
+	if r.EnableTrendline {
+		return r.TrendlineLen.StepsCount() * r.TrendlineValue.StepsCount()
 	}
 
 	return zero
@@ -149,10 +210,10 @@ func (f *OptimizationRequest) stepsCountTrendline(zero uint) uint {
 
 type FieldOptimization struct {
 	Enabled  bool  `json:"enabled"`
-	CurValue int   `json:"curValue"   binding:"min=1,max=600"`
-	MinValue int   `json:"minValue"   binding:"min=1,max=600"`
-	MaxValue int   `json:"maxValue"   binding:"min=1,max=600"`
-	Step     int   `json:"step"       binding:"min=1,max=100"`
+	CurValue int   `json:"curValue"`
+	MinValue int   `json:"minValue"`
+	MaxValue int   `json:"maxValue"`
+	Step     int   `json:"step"`
 }
 
 //=============================================================================
@@ -179,6 +240,34 @@ func (f *FieldOptimization) Steps() []int {
 	}
 
 	return list
+}
+
+//=============================================================================
+
+func (f *FieldOptimization) Validate(min, max int) error {
+	if f.Enabled {
+		if f.MinValue < min || f.MinValue > max {
+			return errors.New("min value out of range ["+ strconv.Itoa(min) +".."+ strconv.Itoa(max) +"]")
+		}
+
+		if f.MaxValue < min || f.MaxValue > max {
+			return errors.New("max value out of range ["+ strconv.Itoa(min) +".."+ strconv.Itoa(max) +"]")
+		}
+
+		if f.MinValue > f.MaxValue {
+			return errors.New("min value greater than max value")
+		}
+
+		if f.Step < 1 || f.Step > max {
+			return errors.New("step value out of range [1.."+ strconv.Itoa(max) +"]")
+		}
+	} else {
+		if f.CurValue < min || f.CurValue > max {
+			return errors.New("current value out of range ["+ strconv.Itoa(min) +".."+ strconv.Itoa(max) +"]")
+		}
+	}
+
+	return nil
 }
 
 //=============================================================================

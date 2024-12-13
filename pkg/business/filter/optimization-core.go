@@ -61,7 +61,7 @@ func init() {
 //===
 //=============================================================================
 
-func StartOptimization(ts *db.TradingSystem, data *[]db.Trade, params *OptimizationRequest) error {
+func StartOptimization(ts *db.TradingSystem, data *[]db.Trade, params *OptimizationRequest) {
 	jobs.Lock()
 	defer jobs.Unlock()
 
@@ -78,13 +78,8 @@ func StartOptimization(ts *db.TradingSystem, data *[]db.Trade, params *Optimizat
 		params: params,
 	}
 
-	err := fop.Start()
-
-	if err == nil {
-		jobs.m[ts.Id] = fop
-	}
-
-	return err
+	fop.Start()
+	jobs.m[ts.Id] = fop
 }
 
 //=============================================================================
