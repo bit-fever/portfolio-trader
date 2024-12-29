@@ -25,131 +25,63 @@ THE SOFTWARE.
 package filter
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/core"
-	"math"
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"log/slog"
 )
 
 //=============================================================================
-//===
-//=== Run comparator
-//===
-//=== Notes:
-//===  - in reverse order: max to min
-//=============================================================================
 
-func runComparator(a any, b any) int {
-	r1 := a.(*Run)
-	r2 := b.(*Run)
-	v1 := r1.FitnessValue
-	v2 := r2.FitnessValue
-
-	if v1 < v2 { return +1 }
-	if v1 > v2 { return -1 }
-
-	if r1.random == r2.random {
-		return 0
-	}
-
-	if r1.random < r2.random {
-		return 1
-	}
-
-	return -1
+type OptimizationContext struct {
+	op *OptimizationProcess
 }
 
 //=============================================================================
-//===
-//=== Fitness functions
-//===
+//=== Constructor
 //=============================================================================
 
-type FitnessFunction func(r *Run) float64
-
-//=============================================================================
-
-func GetFitnessFunction(field string) FitnessFunction {
-	switch field {
-		case FieldToOptimizeNetProfit:
-			return ffNetProfit
-
-		case FieldToOptimizeAvgTrade:
-			return ffAvgTrade
-
-		case FieldToOptimizeDrawDown:
-			return ffMaxDrawdown
-
-		case FieldToOptimizeNetProfitAvgTrade:
-			return ffNetProfitAvgTrade
-
-		case FieldToOptimizeNetProfitAvgTradeMaxDD:
-			return ffNetProfitAvgTradeMaxDD
-
-		default:
-			panic("Unknown field to optimize: "+ field)
+func NewContext(op *OptimizationProcess) optimization.Context {
+	return &OptimizationContext{
+		op: op,
 	}
 }
 
 //=============================================================================
+//=== Methods
+//=============================================================================
 
-func ffNetProfit(r *Run) float64 {
-	return r.NetProfit
+func (oc *OptimizationContext) FilterConfig() *optimization.FilterConfig {
+	return oc.op.optReq.FilterConfig
 }
 
 //=============================================================================
 
-func ffAvgTrade(r *Run) float64 {
-	return r.AvgTrade
+func (oc *OptimizationContext) AlgorithmParams() map[string]any {
+	return oc.op.optReq.Algorithm.Params
 }
 
 //=============================================================================
 
-func ffMaxDrawdown(r *Run) float64 {
-	return r.MaxDrawdown
+func (oc *OptimizationContext) IsStopping() bool {
+	return oc.op.stopping
 }
 
 //=============================================================================
 
-func ffNetProfitAvgTrade(r *Run) float64 {
-	fv := r.NetProfit*r.AvgTrade
-
-	//--- We have to push down results where both netProfit and avgTrade are negative
-	//--- because their product is positive
-
-	if r.NetProfit < 0 && r.AvgTrade < 0 {
-		fv *= -1
-	}
-
-	if fv <= -1000 || fv >= 1000 {
-		fv = math.Round(fv)
-	}
-
-	return fv
+func (oc *OptimizationContext) Baseline() db.TradingFilter {
+	return *oc.op.optReq.Baseline
 }
 
 //=============================================================================
 
-func ffNetProfitAvgTradeMaxDD(r *Run) float64 {
-	fv := r.NetProfit*r.AvgTrade
-	dd := math.Abs(r.MaxDrawdown)
+func (oc *OptimizationContext) RunAnalysis(filter *db.TradingFilter) float64 {
+	return oc.op.runAnalysis(filter)
+}
 
-	//--- We have to push down results where both netProfit and avgTrade are negative
-	//--- because their product is positive
+//=============================================================================
 
-	if r.NetProfit < 0 && r.AvgTrade < 0 {
-		fv *= -1
-	}
-
-	if dd == 0 {
-		dd = 1
-	}
-
-	fv = core.Trunc2d(fv/dd)
-
-	if fv <= -1000 || fv >= 1000 {
-		fv = math.Round(fv)
-	}
-
-	return fv
+func (oc *OptimizationContext) LogInfo(message string) {
+	slog.Info(message, "tsId", oc.op.ts.Id, "tsName", oc.op.ts.Name)
 }
 
 //=============================================================================

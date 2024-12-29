@@ -25,8 +25,11 @@ THE SOFTWARE.
 package filter
 
 import (
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm"
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"log/slog"
+	"math/rand"
 	"time"
 )
 
@@ -41,47 +44,41 @@ const MaxResultSize = 1000
 //=============================================================================
 
 type OptimizationProcess struct {
-	ts            *db.TradingSystem
-	data          *[]db.Trade
-	params        *OptimizationRequest
-	info          *OptimizationInfo
-	runComparator *RunComparator
-	stopping      bool
+	ts              *db.TradingSystem
+	data            *[]db.Trade
+	optReq          *OptimizationRequest
+	info            *OptimizationInfo
+	fitnessFunction FitnessFunction
+	stopping        bool
 }
 
 //=============================================================================
 
-func (f *OptimizationProcess) Start() {
-	field := f.params.FieldToOptimize
+func (op *OptimizationProcess) Start() {
+	field := op.optReq.FieldToOptimize
+	op.fitnessFunction = GetFitnessFunction(field)
 
-	f.runComparator = NewRunComparator(field)
+	algo := algorithm.New(op.optReq.Algorithm.Type)
+	ctx  := NewContext(op)
+	algo.Init(ctx)
 
-	f.info = NewOptimizationInfo(MaxResultSize, f.runComparator.compare)
+	fc := op.optReq.FilterConfig
+	op.info = NewOptimizationInfo(MaxResultSize, field, fc, algo.StepsCount(), op.calcBaseValue())
 
-	f.info.MaxSteps          = f.params.StepsCount()
-	f.info.FieldToOptimize   = field
-	f.info.Filters.PosProfit = f.params.EnablePosProfit
-	f.info.Filters.OldVsNew  = f.params.EnableOldNew
-	f.info.Filters.WinPerc   = f.params.EnableWinPerc
-	f.info.Filters.EquVsAvg  = f.params.EnableEquAvg
-	f.info.Filters.Trendline = f.params.EnableTrendline
-
-	f.initValues()
-
-	go f.generate()
+	go op.generate(algo)
 }
 
 //=============================================================================
 
-func (f *OptimizationProcess) Stop() {
-	slog.Info("Stop: Stopping optimization process", "tsId", f.ts.Id)
-	f.stopping = true
+func (op *OptimizationProcess) Stop() {
+	slog.Info("Stop: Stopping optimization process", "tsId", op.ts.Id)
+	op.stopping = true
 }
 
 //=============================================================================
 
-func (f *OptimizationProcess) GetInfo() *OptimizationInfo {
-	return f.info
+func (op *OptimizationProcess) GetInfo() *OptimizationInfo {
+	return op.info
 }
 
 //=============================================================================
@@ -90,226 +87,55 @@ func (f *OptimizationProcess) GetInfo() *OptimizationInfo {
 //===
 //=============================================================================
 
-func (f *OptimizationProcess) generate() {
-	slog.Info("generate: Started", "tsId", f.ts.Id, "tsName", f.ts.Name, "algorithm", f.params.Algorithm)
+//--- GoRoutine
 
-	//if f.params.CombineFilters {
-	//	f.generateCombined()
-	//} else {
-		f.generateNotCombined()
-	//}
+func (op *OptimizationProcess) generate(algo optimization.Algorithm) {
+	slog.Info("generate: Started", "tsId", op.ts.Id, "tsName", op.ts.Name, "algorithm", op.optReq.Algorithm)
 
-	for ; !f.info.isStatusComplete(); {
+	algo.Optimize()
+
+	for ; !op.info.isStatusComplete(); {
 		time.Sleep(time.Second * 1)
 	}
 
-	slog.Info("Complete.")
+	slog.Info("generate: Complete.")
 }
 
 //=============================================================================
 
-func (f *OptimizationProcess) generateCombined() {
+func (op *OptimizationProcess) runAnalysis(filter *db.TradingFilter) float64 {
+	sum := RunAnalysis(op.ts, filter, op.data).Summary
+	run := op.createRun(filter, &sum)
+	op.info.addResult(run)
+
+	return run.FitnessValue
 }
 
 //=============================================================================
 
-func (f *OptimizationProcess) generateNotCombined() {
-	if !f.generatePosProfit(){
-		if !f.generateOldVsNew() {
-			if !f.generateWinPerc() {
-				if !f.generateEquVsAvg() {
-					f.generateTrendline()
-				}
-			}
-		}
-	}
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) generatePosProfit() bool {
-	if f.params.EnablePosProfit {
-		slog.Info("generatePosProfit: Optimizing positive profit", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		for _, posProLen := range f.params.PosProLen.Steps() {
-			filter := &db.TradingFilter{
-				PosProEnabled: true,
-				PosProLen: posProLen,
-			}
-
-			go func() {
-				res := RunAnalysis(f.ts, filter, f.data)
-				f.addResult(TypePosProfit, posProLen, -1, -1, res)
-			}()
-
-			//--- Check if we have to stop the process
-
-			if f.stopping {
-				slog.Info("generatePosProfit: Got stop request")
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) generateOldVsNew() bool {
-	if f.params.EnableOldNew {
-		slog.Info("generateOldVsNew: Optimizing old vs new periods", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		for _, oldNewOldLen := range f.params.OldNewOldLen.Steps() {
-			for _, oldNewNewLen := range f.params.OldNewNewLen.Steps() {
-				for _, oldNewOldPerc := range f.params.OldNewOldPerc.Steps() {
-					filter := &db.TradingFilter{
-						OldNewEnabled: true,
-						OldNewOldLen : oldNewOldLen,
-						OldNewNewLen : oldNewNewLen,
-						OldNewOldPerc: oldNewOldPerc,
-					}
-
-					go func() {
-						res := RunAnalysis(f.ts, filter, f.data)
-						f.addResult(TypeOldVsNew, oldNewOldLen, oldNewNewLen, oldNewOldPerc, res)
-					}()
-
-					//--- Check if we have to stop the process
-
-					if f.stopping {
-						slog.Info("generateOldVsNew: Got stop request")
-						return true
-					}
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) generateWinPerc() bool {
-	if f.params.EnableWinPerc {
-		slog.Info("generateWinPerc: Optimizing winning percentage", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		for _, winPerLen := range f.params.WinPercLen.Steps() {
-			for _, winPerPerc := range f.params.WinPercPerc.Steps() {
-				filter := &db.TradingFilter{
-					WinPerEnabled: true,
-					WinPerLen    : winPerLen,
-					WinPerValue  : winPerPerc,
-				}
-
-				go func(){
-					res := RunAnalysis(f.ts, filter, f.data)
-					f.addResult(TypeWinPerc, winPerLen, -1, winPerPerc, res)
-				}()
-
-				//--- Check if we have to stop the process
-
-				if f.stopping {
-					slog.Info("generateWinPerc: Got stop request")
-					return true
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) generateEquVsAvg() bool {
-	if f.params.EnableEquAvg {
-		slog.Info("generateEquVsAvg: Optimizing equity vs its average", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		for _, equAvgLen := range f.params.EquAvgLen.Steps() {
-			filter := &db.TradingFilter{
-				EquAvgEnabled: true,
-				EquAvgLen    : equAvgLen,
-			}
-
-			go func(){
-				res := RunAnalysis(f.ts, filter, f.data)
-				f.addResult(TypeEquVsAvg, equAvgLen, -1, -1, res)
-			}()
-
-			//--- Check if we have to stop the process
-
-			if f.stopping {
-				slog.Info("generateEquVsAvg: Got stop request")
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) generateTrendline() bool {
-	if f.params.EnableTrendline {
-		slog.Info("generateTrendline: Optimizing trendline", "tsId", f.ts.Id, "tsName", f.ts.Name)
-
-		for _, trendLen := range f.params.TrendlineLen.Steps() {
-			for _, trendValue := range f.params.TrendlineValue.Steps() {
-				filter := &db.TradingFilter{
-					TrendlineEnabled: true,
-					TrendlineLen    : trendLen,
-					TrendlineValue  : trendValue,
-				}
-
-				go func(){
-					res := RunAnalysis(f.ts, filter, f.data)
-					f.addResult(TypeTrendline, trendLen, -1, trendValue, res)
-				}()
-
-				//--- Check if we have to stop the process
-
-				if f.stopping {
-					slog.Info("generateTrendline: Got stop request")
-					return true
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-//=============================================================================
-
-func (f *OptimizationProcess) addResult(filter string, len int, newLen int, percentage int, far *AnalysisResponse) {
+func (op *OptimizationProcess) createRun(filter *db.TradingFilter, sum *Summary) *Run {
 	r := &Run{
-		FilterType: filter,
-		Length    : len,
-		NewLength : newLen,
-		Percentage: percentage,
+		Filter      : filter,
+		NetProfit   : sum.FilProfit,
+		AvgTrade    : sum.FilAverageTrade,
+		MaxDrawdown : sum.FilMaxDrawdown,
+		random      : rand.Int(),
 	}
 
-	r.NetProfit   = far.Summary.FilProfit
-	r.AvgTrade    = far.Summary.FilAverageTrade
-	r.MaxDrawdown = far.Summary.FilMaxDrawdown
+	r.FitnessValue = op.fitnessFunction(r)
 
-	value := f.runComparator.getValue(&far.Summary)
-	f.info.addResult(r, value)
+	return r
 }
 
 //=============================================================================
 
-func (f *OptimizationProcess) initValues() {
+func (op *OptimizationProcess) calcBaseValue() float64 {
+	baseline := op.optReq.Baseline
 
-	//--- Run without filters to get the baseline
+	sum := RunAnalysis(op.ts, baseline, op.data).Summary
+	run := op.createRun(baseline, &sum)
 
-	res := RunAnalysis(f.ts, &db.TradingFilter{}, f.data)
-
-	f.info.BaseValue = f.runComparator.getValue(&res.Summary)
-	f.info.BestValue = f.info.BaseValue
+	return run.FitnessValue
 }
 
 //=============================================================================

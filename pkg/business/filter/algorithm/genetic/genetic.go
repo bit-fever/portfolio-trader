@@ -22,65 +22,42 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package filter
+package genetic
 
-import (
-	"errors"
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm"
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
-)
-
-//=============================================================================
-//===
-//=== OptimizationRequest
-//===
-//=============================================================================
-
-const FieldToOptimizeNetProfit              = "netProfit"
-const FieldToOptimizeAvgTrade               = "avgTrade"
-const FieldToOptimizeDrawDown               = "maxDD"
-const FieldToOptimizeNetProfitAvgTrade      = "netProfit*avgTrade"
-const FieldToOptimizeNetProfitAvgTradeMaxDD = "netProfit*avgTrade/maxDD"
+import "github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
 
 //=============================================================================
 
-type AlgorithmSpec struct {
-	Type   string         `json:"type"`
-	Params map[string]any `json:"params"`
+type geneticAlgorithm struct {
+	ctx optimization.Context
 }
 
 //=============================================================================
 
-type OptimizationRequest struct {
-	FieldToOptimize string                     `json:"fieldToOptimize"`
-	FilterConfig    *optimization.FilterConfig `json:"filterConfig"`
-	Algorithm       *AlgorithmSpec             `json:"algorithm"`
-	Baseline        *db.TradingFilter          `json:"baseline"`
+func New() optimization.Algorithm {
+	return &geneticAlgorithm{}
+}
+
+//=============================================================================
+//===
+//=== Genetic algorithm implementation
+//===
+//=============================================================================
+
+func (ga *geneticAlgorithm) Init(ctx optimization.Context) {
+	ga.ctx = ctx
 }
 
 //=============================================================================
 
-func (r *OptimizationRequest) Validate() error {
-	if  r.FieldToOptimize != FieldToOptimizeNetProfit         &&
-		r.FieldToOptimize != FieldToOptimizeAvgTrade          &&
-		r.FieldToOptimize != FieldToOptimizeDrawDown          &&
-		r.FieldToOptimize != FieldToOptimizeNetProfitAvgTrade &&
-		r.FieldToOptimize != FieldToOptimizeNetProfitAvgTradeMaxDD {
-		return errors.New("Invalid field to optimize: "+ r.FieldToOptimize)
-	}
+func (ga *geneticAlgorithm) StepsCount() uint {
+	return	1
+}
 
-	algoType := r.Algorithm.Type
+//=============================================================================
 
-	if  algoType != algorithm.Simple && algoType != algorithm.Genetic {
-		return errors.New("Invalid optimization algorithm: "+ algoType)
-	}
+func (ga *geneticAlgorithm) Optimize() {
 
-	if err := r.FilterConfig.Validate(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 //=============================================================================

@@ -45,13 +45,13 @@ type OptimizationResponse struct {
 	BestValue       float64       `json:"bestValue"`
 	FieldToOptimize string        `json:"fieldToOptimize"`
 	Duration        int64         `json:"duration"`
-	Filters struct {
+	Filter struct {
 		PosProfit bool `json:"posProfit"`
 		OldVsNew  bool `json:"oldVsNew"`
 		WinPerc   bool `json:"winPerc"`
 		EquVsAvg  bool `json:"equVsAvg"`
 		Trendline bool `json:"trendline"`
-	} `json:"filters"`
+	} `json:"filter"`
 }
 
 //=============================================================================
@@ -67,11 +67,11 @@ func NewOptimizationResponse(info *OptimizationInfo) *OptimizationResponse {
 	or.BestValue = info.BestValue
 
 	or.FieldToOptimize   = info.FieldToOptimize
-	or.Filters.PosProfit = info.Filters.PosProfit
-	or.Filters.OldVsNew  = info.Filters.OldVsNew
-	or.Filters.WinPerc   = info.Filters.WinPerc
-	or.Filters.EquVsAvg  = info.Filters.EquVsAvg
-	or.Filters.Trendline = info.Filters.Trendline
+	or.Filter.PosProfit = info.Filter.PosProfit
+	or.Filter.OldVsNew  = info.Filter.OldVsNew
+	or.Filter.WinPerc   = info.Filter.WinPerc
+	or.Filter.EquVsAvg  = info.Filter.EquVsAvg
+	or.Filter.Trendline = info.Filter.Trendline
 
 	or.Runs     = info.GetRuns()
 	or.Duration = int64(time.Now().Sub(info.StartTime).Seconds())

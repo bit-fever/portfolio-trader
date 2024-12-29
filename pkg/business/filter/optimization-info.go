@@ -25,11 +25,28 @@ THE SOFTWARE.
 package filter
 
 import (
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
-	"github.com/emirpasic/gods/utils"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"sync"
 	"time"
 )
+
+//=============================================================================
+//===
+//=== Run
+//===
+//=============================================================================
+
+type Run struct {
+	Filter       *db.TradingFilter `json:"filter"`
+
+	FitnessValue float64 `json:"fitnessValue"`
+	NetProfit    float64 `json:"netProfit"`
+	AvgTrade     float64 `json:"avgTrade"`
+	MaxDrawdown  float64 `json:"maxDrawdown"`
+	random       int
+}
 
 //=============================================================================
 //===
@@ -54,7 +71,7 @@ type OptimizationInfo struct {
 	BestValue       float64
 	FieldToOptimize string
 
-	Filters struct {
+	Filter struct {
 		PosProfit bool
 		OldVsNew  bool
 		WinPerc   bool
@@ -65,32 +82,24 @@ type OptimizationInfo struct {
 
 //=============================================================================
 
-const TypePosProfit = "posProfit"
-const TypeOldVsNew  = "oldVsNew"
-const TypeWinPerc   = "winPerc"
-const TypeEquVsAvg  = "equVsAvg"
-const TypeTrendline = "trendline"
+func NewOptimizationInfo(maxResultSize int, field string, fc *optimization.FilterConfig,
+						 steps uint, baseValue float64) *OptimizationInfo {
+	oi := &OptimizationInfo{}
+	oi.CurrStep          = 0
+	oi.StartTime         = time.Now()
+	oi.Status            = OptimStatusRunning
+	oi.results           = core.NewSortedResults(maxResultSize, runComparator)
+	oi.BaseValue         = baseValue
+	oi.BestValue         = baseValue
+	oi.MaxSteps          = steps
+	oi.FieldToOptimize   = field
+	oi.Filter.PosProfit = fc.EnablePosProfit
+	oi.Filter.OldVsNew  = fc.EnableOldNew
+	oi.Filter.WinPerc   = fc.EnableWinPerc
+	oi.Filter.EquVsAvg  = fc.EnableEquAvg
+	oi.Filter.Trendline = fc.EnableTrendline
 
-type Run struct {
-	FilterType  string  `json:"filterType"`
-	Length      int     `json:"length"`
-	NewLength   int     `json:"newLength"`
-	Percentage  int     `json:"percentage"`
-	NetProfit   float64 `json:"netProfit"`
-	AvgTrade    float64 `json:"avgTrade"`
-	MaxDrawdown float64 `json:"maxDrawdown"`
-}
-
-//=============================================================================
-
-func NewOptimizationInfo(maxResultSize int, runComparator utils.Comparator) *OptimizationInfo {
-	fop := &OptimizationInfo{}
-	fop.CurrStep  = 0
-	fop.StartTime = time.Now()
-	fop.Status    = OptimStatusRunning
-	fop.results   = core.NewSortedResults(maxResultSize, runComparator)
-
-	return fop
+	return oi
 }
 
 //=============================================================================
@@ -116,15 +125,17 @@ func (oi *OptimizationInfo) GetRuns() []any {
 //===
 //=============================================================================
 
-func (oi *OptimizationInfo) addResult(r *Run, currValue float64) {
+func (oi *OptimizationInfo) addResult(r *Run) {
 	oi.Lock()
 	defer oi.Unlock()
 
 	oi.CurrStep++
 	oi.results.Add(r)
 
-	if oi.BestValue < currValue {
-		oi.BestValue = currValue
+	fv := r.FitnessValue
+
+	if oi.BestValue < fv {
+		oi.BestValue = fv
 	}
 }
 
