@@ -24,7 +24,10 @@ THE SOFTWARE.
 
 package genetic
 
-import "github.com/bit-fever/portfolio-trader/pkg/db"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+)
 
 //=============================================================================
 
@@ -34,29 +37,44 @@ type Part interface {
 }
 
 //=============================================================================
-
-type PartConfig struct {
-	minValue int
-	maxValue int
-	step     int
-}
-
-//=============================================================================
 //===
 //=== PosProfitPart
 //===
 //=============================================================================
 
 type PosProfitPart struct {
-	enabled  bool
-	len      int
-	config   PartConfig
+	lenEnabled bool
+	len        int
+
+	lenFo *optimization.FieldOptimization
 }
 
 //=============================================================================
 
-func NewPosProfitPart() Part {
-	return nil
+func NewPosProfitPart(fc *optimization.FilterConfig) Part {
+	p := &PosProfitPart{
+		lenEnabled: fc.PosProLen.Enabled,
+		len       : fc.PosProLen.CurValue,
+		lenFo     : &fc.PosProLen,
+	}
+
+	if p.lenEnabled {
+		p.len = p.lenFo.RandomValue()
+	}
+
+	return p
+}
+
+//=============================================================================
+
+func (p *PosProfitPart) Mutate() {
+
+}
+
+//=============================================================================
+
+func (p *PosProfitPart) Apply(f *db.TradingFilter) {
+
 }
 
 //=============================================================================
@@ -66,13 +84,38 @@ func NewPosProfitPart() Part {
 //=============================================================================
 
 type EquityVsAvgPart struct {
+	lenEnabled bool
+	len        int
+
+	lenFo *optimization.FieldOptimization
+}
+
+//=============================================================================
+
+func NewEquityVsAvgPart(fc *optimization.FilterConfig) Part {
+	p := &EquityVsAvgPart{
+		lenEnabled: fc.EquAvgLen.Enabled,
+		len       : fc.EquAvgLen.CurValue,
+		lenFo     : &fc.EquAvgLen,
+	}
+
+	if p.lenEnabled {
+		p.len = p.lenFo.RandomValue()
+	}
+
+	return p
+}
+
+//=============================================================================
+
+func (p *EquityVsAvgPart) Mutate() {
 
 }
 
 //=============================================================================
 
-func NewEquityVsAvgPart() Part {
-	return nil
+func (p *EquityVsAvgPart) Apply(f *db.TradingFilter) {
+
 }
 
 //=============================================================================
@@ -82,13 +125,49 @@ func NewEquityVsAvgPart() Part {
 //=============================================================================
 
 type WinningPercPart struct {
+	lenEnabled  bool
+	len         int
+	percEnabled bool
+	perc        int
+
+	lenFo  *optimization.FieldOptimization
+	percFo *optimization.FieldOptimization
+}
+
+//=============================================================================
+
+func NewWinningPercPart(fc *optimization.FilterConfig) Part {
+	p := &WinningPercPart{
+		lenEnabled : fc.WinPercLen.Enabled,
+		len        : fc.WinPercLen.CurValue,
+		lenFo      : &fc.WinPercLen,
+
+		percEnabled: fc.WinPercPerc.Enabled,
+		perc       : fc.WinPercPerc.CurValue,
+		percFo     : &fc.WinPercPerc,
+	}
+
+	if p.lenEnabled {
+		p.len = p.lenFo.RandomValue()
+	}
+
+	if p.percEnabled {
+		p.perc = p.percFo.RandomValue()
+	}
+
+	return p
+}
+
+//=============================================================================
+
+func (p *WinningPercPart) Mutate() {
 
 }
 
 //=============================================================================
 
-func NewWinningPercPart() Part {
-	return nil
+func (p *WinningPercPart) Apply(f *db.TradingFilter) {
+
 }
 
 //=============================================================================
@@ -98,14 +177,64 @@ func NewWinningPercPart() Part {
 //=============================================================================
 
 type OldVsNewPart struct {
+	oldLenEnabled  bool
+	oldLen         int
+
+	newLenEnabled  bool
+	newLen         int
+
+	oldPercEnabled bool
+	oldPerc        int
+
+	oldLenFo  *optimization.FieldOptimization
+	newLenFo  *optimization.FieldOptimization
+	oldPercFo *optimization.FieldOptimization
+}
+
+//=============================================================================
+
+func NewOldVsNewPart(fc *optimization.FilterConfig) Part {
+	p := &OldVsNewPart{
+		oldLenEnabled : fc.OldNewOldLen.Enabled,
+		oldLen        : fc.OldNewOldLen.CurValue,
+		oldLenFo      : &fc.OldNewOldLen,
+
+		newLenEnabled : fc.OldNewNewLen.Enabled,
+		newLen        : fc.OldNewNewLen.CurValue,
+		newLenFo      : &fc.OldNewNewLen,
+
+		oldPercEnabled: fc.OldNewOldPerc.Enabled,
+		oldPerc       : fc.OldNewOldPerc.CurValue,
+		oldPercFo     : &fc.OldNewOldPerc,
+	}
+
+	if p.oldLenEnabled {
+		p.oldLen = p.oldLenFo.RandomValue()
+	}
+
+	if p.newLenEnabled {
+		p.newLen = p.newLenFo.RandomValue()
+	}
+
+	if p.oldPercEnabled {
+		p.oldPerc = p.oldPercFo.RandomValue()
+	}
+
+	return p
+}
+
+//=============================================================================
+
+func (p *OldVsNewPart) Mutate() {
 
 }
 
 //=============================================================================
 
-func NewOldVsNewPart() Part {
-	return nil
+func (p *OldVsNewPart) Apply(f *db.TradingFilter) {
+
 }
+
 
 //=============================================================================
 //===
@@ -114,13 +243,49 @@ func NewOldVsNewPart() Part {
 //=============================================================================
 
 type TrendlinePart struct {
+	lenEnabled   bool
+	len          int
+	valueEnabled bool
+	value        int
+
+	lenFo   *optimization.FieldOptimization
+	valueFo *optimization.FieldOptimization
+}
+
+//=============================================================================
+
+func NewTrendlinePart(fc *optimization.FilterConfig) Part {
+	p := &TrendlinePart{
+		lenEnabled  : fc.TrendlineLen.Enabled,
+		len         : fc.TrendlineLen.CurValue,
+		lenFo       : &fc.TrendlineLen,
+
+		valueEnabled: fc.TrendlineValue.Enabled,
+		value       : fc.TrendlineValue.CurValue,
+		valueFo     : &fc.TrendlineValue,
+	}
+
+	if p.lenEnabled {
+		p.len = p.lenFo.RandomValue()
+	}
+
+	if p.valueEnabled {
+		p.value = p.valueFo.RandomValue()
+	}
+
+	return p
+}
+
+//=============================================================================
+
+func (p *TrendlinePart) Mutate() {
 
 }
 
 //=============================================================================
 
-func NewTrendlinePart() Part {
-	return nil
+func (p *TrendlinePart) Apply(f *db.TradingFilter) {
+
 }
 
 //=============================================================================

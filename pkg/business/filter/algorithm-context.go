@@ -56,8 +56,8 @@ func (oc *OptimizationContext) FilterConfig() *optimization.FilterConfig {
 
 //=============================================================================
 
-func (oc *OptimizationContext) AlgorithmParams() map[string]any {
-	return oc.op.optReq.Algorithm.Params
+func (oc *OptimizationContext) AlgorithmConfig() *optimization.AlgorithmConfig {
+	return &oc.op.optReq.Algorithm.Config
 }
 
 //=============================================================================

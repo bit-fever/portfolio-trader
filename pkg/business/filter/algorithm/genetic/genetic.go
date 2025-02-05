@@ -29,7 +29,8 @@ import "github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/opti
 //=============================================================================
 
 type geneticAlgorithm struct {
-	ctx optimization.Context
+	ctx    optimization.Context
+	config *optimization.GeneticConfig
 }
 
 //=============================================================================
@@ -45,13 +46,21 @@ func New() optimization.Algorithm {
 //=============================================================================
 
 func (ga *geneticAlgorithm) Init(ctx optimization.Context) {
-	ga.ctx = ctx
+	ga.ctx    = ctx
+	ga.config = &ctx.AlgorithmConfig().Genetic
+
+	//--- TODO Validate config and return an error in case of errors
+
+	ga.config = &optimization.GeneticConfig{
+		PopulationSize: 1000,
+		MinSteps      : 1000,
+	}
 }
 
 //=============================================================================
 
 func (ga *geneticAlgorithm) StepsCount() uint {
-	return	1
+	return	ga.config.MinSteps
 }
 
 //=============================================================================

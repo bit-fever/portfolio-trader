@@ -27,9 +27,11 @@ package inventory
 import (
 	"encoding/json"
 	"github.com/bit-fever/core/msg"
+	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
+	"time"
 )
 
 //=============================================================================
@@ -60,6 +62,9 @@ func handleMessage(m *msg.Message) bool {
 		if m.Type == msg.TypeUpdate {
 			return setTradingSystem(&tsm, false)
 		}
+		if m.Type == msg.TypeDelete {
+			return deleteTradingSystem(&tsm)
+		}
 	} else if m.Source == msg.SourceBrokerProduct {
 		pbm := BrokerProductMessage{}
 		err := json.Unmarshal(m.Entity, &pbm)
@@ -88,7 +93,7 @@ func handleMessage(m *msg.Message) bool {
 //=============================================================================
 
 func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
-	slog.Info("setTradingSystem: Trading system change received", "create", create, "sourceId", tsm.TradingSystem.Id)
+	slog.Info("setTradingSystem: Trading system change received", "create", create, "id", tsm.TradingSystem.Id)
 
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
 		ts, err := db.GetTradingSystemById(tx, tsm.TradingSystem.Id)
@@ -99,10 +104,14 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 
 		if ts == nil {
 			ts = &db.TradingSystem{}
-			ts.Running    = false
-			ts.Activation = db.TsActivationManual
-			ts.Status     = db.TsStatusOff
-			ts.Active     = false
+			ts.Running         = false
+			ts.Activation      = db.TsActivationManual
+			ts.Status          = db.TsStatusOff
+			ts.Active          = false
+			ts.SuggestedAction = db.TsActionNone
+
+			lu := time.Now()
+			ts.LastUpdate = &lu
 		} else {
 			if ts.Username != tsm.TradingSystem.Username {
 				slog.Error("Trading system '%v' not owned by user '%v'! Dropping message", tsm.TradingSystem.Id, tsm.TradingSystem.Username)
@@ -130,6 +139,25 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		slog.Error("Raised error while processing message")
 	} else {
 		slog.Info("setTradingSystem: Operation complete")
+	}
+
+	return err == nil
+}
+
+//=============================================================================
+
+func deleteTradingSystem(tsm *TradingSystemMessage) bool {
+	slog.Info("deleteTradingSystem: Trading system deletion received", "id", tsm.TradingSystem.Id)
+
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		id := tsm.TradingSystem.Id
+		return business.DeleteTradingSystem(tx, id)
+	})
+
+	if err != nil {
+		slog.Error("Raised error while deleting trading system", "error", err.Error())
+	} else {
+		slog.Info("deleteTradingSystem: Operation complete", "id", tsm.TradingSystem.Id)
 	}
 
 	return err == nil

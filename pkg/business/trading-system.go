@@ -62,3 +62,20 @@ func GetTrades(tx *gorm.DB, c *auth.Context, tsId uint) (*[]db.Trade, error) {
 }
 
 //=============================================================================
+
+func DeleteTradingSystem(tx *gorm.DB, id uint) error {
+
+	err := db.DeleteAllTradesByTradingSystemId(tx, id)
+	if err != nil {
+		return err
+	}
+
+	err = db.DeleteTradingFilter(tx, id)
+	if err != nil {
+		return err
+	}
+
+	return db.DeleteTradingSystem(tx, id)
+}
+
+//=============================================================================

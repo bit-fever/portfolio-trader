@@ -136,7 +136,7 @@ func (sa *simpleAlgorithm) generatePosProfit() bool {
 	if sa.fc.EnablePosProfit {
 		sa.ctx.LogInfo("generatePosProfit: Optimizing positive profit")
 
-		for _, posProLen := range sa.fc.PosProLen.Steps() {
+		for _, posProLen := range *sa.fc.PosProLen.Steps() {
 			f := sa.ctx.Baseline()
 			f.PosProEnabled= true
 			f.PosProLen    = posProLen
@@ -163,9 +163,9 @@ func (sa *simpleAlgorithm) generateOldVsNew() bool {
 	if sa.fc.EnableOldNew {
 		sa.ctx.LogInfo("generateOldVsNew: Optimizing old vs new periods")
 
-		for _, oldNewOldLen := range sa.fc.OldNewOldLen.Steps() {
-			for _, oldNewNewLen := range sa.fc.OldNewNewLen.Steps() {
-				for _, oldNewOldPerc := range sa.fc.OldNewOldPerc.Steps() {
+		for _, oldNewOldLen := range *sa.fc.OldNewOldLen.Steps() {
+			for _, oldNewNewLen := range *sa.fc.OldNewNewLen.Steps() {
+				for _, oldNewOldPerc := range *sa.fc.OldNewOldPerc.Steps() {
 					f := sa.ctx.Baseline()
 					f.OldNewEnabled = true
 					f.OldNewOldLen  = oldNewOldLen
@@ -196,8 +196,8 @@ func (sa *simpleAlgorithm) generateWinPerc() bool {
 	if sa.fc.EnableWinPerc {
 		sa.ctx.LogInfo("generateWinPerc: Optimizing winning percentage")
 
-		for _, winPerLen := range sa.fc.WinPercLen.Steps() {
-			for _, winPerPerc := range sa.fc.WinPercPerc.Steps() {
+		for _, winPerLen := range *sa.fc.WinPercLen.Steps() {
+			for _, winPerPerc := range *sa.fc.WinPercPerc.Steps() {
 				f := sa.ctx.Baseline()
 				f.WinPerEnabled= true
 				f.WinPerLen    = winPerLen
@@ -226,7 +226,7 @@ func (sa *simpleAlgorithm) generateEquVsAvg() bool {
 	if sa.fc.EnableEquAvg {
 		sa.ctx.LogInfo("generateEquVsAvg: Optimizing equity vs its average")
 
-		for _, equAvgLen := range sa.fc.EquAvgLen.Steps() {
+		for _, equAvgLen := range *sa.fc.EquAvgLen.Steps() {
 			f := sa.ctx.Baseline()
 			f.EquAvgEnabled= true
 			f.EquAvgLen    = equAvgLen
@@ -253,8 +253,8 @@ func (sa *simpleAlgorithm) generateTrendline() bool {
 	if sa.fc.EnableTrendline {
 		sa.ctx.LogInfo("generateTrendline: Optimizing trendline")
 
-		for _, trendLen := range sa.fc.TrendlineLen.Steps() {
-			for _, trendValue := range sa.fc.TrendlineValue.Steps() {
+		for _, trendLen := range *sa.fc.TrendlineLen.Steps() {
+			for _, trendValue := range *sa.fc.TrendlineValue.Steps() {
 				f := sa.ctx.Baseline()
 				f.TrendlineEnabled= true
 				f.TrendlineLen    = trendLen

@@ -30,7 +30,7 @@ import "github.com/bit-fever/portfolio-trader/pkg/db"
 
 type Context interface {
 	FilterConfig()    *FilterConfig
-	AlgorithmParams() map[string]any
+	AlgorithmConfig() *AlgorithmConfig
 	IsStopping()      bool
 	Baseline()        db.TradingFilter
 
@@ -47,4 +47,27 @@ type Algorithm interface {
 }
 
 //=============================================================================
+//===
+//=== Algorithm configurations
+//===
+//=============================================================================
 
+type SimpleConfig struct {
+
+}
+
+//=============================================================================
+
+type GeneticConfig struct {
+	PopulationSize int `json:"populationSize"`
+	MinSteps       uint `json:"minSteps"`
+}
+
+//=============================================================================
+
+type AlgorithmConfig struct {
+	Simple  SimpleConfig  `json:"simple"`
+	Genetic GeneticConfig `json:"genetic"`
+}
+
+//=============================================================================

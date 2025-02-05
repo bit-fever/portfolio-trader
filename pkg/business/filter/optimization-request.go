@@ -46,8 +46,8 @@ const FieldToOptimizeNetProfitAvgTradeMaxDD = "netProfit*avgTrade/maxDD"
 //=============================================================================
 
 type AlgorithmSpec struct {
-	Type   string         `json:"type"`
-	Params map[string]any `json:"params"`
+	Type   string                       `json:"type"`
+	Config optimization.AlgorithmConfig `json:"config"`
 }
 
 //=============================================================================

@@ -61,3 +61,9 @@ func SetTradingFilter(tx *gorm.DB, tf *TradingFilter) error {
 }
 
 //=============================================================================
+
+func DeleteTradingFilter(tx *gorm.DB, id uint) error {
+	return tx.Delete(&TradingFilter{}, id).Error
+}
+
+//=============================================================================

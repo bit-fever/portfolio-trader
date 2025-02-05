@@ -26,6 +26,7 @@ package optimization
 
 import (
 	"errors"
+	"math/rand"
 	"strconv"
 )
 
@@ -114,6 +115,9 @@ type FieldOptimization struct {
 	MinValue int   `json:"minValue"`
 	MaxValue int   `json:"maxValue"`
 	Step     int   `json:"step"`
+
+	//--- Caching
+	steps    *[]int
 }
 
 //=============================================================================
@@ -128,7 +132,11 @@ func (f *FieldOptimization) StepsCount() uint {
 
 //=============================================================================
 
-func (f *FieldOptimization) Steps() []int {
+func (f *FieldOptimization) Steps() *[]int {
+	if f.steps != nil {
+		return f.steps
+	}
+
 	list := []int{}
 
 	if !f.Enabled {
@@ -139,7 +147,9 @@ func (f *FieldOptimization) Steps() []int {
 		}
 	}
 
-	return list
+	f.steps = &list
+
+	return &list
 }
 
 //=============================================================================
@@ -168,6 +178,15 @@ func (f *FieldOptimization) Validate(min, max int) error {
 	}
 
 	return nil
+}
+
+//=============================================================================
+
+func (f *FieldOptimization) RandomValue() int {
+	list := f.Steps()
+	idx  := rand.Intn(len(*list))
+
+	return (*list)[idx]
 }
 
 //=============================================================================

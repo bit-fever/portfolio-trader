@@ -104,3 +104,9 @@ func AddTrade(tx *gorm.DB, tr *Trade) error {
 }
 
 //=============================================================================
+
+func DeleteAllTradesByTradingSystemId(tx *gorm.DB, id uint) error {
+	return tx.Delete(&Trade{}, "trading_system_id", id).Error
+}
+
+//=============================================================================

@@ -157,3 +157,9 @@ func UpdateBrokerProductInfo(tx *gorm.DB, brokerProductId uint, values map[strin
 }
 
 //=============================================================================
+
+func DeleteTradingSystem(tx *gorm.DB, id uint) error {
+	return tx.Delete(&TradingSystem{}, id).Error
+}
+
+//=============================================================================
