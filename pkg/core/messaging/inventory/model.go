@@ -25,6 +25,21 @@ THE SOFTWARE.
 package inventory
 
 //=============================================================================
+//=== Entities
+//=============================================================================
+
+type DataProduct struct {
+	Id               uint     `json:"id"`
+	ConnectionId     uint     `json:"connectionId"`
+	ExchangeId       uint     `json:"exchangeId"`
+	Username         string   `json:"username"`
+	Symbol           string   `json:"symbol"`
+	Name             string   `json:"name"`
+	MarketType       string   `json:"marketType"`
+	ProductType      string   `json:"productType"`
+}
+
+//=============================================================================
 
 type BrokerProduct struct {
 	Id               uint     `json:"id"`
@@ -78,11 +93,21 @@ type Currency struct {
 
 //=============================================================================
 
+type TradingSession struct {
+	Id     uint   `json:"id"`
+	Name   string `json:"name"`
+	Config string `json:"config"`
+}
+
+//=============================================================================
+
 type TradingSystem struct {
 	Id                uint    `json:"id"`
 	Username          string  `json:"username"`
 	WorkspaceCode     string  `json:"workspaceCode"`
 	Name              string  `json:"name"`
+	Scope             string  `json:"scope"`
+	Timeframe         int     `json:"timeframe"`
 	PortfolioId       uint    `json:"portfolioId"`
 	DataProductId     uint    `json:"dataProductId"`
 	BrokerProductId   uint    `json:"brokerProductId"`
@@ -90,11 +115,13 @@ type TradingSystem struct {
 }
 
 //=============================================================================
+//=== Messages
+//=============================================================================
 
-type TradingSystemMessage struct {
-	TradingSystem TradingSystem `json:"tradingSystem"`
-	BrokerProduct BrokerProduct `json:"brokerProduct"`
-	Currency      Currency      `json:"currency"`
+type DataProductMessage struct {
+	DataProduct DataProduct `json:"dataProduct"`
+	Connection  Connection  `json:"connection"`
+	Exchange    Exchange    `json:"exchange"`
 }
 
 //=============================================================================
@@ -103,6 +130,16 @@ type BrokerProductMessage struct {
 	BrokerProduct BrokerProduct `json:"brokerProduct"`
 	Connection    Connection    `json:"connection"`
 	Exchange      Exchange      `json:"exchange"`
+}
+
+//=============================================================================
+
+type TradingSystemMessage struct {
+	TradingSystem  TradingSystem  `json:"tradingSystem"`
+	DataProduct    DataProduct    `json:"dataProduct"`
+	BrokerProduct  BrokerProduct  `json:"brokerProduct"`
+	Currency       Currency       `json:"currency"`
+	TradingSession TradingSession `json:"tradingSession"`
 }
 
 //=============================================================================

@@ -65,6 +65,22 @@ func handleMessage(m *msg.Message) bool {
 		if m.Type == msg.TypeDelete {
 			return deleteTradingSystem(&tsm)
 		}
+	} else if m.Source == msg.SourceDataProduct {
+		dpm := DataProductMessage{}
+		err := json.Unmarshal(m.Entity, &dpm)
+		if err != nil {
+			slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
+			return true
+		}
+
+		if m.Type == msg.TypeCreate {
+			//--- If the broker product is new, there are no trading systems to update. Just return 'true'
+			return true
+		}
+
+		if m.Type == msg.TypeUpdate {
+			return updateDataProduct(&dpm)
+		}
 	} else if m.Source == msg.SourceBrokerProduct {
 		pbm := BrokerProductMessage{}
 		err := json.Unmarshal(m.Entity, &pbm)
@@ -81,9 +97,6 @@ func handleMessage(m *msg.Message) bool {
 		if m.Type == msg.TypeUpdate {
 			return updateBrokerProduct(&pbm)
 		}
-	} else if m.Source == msg.SourceDataProduct {
-		//--- We are not interested into data products
-		return true
 	}
 
 	slog.Error("Dropping message with unknown source/type!", "source", m.Source, "type", m.Type)
@@ -123,14 +136,22 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.Username        = tsm.TradingSystem.Username
 		ts.WorkspaceCode   = tsm.TradingSystem.WorkspaceCode
 		ts.Name            = tsm.TradingSystem.Name
+		ts.Scope           = tsm.TradingSystem.Scope
+		ts.Timeframe       = tsm.TradingSystem.Timeframe
+		ts.DataProductId   = tsm.TradingSystem.DataProductId
+		ts.DataSymbol      = tsm.DataProduct.Symbol
 		ts.BrokerProductId = tsm.TradingSystem.BrokerProductId
 		ts.BrokerSymbol    = tsm.BrokerProduct.Symbol
 		ts.PointValue      = tsm.BrokerProduct.PointValue
 		ts.CostPerOperation= tsm.BrokerProduct.CostPerOperation
 		ts.MarginValue     = tsm.BrokerProduct.MarginValue
 		ts.Increment       = tsm.BrokerProduct.Increment
+		ts.MarketType      = tsm.BrokerProduct.MarketType
 		ts.CurrencyId      = tsm.Currency.Id
 		ts.CurrencyCode    = tsm.Currency.Code
+		ts.TradingSessionId= tsm.TradingSession.Id
+		ts.SessionName     = tsm.TradingSession.Name
+		ts.SessionConfig   = tsm.TradingSession.Config
 
 		return db.UpdateTradingSystem(tx, ts)
 	})
@@ -158,6 +179,29 @@ func deleteTradingSystem(tsm *TradingSystemMessage) bool {
 		slog.Error("Raised error while deleting trading system", "error", err.Error())
 	} else {
 		slog.Info("deleteTradingSystem: Operation complete", "id", tsm.TradingSystem.Id)
+	}
+
+	return err == nil
+}
+
+//=============================================================================
+
+func updateDataProduct(dpm *DataProductMessage) bool {
+	slog.Info("updateDataProduct: Data product change received", "sourceId", dpm.DataProduct.Id)
+
+	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		values := map[string]interface{} {
+			//--- data_symbol cannot be changed, anyway
+			"data_symbol" : dpm.DataProduct.Symbol,
+		}
+
+		return db.UpdateDataProductInfo(tx, dpm.DataProduct.Id, values)
+	})
+
+	if err != nil {
+		slog.Error("Raised error while processing message")
+	} else {
+		slog.Info("updateDataProduct: Operation complete")
 	}
 
 	return err == nil

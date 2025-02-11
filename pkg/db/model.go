@@ -74,29 +74,37 @@ const (
 //-----------------------------------------------------------------------------
 
 type TradingSystem struct {
-	Id               uint         `json:"id" gorm:"primaryKey"`
-	Username         string       `json:"username"`
-	WorkspaceCode    string       `json:"workspaceCode"`
-	Name             string       `json:"name"`
-	Running          bool         `json:"running"`
-	Activation       TsActivation `json:"activation"`
-	Active           bool         `json:"active"`
-	Status           TsStatus     `json:"status"`
-	SuggestedAction  TsSuggAction `json:"suggestedAction"`
-	FirstTrade       *time.Time   `json:"firstTrade"`
-	LastTrade        *time.Time   `json:"lastTrade"`
-	LastUpdate       *time.Time   `json:"lastUpdate"`
-	LmNetProfit      float64      `json:"lmNetProfit"`
-	LmNetAvgTrade    float64      `json:"lmNetAvgTrade"`
-	LmNumTrades      int          `json:"lmNumTrades"`
-	BrokerProductId  uint         `json:"brokerProductId"`
-	BrokerSymbol     string       `json:"brokerSymbol"`
-	PointValue       float32      `json:"pointValue"`
-	CostPerOperation float32      `json:"costPerOperation"`
-	MarginValue      float32      `json:"marginValue"`
-	Increment        float64      `json:"increment"`
-	CurrencyId       uint         `json:"currencyId"`
-	CurrencyCode     string       `json:"currencyCode"`
+	Id                uint         `json:"id" gorm:"primaryKey"`
+	Username          string       `json:"username"`
+	WorkspaceCode     string       `json:"workspaceCode"`
+	Name              string       `json:"name"`
+	Scope             string       `json:"scope"`
+	Timeframe         int          `json:"timeframe"`
+	DataProductId     uint         `json:"dataProductId"`
+	DataSymbol        string       `json:"dataSymbol"`
+	BrokerProductId   uint         `json:"brokerProductId"`
+	BrokerSymbol      string       `json:"brokerSymbol"`
+	PointValue        float32      `json:"pointValue"`
+	CostPerOperation  float32      `json:"costPerOperation"`
+	MarginValue       float32      `json:"marginValue"`
+	Increment         float64      `json:"increment"`
+	MarketType        string       `json:"marketType"`
+	CurrencyId        uint         `json:"currencyId"`
+	CurrencyCode      string       `json:"currencyCode"`
+	TradingSessionId  uint         `json:"tradingSessionId"`
+	SessionName       string       `json:"sessionName"`
+	SessionConfig     string       `json:"sessionConfig"`
+	Running           bool         `json:"running"`
+	Activation        TsActivation `json:"activation"`
+	Active            bool         `json:"active"`
+	Status            TsStatus     `json:"status"`
+	SuggestedAction   TsSuggAction `json:"suggestedAction"`
+	FirstTrade        *time.Time   `json:"firstTrade"`
+	LastTrade         *time.Time   `json:"lastTrade"`
+	LastUpdate        *time.Time   `json:"lastUpdate"`
+	LastNetProfit     float64      `json:"lastNetProfit"`
+	LastNetAvgTrade   float64      `json:"lastNetAvgTrade"`
+	LastNumTrades     int          `json:"lastNumTrades"`
 }
 
 //=============================================================================

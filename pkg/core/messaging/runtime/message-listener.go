@@ -178,7 +178,7 @@ func updateLastMonthStats(ts *db.TradingSystem, trades *[]db.Trade) {
 	netProit := 0.0
 	numTrades:= 0
 
-	startDate := time.Now().Add(-time.Hour * 24*30)
+	startDate := time.Now().Add(-time.Hour * 24*30*3)
 
 	for _, trade := range *trades {
 		if trade.ExitTime.After(startDate) {
@@ -187,12 +187,12 @@ func updateLastMonthStats(ts *db.TradingSystem, trades *[]db.Trade) {
 		}
 	}
 
-	ts.LmNetProfit   = netProit
-	ts.LmNumTrades   = numTrades
-	ts.LmNetAvgTrade = 0
+	ts.LastNetProfit   = netProit
+	ts.LastNumTrades   = numTrades
+	ts.LastNetAvgTrade = 0
 
 	if numTrades != 0 {
-		ts.LmNetAvgTrade = core.Trunc2d(netProit / float64(numTrades))
+		ts.LastNetAvgTrade = core.Trunc2d(netProit / float64(numTrades))
 	}
 }
 
