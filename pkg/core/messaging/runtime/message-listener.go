@@ -33,7 +33,6 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
-	"strconv"
 	"time"
 )
 
@@ -212,13 +211,10 @@ func updateActivationStatus(ts *db.TradingSystem, trades *[]db.Trade, f *db.Trad
 		activValue = filter.CalcActivation(ts, f, *trades)
 	}
 
-	switch ts.Activation {
-		case db.TsActivationManual:
-			handleManualActivation(ts, activValue)
-		case db.TsActivationAuto:
-			handleAutomaticActivation(ts, activValue)
-		default:
-			panic("Unknown filter activation for ts="+ strconv.Itoa(int(ts.Id)))
+	if ts.AutoActivation {
+		handleAutomaticActivation(ts, activValue)
+	} else {
+		handleManualActivation(ts, activValue)
 	}
 }
 

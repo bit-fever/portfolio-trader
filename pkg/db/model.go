@@ -38,15 +38,6 @@ import (
 //===
 //=============================================================================
 
-type TsActivation int8
-
-const (
-	TsActivationManual TsActivation = 0
-	TsActivationAuto   TsActivation = 1
-)
-
-//-----------------------------------------------------------------------------
-
 type TsStatus int8
 
 const (
@@ -95,7 +86,7 @@ type TradingSystem struct {
 	SessionName       string       `json:"sessionName"`
 	SessionConfig     string       `json:"sessionConfig"`
 	Running           bool         `json:"running"`
-	Activation        TsActivation `json:"activation"`
+	AutoActivation    bool         `json:"autoActivation"`
 	Active            bool         `json:"active"`
 	Status            TsStatus     `json:"status"`
 	SuggestedAction   TsSuggAction `json:"suggestedAction"`

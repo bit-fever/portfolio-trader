@@ -118,7 +118,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		if ts == nil {
 			ts = &db.TradingSystem{}
 			ts.Running         = false
-			ts.Activation      = db.TsActivationManual
+			ts.AutoActivation  = false
 			ts.Status          = db.TsStatusOff
 			ts.Active          = false
 			ts.SuggestedAction = db.TsActionNone

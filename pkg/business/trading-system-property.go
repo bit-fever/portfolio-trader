@@ -105,7 +105,6 @@ func handleRunningProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem, v
 		}, nil
 	}
 
-
 	if !oldValue && newValue {
 		//--- Enabling
 		c.Log.Info("handleRunningProperty: Starting trading system", "tsId", ts.Id)
@@ -131,8 +130,8 @@ func handleRunningProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem, v
 //=============================================================================
 
 func handleActivationProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem, value string) (*TradingSystemPropertyResponse, error) {
-	oldValue     := ts.Activation
-	newValue,err := getActivation(value)
+	oldValue     := ts.AutoActivation
+	newValue,err := getBool(value)
 	if err != nil {
 		return &TradingSystemPropertyResponse{
 			Status : ResponseStatusError,
@@ -146,15 +145,15 @@ func handleActivationProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem
 		}, nil
 	}
 
-	if oldValue == db.TsActivationAuto && newValue == db.TsActivationManual {
-		//--- Activation = manual
-		c.Log.Info("handleActivationProperty: Trading system's activation set to MANUAL", "tsId", ts.Id)
-	} else {
+	if !oldValue && newValue {
 		//--- Activation = auto
 		c.Log.Info("handleActivationProperty: Trading system's activation set to AUTO", "tsId", ts.Id)
+	} else {
+		//--- Activation = manual
+		c.Log.Info("handleActivationProperty: Trading system's activation set to MANUAL", "tsId", ts.Id)
 	}
 
-	ts.Activation = newValue
+	ts.AutoActivation = newValue
 	err = db.UpdateTradingSystem(tx, ts)
 
 	return &TradingSystemPropertyResponse{
@@ -180,7 +179,7 @@ func handleActiveProperty(tx *gorm.DB, c *auth.Context, ts *db.TradingSystem, va
 		}, nil
 	}
 
-	if ts.Activation == db.TsActivationAuto {
+	if ts.AutoActivation {
 		return &TradingSystemPropertyResponse{
 			Status : ResponseStatusError,
 			Message: "Trading system is in AUTOMATIC mode. Switch to MANUAL to pause",
@@ -220,19 +219,6 @@ func getBool(value string) (bool, error) {
 	}
 
 	return false, errors.New("Unknown boolean value : "+ value)
-}
-
-//=============================================================================
-
-func getActivation(value string) (db.TsActivation, error) {
-	if value == "manual" {
-		return db.TsActivationManual, nil
-	}
-	if value == "auto" {
-		return db.TsActivationAuto, nil
-	}
-
-	return 0, errors.New("Unknown activation value : "+ value)
 }
 
 //=============================================================================
