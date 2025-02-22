@@ -22,76 +22,24 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package service
+package db
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/portfolio-trader/pkg/business"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
 )
 
 //=============================================================================
 
-func getPortfolios(c *auth.Context) {
-	filter := map[string]any{}
-	offset, limit, err := c.GetPagingParams()
+func GetPortfolios(tx *gorm.DB, filter map[string]any, offset int, limit int) (*[]Portfolio, error) {
+	var list []Portfolio
+	res := tx.Where(filter).Offset(offset).Limit(limit).Find(&list)
 
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := business.GetPortfolios(tx, c, filter, offset, limit)
-
-			if err != nil {
-				return err
-			}
-
-			return c.ReturnList(list, offset, limit, len(*list))
-		})
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
 	}
 
-	c.ReturnError(err)
-}
-
-//=============================================================================
-
-func getPortfolioTree(c *auth.Context) {
-	filter := map[string]any{}
-	offset, limit, err := c.GetPagingParams()
-
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := business.GetPortfolioTree(tx, c, filter, offset, limit)
-
-			if err != nil {
-				return err
-			}
-
-			return c.ReturnObject(list)
-		})
-	}
-
-	c.ReturnError(err)
-}
-
-//=============================================================================
-
-func getPortfolioMonitoring(c *auth.Context) {
-	params := business.PortfolioMonitoringParams{}
-	err    := c.BindParamsFromBody(&params)
-
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			result, err := business.GetPortfolioMonitoring(tx, &params)
-
-			if err != nil {
-				return err
-			}
-
-			return c.ReturnObject(result)
-		})
-	}
-
-	c.ReturnError(err)
+	return &list, nil
 }
 
 //=============================================================================

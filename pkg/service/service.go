@@ -50,6 +50,8 @@ func Init(router *gin.Engine, cfg *app.Config, logger *slog.Logger) {
 	router.POST  ("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(startFilterOptimization,   roles.Admin_User_Service))
 	router.DELETE("/api/portfolio/v1/trading-systems/:id/filter-optimization", ctrl.Secure(stopFilterOptimization,    roles.Admin_User_Service))
 
+	router.GET   ("/api/inventory/v1/portfolios",                              ctrl.Secure(getPortfolios,             roles.Admin_User_Service))
+	router.GET   ("/api/inventory/v1/portfolio/tree",                          ctrl.Secure(getPortfolioTree,          roles.Admin_User_Service))
 	router.POST  ("/api/portfolio/v1/portfolio/monitoring",                    ctrl.Secure(getPortfolioMonitoring,    roles.Admin_User_Service))
 }
 

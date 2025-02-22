@@ -16,5 +16,5 @@ messaging:
   username: rabbit-admin
   password: rabbit.admin
 scan:
-  address: https://158.69.26.216:8443/api/v1/strategies
+  address:
   periodHour: 2

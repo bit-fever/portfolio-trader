@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2025 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,76 +22,34 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package service
+package business
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"gorm.io/gorm"
 )
 
 //=============================================================================
-
-func getPortfolios(c *auth.Context) {
-	filter := map[string]any{}
-	offset, limit, err := c.GetPagingParams()
-
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := business.GetPortfolios(tx, c, filter, offset, limit)
-
-			if err != nil {
-				return err
-			}
-
-			return c.ReturnList(list, offset, limit, len(*list))
-		})
-	}
-
-	c.ReturnError(err)
-}
-
+//===
+//=== Portfolio tree
+//===
 //=============================================================================
 
-func getPortfolioTree(c *auth.Context) {
-	filter := map[string]any{}
-	offset, limit, err := c.GetPagingParams()
-
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			list, err := business.GetPortfolioTree(tx, c, filter, offset, limit)
-
-			if err != nil {
-				return err
-			}
-
-			return c.ReturnObject(list)
-		})
-	}
-
-	c.ReturnError(err)
+type PortfolioTree struct {
+	db.Portfolio
+	Children       []*PortfolioTree    `json:"children"`
+	TradingSystems []*db.TradingSystem `json:"tradingSystems"`
 }
 
-//=============================================================================
+//-----------------------------------------------------------------------------
 
-func getPortfolioMonitoring(c *auth.Context) {
-	params := business.PortfolioMonitoringParams{}
-	err    := c.BindParamsFromBody(&params)
+func (pt *PortfolioTree) AddChild(p *PortfolioTree) {
+	pt.Children = append(pt.Children, p)
+}
 
-	if err == nil {
-		err = db.RunInTransaction(func(tx *gorm.DB) error {
-			result, err := business.GetPortfolioMonitoring(tx, &params)
+//-----------------------------------------------------------------------------
 
-			if err != nil {
-				return err
-			}
-
-			return c.ReturnObject(result)
-		})
-	}
-
-	c.ReturnError(err)
+func (pt *PortfolioTree) AddTradingSystem(ts *db.TradingSystem) {
+	pt.TradingSystems = append(pt.TradingSystems, ts)
 }
 
 //=============================================================================

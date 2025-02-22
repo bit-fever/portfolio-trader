@@ -38,6 +38,15 @@ import (
 //===
 //=============================================================================
 
+type Portfolio struct {
+	Id        uint    `json:"id" gorm:"primaryKey"`
+	ParentId  uint    `json:"parentId"`
+	Username  string  `json:"username"`
+	Name      string  `json:"name"`
+}
+
+//=============================================================================
+
 type TsStatus int8
 
 const (
@@ -150,6 +159,7 @@ type Trade struct {
 func (TradingSystem) TableName() string { return "trading_system" }
 func (TradingFilter) TableName() string { return "trading_filter" }
 func (Trade)         TableName() string { return "trade"          }
+func (Portfolio)     TableName() string { return "portfolio"      }
 
 //=============================================================================
 //===
