@@ -15,6 +15,6 @@ messaging:
   address: localhost:8450
   username: rabbit-admin
   password: rabbit.admin
-scan:
-  address:
-  periodHour: 2
+#scan:
+#  address: https://158.69.26.216:8443/api/v1/strategies
+#  periodHour: 2

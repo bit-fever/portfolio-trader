@@ -71,7 +71,7 @@ func GetPortfolioTree(tx *gorm.DB, c *auth.Context, filter map[string]any, offse
 //===
 //=============================================================================
 
-func buildPortfolioTree(log *slog.Logger, poList *[]db.Portfolio, tsList *[]db.TradingSystemFull) *[]*PortfolioTree {
+func buildPortfolioTree(log *slog.Logger, poList *[]db.Portfolio, tsList *[]db.TradingSystem) *[]*PortfolioTree {
 
 	//--- Step 1: Collect all nodes into a map
 
@@ -82,7 +82,7 @@ func buildPortfolioTree(log *slog.Logger, poList *[]db.Portfolio, tsList *[]db.T
 		pt := &PortfolioTree{
 			Portfolio:      p,
 			Children:       []*PortfolioTree{},
-			TradingSystems: []*db.TradingSystemFull{},
+			TradingSystems: []*db.TradingSystem{},
 		}
 		nodeMap[p.Id] = pt
 		fullMap[p.Id] = pt
@@ -102,7 +102,7 @@ func buildPortfolioTree(log *slog.Logger, poList *[]db.Portfolio, tsList *[]db.T
 
 	for _, ts := range *tsList {
 		aux := ts
-		portfolio := fullMap[ts.PortfolioId]
+		portfolio := fullMap[*ts.PortfolioId]
 		portfolio.AddTradingSystem(&aux)
 	}
 

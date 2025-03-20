@@ -38,31 +38,13 @@ func FindTradesByTsId(tx *gorm.DB, tsId uint) (*[]Trade, error) {
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
 
-	res := tx.Where(filter).Find(&list).Order("exit_time")
+	res := tx.Where(filter).Find(&list).Order("entry_date")
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
 	}
 
 	return &list, nil
-}
-
-//=============================================================================
-
-func FindTradesByTsIds(tx *gorm.DB, ids []uint) (*[]Trade, error){
-	var list []Trade
-
-	filter := map[string]any{}
-	filter["trading_system_id"] = ids
-
-	res := tx.Where(filter).Find(&list).Order("exit_time")
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
-
 }
 
 //=============================================================================
@@ -106,7 +88,8 @@ func AddTrade(tx *gorm.DB, tr *Trade) error {
 //=============================================================================
 
 func DeleteAllTradesByTradingSystemId(tx *gorm.DB, id uint) error {
-	return tx.Delete(&Trade{}, "trading_system_id", id).Error
+	err := tx.Delete(&Trade{}, "trading_system_id", id).Error
+	return req.NewServerErrorByError(err)
 }
 
 //=============================================================================

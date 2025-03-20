@@ -31,7 +31,6 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
-	"time"
 )
 
 //=============================================================================
@@ -109,6 +108,8 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 	slog.Info("setTradingSystem: Trading system change received", "create", create, "id", tsm.TradingSystem.Id)
 
 	err := db.RunInTransaction(func(tx *gorm.DB) error {
+		isNew := true
+
 		ts, err := db.GetTradingSystemById(tx, tsm.TradingSystem.Id)
 
 		if err != nil {
@@ -122,10 +123,9 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 			ts.Status          = db.TsStatusOff
 			ts.Active          = false
 			ts.SuggestedAction = db.TsActionNone
-
-			lu := time.Now()
-			ts.LastUpdate = &lu
 		} else {
+			isNew = false
+
 			if ts.Username != tsm.TradingSystem.Username {
 				slog.Error("Trading system '%v' not owned by user '%v'! Dropping message", tsm.TradingSystem.Id, tsm.TradingSystem.Username)
 				return nil
@@ -134,7 +134,6 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 
 		ts.Id              = tsm.TradingSystem.Id
 		ts.Username        = tsm.TradingSystem.Username
-		ts.WorkspaceCode   = tsm.TradingSystem.WorkspaceCode
 		ts.Name            = tsm.TradingSystem.Name
 		ts.Scope           = tsm.TradingSystem.Scope
 		ts.Timeframe       = tsm.TradingSystem.Timeframe
@@ -152,8 +151,20 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.TradingSessionId= tsm.TradingSession.Id
 		ts.SessionName     = tsm.TradingSession.Name
 		ts.SessionConfig   = tsm.TradingSession.Config
+		ts.External        = tsm.TradingSystem.ExternalRef != ""
+		ts.StrategyType    = tsm.TradingSystem.StrategyType
+		ts.Overnight       = tsm.TradingSystem.Overnight
+		ts.Tags            = tsm.TradingSystem.Tags
 
-		return db.UpdateTradingSystem(tx, ts)
+		err = db.UpdateTradingSystem(tx, ts)
+
+		if err == nil && isNew {
+			err = db.SetTradingFilter(tx, &db.TradingFilter{
+				TradingSystemId : ts.Id,
+			})
+		}
+
+		return err
 	})
 
 	if err != nil {

@@ -62,13 +62,10 @@ const (
 type TsSuggAction int8
 
 const (
-	TsActionNone            TsSuggAction = 0
-	TsActionTurnOff         TsSuggAction = 1
-	TsActionTurnOn          TsSuggAction = 2
-	TsActionCheck           TsSuggAction = 3
-	TsActionTurnOffAndCheck TsSuggAction = 4
-	TsActionNoneTurnedOff   TsSuggAction = 5
-	TsActionNoneTurnedOn    TsSuggAction = 6
+	TsActionNone     TsSuggAction = 0
+	TsActionTurnOff  TsSuggAction = 1
+	TsActionTurnOn   TsSuggAction = 2
+	TsActionCheck    TsSuggAction = 3
 )
 
 //-----------------------------------------------------------------------------
@@ -76,7 +73,6 @@ const (
 type TradingSystem struct {
 	Id                uint         `json:"id" gorm:"primaryKey"`
 	Username          string       `json:"username"`
-	WorkspaceCode     string       `json:"workspaceCode"`
 	Name              string       `json:"name"`
 	Scope             string       `json:"scope"`
 	Timeframe         int          `json:"timeframe"`
@@ -94,6 +90,10 @@ type TradingSystem struct {
 	TradingSessionId  uint         `json:"tradingSessionId"`
 	SessionName       string       `json:"sessionName"`
 	SessionConfig     string       `json:"sessionConfig"`
+	External          bool         `json:"external"`
+	StrategyType      string       `json:"strategyType"`
+	Overnight         bool         `json:"overnight"`
+	Tags              string       `json:"tags"`
 	Running           bool         `json:"running"`
 	AutoActivation    bool         `json:"autoActivation"`
 	Active            bool         `json:"active"`
@@ -101,10 +101,10 @@ type TradingSystem struct {
 	SuggestedAction   TsSuggAction `json:"suggestedAction"`
 	FirstTrade        *time.Time   `json:"firstTrade"`
 	LastTrade         *time.Time   `json:"lastTrade"`
-	LastUpdate        *time.Time   `json:"lastUpdate"`
 	LastNetProfit     float64      `json:"lastNetProfit"`
 	LastNetAvgTrade   float64      `json:"lastNetAvgTrade"`
 	LastNumTrades     int          `json:"lastNumTrades"`
+	PortfolioId       *uint        `json:"portfolioId"`
 }
 
 //=============================================================================
@@ -129,11 +129,9 @@ type TradingFilter struct {
 
 //=============================================================================
 
-type TradeType int8
-
 const (
-	TradeTypeLong  TradeType = 0
-	TradeTypeShort TradeType = 1
+	TradeTypeLong  = "LO"
+	TradeTypeShort = "SH"
 )
 
 //-----------------------------------------------------------------------------
@@ -141,13 +139,25 @@ const (
 type Trade struct {
 	Id              uint       `json:"id" gorm:"primaryKey"`
 	TradingSystemId uint       `json:"tradingSystemId"`
-	TradeType       TradeType  `json:"tradeType"`
-	EntryTime       *time.Time `json:"entryTime"`
-	EntryValue      float64    `json:"entryValue"`
-	ExitTime        *time.Time `json:"exitTime"`
-	ExitValue       float64    `json:"exitValue"`
+	TradeType       string     `json:"tradeType"`
+	EntryDate       *time.Time `json:"entryDate"`
+	EntryPrice      float64    `json:"entryPrice"`
+	EntryLabel      string     `json:"entryLabel"`
+	ExitDate        *time.Time `json:"exitDate"`
+	ExitPrice       float64    `json:"exitPrice"`
+	ExitLabel       string     `json:"exitLabel"`
 	GrossProfit     float64    `json:"grossProfit"`
-	NumContracts    int        `json:"numContracts"`
+	Contracts       int        `json:"contracts"`
+}
+
+//-----------------------------------------------------------------------------
+
+func (t Trade) String() string {
+	return fmt.Sprintf("%v|%v|%v|%v|%v|%v|%v|%v|%v",
+		t.TradeType,
+		t.EntryDate.UTC(), t.EntryPrice, t.EntryLabel,
+		t.ExitDate.UTC(),  t.ExitPrice,  t.ExitLabel,
+		t.GrossProfit, t.Contracts)
 }
 
 //=============================================================================

@@ -26,7 +26,6 @@ package app
 
 import (
 	"github.com/bit-fever/core"
-	"time"
 )
 
 //=============================================================================
@@ -37,11 +36,6 @@ type Config struct {
 	core.Authentication
 	core.Platform
 	core.Messaging
-
-	Scan struct {
-		Address string
-		PeriodHour time.Duration
-	}
 }
 
 //=============================================================================

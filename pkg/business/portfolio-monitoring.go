@@ -107,7 +107,7 @@ func buildSortedMapOfInfo(list *[]db.Trade) *map[uint][]*db.Trade {
 
 	for _, list := range trMap {
 		sort.SliceStable(list, func(i, j int) bool {
-			return list[i].ExitTime.Before(*list[j].ExitTime)
+			return list[i].ExitDate.Before(*list[j].ExitDate)
 		})
 	}
 
@@ -151,7 +151,7 @@ func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.Trade) *Tradi
 		currRawProfit += tr.GrossProfit
 		currNetProfit += tr.GrossProfit - float64(ts.CostPerOperation) * 2
 
-		tsa.Time[i]        = *tr.ExitTime
+		tsa.Time[i]        = *tr.ExitDate
 		tsa.GrossProfit[i] = currRawProfit
 		tsa.NetProfit[i]   = currNetProfit
 	}

@@ -25,27 +25,28 @@ THE SOFTWARE.
 package runtime
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"time"
 )
 
 //=============================================================================
 
-type TradeMessage struct {
-	TradingSystemId uint     `json:"tradingSystemId"`
-	Trades          []*Trade `json:"trades"`
+type TradeListMessage struct {
+	TradingSystemId uint         `json:"tradingSystemId"`
+	Trades          []*TradeItem `json:"trades"`
 }
 
 //=============================================================================
 
-type Trade struct {
-	TradeType       db.TradeType `json:"tradeType"`
-	EntryTime       *time.Time   `json:"entryTime"`
-	EntryValue      float64      `json:"entryValue"`
-	ExitTime        *time.Time   `json:"exitTime"`
-	ExitValue       float64      `json:"exitValue"`
+type TradeItem struct {
+	TradeType       string       `json:"tradeType"`
+	EntryDate       *time.Time   `json:"entryDate"`
+	EntryPrice      float64      `json:"entryPrice"`
+	EntryLabel      string       `json:"entryLabel"`
+	ExitDate        *time.Time   `json:"exitDate"`
+	ExitPrice       float64      `json:"exitPrice"`
+	ExitLabel       string       `json:"exitLabel"`
 	GrossProfit     float64      `json:"grossProfit"`
-	NumContracts    int          `json:"numContracts"`
+	Contracts       int          `json:"contracts"`
 }
 
 //=============================================================================

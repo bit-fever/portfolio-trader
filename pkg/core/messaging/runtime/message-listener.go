@@ -33,6 +33,7 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
+	"sort"
 	"time"
 )
 
@@ -51,7 +52,7 @@ func handleMessage(m *msg.Message) bool {
 	slog.Info("New message received", "source", m.Source, "type", m.Type)
 
 	if m.Source == msg.SourceTrade {
-		tm := TradeMessage{}
+		tm := TradeListMessage{}
 		err := json.Unmarshal(m.Entity, &tm)
 		if err != nil {
 			slog.Error("Dropping badly formatted message!", "entity", string(m.Entity))
@@ -69,7 +70,7 @@ func handleMessage(m *msg.Message) bool {
 
 //=============================================================================
 
-func handleNewTrades(tm *TradeMessage) bool {
+func handleNewTrades(tm *TradeListMessage) bool {
 	tsId := tm.TradingSystemId
 
 	slog.Info("handleNewTrades: Processing new trades for trading systems", "id", tsId)
@@ -107,11 +108,21 @@ func handleNewTrades(tm *TradeMessage) bool {
 
 //=============================================================================
 
-func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrades []*Trade) (*[]db.Trade, error) {
+func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrades []*TradeItem) (*[]db.Trade, error) {
 	list := *trades
+
+	tradeSet := map[string]bool{}
+	for _, dbt := range *trades {
+		tradeSet[dbt.String()] = true
+	}
 
 	for _, tr := range newTrades {
 		dbTr := toDbTrade(ts.Id, tr)
+		_, exists := tradeSet[dbTr.String()]
+		if exists {
+			continue
+		}
+
 		err  := db.AddTrade(tx, dbTr)
 
 		if err != nil {
@@ -122,37 +133,45 @@ func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrad
 
 		//--- Update information on trading system
 
-		if ts.FirstTrade == nil || ts.FirstTrade.After(*tr.EntryTime) {
-			ts.FirstTrade = tr.EntryTime
+		if ts.FirstTrade == nil || ts.FirstTrade.After(*tr.EntryDate) {
+			ts.FirstTrade = tr.EntryDate
 		}
 
-		if ts.LastTrade == nil || ts.LastTrade.Before(*tr.EntryTime) {
-			ts.LastTrade = tr.EntryTime
+		if ts.LastTrade == nil || ts.LastTrade.Before(*tr.EntryDate) {
+			ts.LastTrade = tr.EntryDate
 		}
 	}
+
+	//--- Sort final list as new trades could be in the past
+
+	sort.Slice(list, func(i,j int) bool {
+		return list[i].EntryDate.Before(*list[j].EntryDate)
+	})
 
 	return &list, nil
 }
 
 //=============================================================================
 
-func toDbTrade(tsId uint, t *Trade) *db.Trade {
+func toDbTrade(tsId uint, t *TradeItem) *db.Trade {
 	return &db.Trade{
 		TradingSystemId: tsId,
 		TradeType      : t.TradeType,
-		EntryTime      : t.EntryTime,
-		EntryValue     : t.EntryValue,
-		ExitTime       : t.ExitTime,
-		ExitValue      : t.ExitValue,
+		EntryDate      : t.EntryDate,
+		EntryPrice     : t.EntryPrice,
+		EntryLabel     : t.EntryLabel,
+		ExitDate       : t.ExitDate,
+		ExitPrice      : t.ExitPrice,
+		ExitLabel      : t.ExitLabel,
 		GrossProfit    : t.GrossProfit,
-		NumContracts   : t.NumContracts,
+		Contracts      : t.Contracts,
 	}
 }
 
 //=============================================================================
 
 func updateTradingSystem(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, filter *db.TradingFilter) error {
-	updateLastMonthStats(ts, trades)
+	updateLastStats(ts, trades)
 	updateActivationStatus(ts, trades, filter)
 
 	//--- If we got new trades, probably we have to set an idle/broken state to running
@@ -165,33 +184,30 @@ func updateTradingSystem(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, 
 		}
 	}
 
-	now := time.Now()
-	ts.LastUpdate = &now
-
 	return db.UpdateTradingSystem(tx, ts)
 }
 
 //=============================================================================
 
-func updateLastMonthStats(ts *db.TradingSystem, trades *[]db.Trade) {
-	netProit := 0.0
-	numTrades:= 0
+func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade) {
+	netProfit := 0.0
+	numTrades := 0
 
 	startDate := time.Now().Add(-time.Hour * 24*30*3)
 
 	for _, trade := range *trades {
-		if trade.ExitTime.After(startDate) {
-			netProit += trade.GrossProfit - 2 * float64(ts.CostPerOperation)
+		if trade.ExitDate.After(startDate) {
+			netProfit += trade.GrossProfit - 2 * float64(ts.CostPerOperation)
 			numTrades++
 		}
 	}
 
-	ts.LastNetProfit   = netProit
+	ts.LastNetProfit   = netProfit
 	ts.LastNumTrades   = numTrades
 	ts.LastNetAvgTrade = 0
 
 	if numTrades != 0 {
-		ts.LastNetAvgTrade = core.Trunc2d(netProit / float64(numTrades))
+		ts.LastNetAvgTrade = core.Trunc2d(netProfit / float64(numTrades))
 	}
 }
 
@@ -230,16 +246,8 @@ func handleManualActivation(ts *db.TradingSystem, activValue bool) {
 	} else {
 		if !activValue {
 			ts.SuggestedAction = db.TsActionTurnOff
-
-			if ts.Status == db.TsStatusBroken {
-				ts.SuggestedAction = db.TsActionTurnOffAndCheck
-			}
 		} else {
 			ts.SuggestedAction = db.TsActionNone
-
-			if ts.Status == db.TsStatusBroken {
-				ts.SuggestedAction = db.TsActionCheck
-			}
 		}
 	}
 }
@@ -247,35 +255,35 @@ func handleManualActivation(ts *db.TradingSystem, activValue bool) {
 //=============================================================================
 
 func handleAutomaticActivation(ts *db.TradingSystem, activValue bool) {
+	ts.SuggestedAction = db.TsActionNone
+
 	if !ts.Active {
-		if !activValue {
-			ts.SuggestedAction = db.TsActionNone
-		} else {
-			ts.Status          = db.TsStatusRunning
-			ts.SuggestedAction = db.TsActionNoneTurnedOn
-			ts.Active          = true
+		if activValue {
+			ts.Status = db.TsStatusRunning
+			ts.Active = true
+			activate(ts)
 			notifyRuntime(ts)
 		}
 	} else {
 		if !activValue {
-			ts.Status          = db.TsStatusPaused
-			ts.SuggestedAction = db.TsActionNoneTurnedOff
-			ts.Active          = false
+			ts.Status = db.TsStatusPaused
+			ts.Active = false
+			activate(ts)
 			notifyRuntime(ts)
-		} else {
-			ts.SuggestedAction = db.TsActionNone
-
-			if ts.Status == db.TsStatusBroken {
-				ts.SuggestedAction = db.TsActionCheck
-			}
 		}
 	}
 }
 
 //=============================================================================
 
-func notifyRuntime(ts *db.TradingSystem) {
+func activate(ts *db.TradingSystem) {
+	//TODO
+}
 
+//=============================================================================
+
+func notifyRuntime(ts *db.TradingSystem) {
+	//TODO
 }
 
 //=============================================================================

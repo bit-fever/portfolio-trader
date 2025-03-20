@@ -26,15 +26,12 @@ package tradingsystem
 
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"time"
 )
 
 //=============================================================================
 
 func UpdateStatus(ts *db.TradingSystem) {
-	now := time.Now()
 	ts.SuggestedAction = db.TsActionNone
-	ts.LastUpdate      = &now
 
 	if ! ts.Running {
 		ts.Status = db.TsStatusOff

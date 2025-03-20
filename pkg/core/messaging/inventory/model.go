@@ -104,14 +104,17 @@ type TradingSession struct {
 type TradingSystem struct {
 	Id                uint    `json:"id"`
 	Username          string  `json:"username"`
-	WorkspaceCode     string  `json:"workspaceCode"`
 	Name              string  `json:"name"`
 	Scope             string  `json:"scope"`
 	Timeframe         int     `json:"timeframe"`
-	PortfolioId       uint    `json:"portfolioId"`
 	DataProductId     uint    `json:"dataProductId"`
 	BrokerProductId   uint    `json:"brokerProductId"`
 	TradingSessionId  uint    `json:"tradingSessionId"`
+	AgentProfileId    uint    `json:"agentProfileId" gorm:"default:null"`
+	StrategyType      string  `json:"strategyType"`
+	Overnight         bool    `json:"overnight"`
+	Tags              string  `json:"tags"`
+	ExternalRef       string  `json:"externalRef"`
 }
 
 //=============================================================================

@@ -102,7 +102,8 @@ func updateTradingSystem(ts *db.TradingSystem) error {
 		brokenDate := time.Now().Add(-time.Hour * 24 * time.Duration(BrokenDays))
 
 		if ts.LastTrade.Before(brokenDate) {
-			ts.Status = db.TsStatusBroken
+			ts.Status          = db.TsStatusBroken
+			ts.SuggestedAction = db.TsActionCheck
 		}
 	} else {
 		return nil

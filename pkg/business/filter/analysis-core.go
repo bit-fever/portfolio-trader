@@ -121,7 +121,7 @@ func calcUnfilteredEquityAndProfit(e *Equities, ts *db.TradingSystem, tradeList 
 		netProfit := t.GrossProfit - costPerOperat * 2
 		netEquity += netProfit
 
-		e.Time[i]             = *t.ExitTime
+		e.Time[i]             = *t.ExitDate
 		e.UnfilteredEquity[i] = netEquity
 		e.NetProfit[i]        = netProfit
 	}
