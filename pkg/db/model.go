@@ -74,7 +74,6 @@ type TradingSystem struct {
 	Id                uint         `json:"id" gorm:"primaryKey"`
 	Username          string       `json:"username"`
 	Name              string       `json:"name"`
-	Scope             string       `json:"scope"`
 	Timeframe         int          `json:"timeframe"`
 	DataProductId     uint         `json:"dataProductId"`
 	DataSymbol        string       `json:"dataSymbol"`
@@ -94,6 +93,8 @@ type TradingSystem struct {
 	StrategyType      string       `json:"strategyType"`
 	Overnight         bool         `json:"overnight"`
 	Tags              string       `json:"tags"`
+	Finalized         bool         `json:"finalized"`
+	Trading           bool         `json:"trading"`
 	Running           bool         `json:"running"`
 	AutoActivation    bool         `json:"autoActivation"`
 	Active            bool         `json:"active"`

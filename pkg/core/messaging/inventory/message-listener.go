@@ -135,7 +135,6 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.Id              = tsm.TradingSystem.Id
 		ts.Username        = tsm.TradingSystem.Username
 		ts.Name            = tsm.TradingSystem.Name
-		ts.Scope           = tsm.TradingSystem.Scope
 		ts.Timeframe       = tsm.TradingSystem.Timeframe
 		ts.DataProductId   = tsm.TradingSystem.DataProductId
 		ts.DataSymbol      = tsm.DataProduct.Symbol
@@ -155,6 +154,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.StrategyType    = tsm.TradingSystem.StrategyType
 		ts.Overnight       = tsm.TradingSystem.Overnight
 		ts.Tags            = tsm.TradingSystem.Tags
+		ts.Finalized       = tsm.TradingSystem.Finalized
 
 		err = db.UpdateTradingSystem(tx, ts)
 

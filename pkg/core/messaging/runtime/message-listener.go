@@ -202,7 +202,7 @@ func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade) {
 		}
 	}
 
-	ts.LastNetProfit   = netProfit
+	ts.LastNetProfit   = core.Trunc2d(netProfit)
 	ts.LastNumTrades   = numTrades
 	ts.LastNetAvgTrade = 0
 

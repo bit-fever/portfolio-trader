@@ -105,7 +105,6 @@ type TradingSystem struct {
 	Id                uint    `json:"id"`
 	Username          string  `json:"username"`
 	Name              string  `json:"name"`
-	Scope             string  `json:"scope"`
 	Timeframe         int     `json:"timeframe"`
 	DataProductId     uint    `json:"dataProductId"`
 	BrokerProductId   uint    `json:"brokerProductId"`
@@ -115,6 +114,7 @@ type TradingSystem struct {
 	Overnight         bool    `json:"overnight"`
 	Tags              string  `json:"tags"`
 	ExternalRef       string  `json:"externalRef"`
+	Finalized         bool    `json:"finalized"`
 }
 
 //=============================================================================

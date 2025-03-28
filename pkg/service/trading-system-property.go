@@ -33,16 +33,91 @@ import (
 
 //=============================================================================
 
-func setTradingSystemProperty(c *auth.Context) {
+func setTradingSystemTrading(c *auth.Context) {
 	tsId, err := c.GetIdFromUrl()
 
 	if err == nil {
-		req := business.TradingSystemPropertyRequest{}
+		req := business.TradingSystemTradingRequest{}
 		err = c.BindParamsFromBody(&req)
 
 		if err == nil {
 			err = db.RunInTransaction(func(tx *gorm.DB) error {
-				rep, err := business.SetTradingSystemProperty(tx, c, tsId, &req)
+				rep, err := business.SetTradingSystemTrading(tx, c, tsId, &req)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(rep)
+			})
+		}
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func setTradingSystemRunning(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		req := business.TradingSystemRunningRequest{}
+		err = c.BindParamsFromBody(&req)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.SetTradingSystemRunning(tx, c, tsId, &req)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(rep)
+			})
+		}
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func setTradingSystemActivation(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		req := business.TradingSystemActivationRequest{}
+		err = c.BindParamsFromBody(&req)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.SetTradingSystemActivation(tx, c, tsId, &req)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(rep)
+			})
+		}
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func setTradingSystemActive(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		req := business.TradingSystemActiveRequest{}
+		err = c.BindParamsFromBody(&req)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				rep, err := business.SetTradingSystemActive(tx, c, tsId, &req)
 
 				if err != nil {
 					return err
