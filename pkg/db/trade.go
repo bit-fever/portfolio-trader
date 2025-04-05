@@ -38,7 +38,7 @@ func FindTradesByTsId(tx *gorm.DB, tsId uint) (*[]Trade, error) {
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
 
-	res := tx.Where(filter).Find(&list).Order("entry_date")
+	res := tx.Where(filter).Find(&list).Order("exit_date")
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
@@ -59,23 +59,6 @@ func FindTradesFromTime(tx *gorm.DB, tsIds []uint, fromTime time.Time) (*[]Trade
 	}
 
 	return &data, nil
-}
-
-//=============================================================================
-
-func FindLastTrade(tx *gorm.DB, tsId uint) (*Trade, error) {
-	var data []Trade
-
-	res := tx.Order("entry_time DESC").Limit(1).Find(&data, "trading_system_id = ?", tsId)
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	if len(data) == 0 {
-		return nil, nil
-	}
-
-	return &data[0], nil
 }
 
 //=============================================================================

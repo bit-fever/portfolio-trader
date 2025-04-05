@@ -3,21 +3,26 @@ module github.com/bit-fever/portfolio-trader
 go 1.22
 
 require (
-	github.com/bit-fever/core v1.8.0
+	github.com/bit-fever/core v1.8.3
 	github.com/emirpasic/gods v1.18.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
+	github.com/vicanso/go-charts/v2 v2.6.10
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.25.12
 )
 
-require golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+require (
+	github.com/coreos/go-oidc/v3 v3.7.0
+	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
+	golang.org/x/oauth2 v0.13.0
+)
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
-	github.com/coreos/go-oidc/v3 v3.7.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
@@ -26,6 +31,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.15.5 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
@@ -52,14 +58,15 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
+	github.com/wcharczuk/go-chart/v2 v2.1.0 // indirect
 	go.opentelemetry.io/otel v1.19.0 // indirect
 	go.opentelemetry.io/otel/trace v1.19.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/image v0.0.0-20200927104501-e162460cd6b5 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/oauth2 v0.13.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

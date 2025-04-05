@@ -26,11 +26,14 @@ package runtime
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/core/tradingsystem"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/portfolio-trader/pkg/platform"
+	"github.com/vicanso/go-charts/v2"
 	"gorm.io/gorm"
 	"log/slog"
 	"sort"
@@ -123,6 +126,7 @@ func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrad
 			continue
 		}
 
+		tradeSet[dbTr.String()] = true
 		err  := db.AddTrade(tx, dbTr)
 
 		if err != nil {
@@ -145,7 +149,7 @@ func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrad
 	//--- Sort final list as new trades could be in the past
 
 	sort.Slice(list, func(i,j int) bool {
-		return list[i].EntryDate.Before(*list[j].EntryDate)
+		return list[i].ExitDate.Before(*list[j].ExitDate)
 	})
 
 	return &list, nil
@@ -171,8 +175,13 @@ func toDbTrade(tsId uint, t *TradeItem) *db.Trade {
 //=============================================================================
 
 func updateTradingSystem(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, filter *db.TradingFilter) error {
-	updateLastStats(ts, trades)
+	lastDays := 90
+	updateLastStats(ts, trades, lastDays)
 	updateActivationStatus(ts, trades, filter)
+
+	if err := updateChart(ts, trades, lastDays); err != nil {
+		return err
+	}
 
 	//--- If we got new trades, probably we have to set an idle/broken state to running
 
@@ -189,11 +198,11 @@ func updateTradingSystem(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, 
 
 //=============================================================================
 
-func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade) {
+func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) {
 	netProfit := 0.0
 	numTrades := 0
 
-	startDate := time.Now().Add(-time.Hour * 24*30*3)
+	startDate := time.Now().Add(-time.Hour * 24 * time.Duration(lastDays))
 
 	for _, trade := range *trades {
 		if trade.ExitDate.After(startDate) {
@@ -284,6 +293,85 @@ func activate(ts *db.TradingSystem) {
 
 func notifyRuntime(ts *db.TradingSystem) {
 	//TODO
+}
+
+//=============================================================================
+
+func updateChart(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) error {
+	xAxis, values := calcEquity(trades, lastDays)
+
+	p, err := charts.LineRender(
+		[][]float64{ values, },
+		charts.XAxisDataOptionFunc(xAxis, charts.FalseFlag()),
+		func(opt *charts.ChartOption) {
+			opt.XAxis.SplitNumber = 30
+			opt.XAxis.FontSize = 8
+			opt.SymbolShow = charts.FalseFlag()
+			opt.LineStrokeWidth = 2
+			opt.ValueFormatter = func(f float64) string {
+				return fmt.Sprintf("%.0f", f)
+			}
+			opt.Width  = 400
+			opt.Height = 200
+			opt.YAxisOptions = []charts.YAxisOption{ { FontSize: 8 }}
+			opt.Padding      = charts.Box{ Top: 8, Left: 4, Right: 4, Bottom: 0}
+		},
+	)
+
+	if err != nil {
+		slog.Error("updateChart: Cannot generate equity chart", "id", ts.Id, "error", err)
+		return err
+	}
+
+	buf, err := p.Bytes()
+	if err != nil {
+		slog.Error("updateChart: Cannot convert equity chart to byte array", "id", ts.Id, "error", err)
+		return err
+	}
+
+	err = platform.SetEquityChart(ts.Id, buf)
+	if err != nil {
+		slog.Error("updateChart: Cannot save equity chart into storage", "id", ts.Id, "error", err)
+	}
+
+	return err
+}
+
+//=============================================================================
+
+func flatDate(date time.Time) time.Time {
+	y, m, d := date.Date()
+	return time.Date(y, m, d, 0,0,0,0, date.Location())
+}
+
+//=============================================================================
+
+func calcEquity(trades *[]db.Trade, lastDays int) ([]string, []float64) {
+	startDate := flatDate(time.Now().Add(-time.Hour * 24 * time.Duration(lastDays)))
+	xLabel    := startDate.Format(time.DateOnly)
+
+	var xAxis   []string
+	var values  []float64
+
+	for i := 0; i<=lastDays; i++ {
+		xAxis  = append(xAxis, xLabel)
+		values = append(values, 0)
+
+		xLabel = ""
+	}
+
+	for _, trade := range *trades {
+		if trade.ExitDate.After(startDate) {
+			day := trade.ExitDate.Sub(startDate) / (time.Hour * 24)
+			values[day] += trade.GrossProfit
+		}
+	}
+
+	for i := 1; i<len(values); i++ {
+		values[i] += values[i -1]
+	}
+
+	return xAxis, values
 }
 
 //=============================================================================
