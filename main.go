@@ -25,6 +25,7 @@ THE SOFTWARE.
 package main
 
 import (
+	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/core/boot"
 	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/core/req"
@@ -33,6 +34,7 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/core/messaging/runtime"
 	"github.com/bit-fever/portfolio-trader/pkg/core/tradingsystem"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/bit-fever/portfolio-trader/pkg/platform"
 	"github.com/bit-fever/portfolio-trader/pkg/service"
 	"log/slog"
 )
@@ -49,12 +51,14 @@ func main() {
 	logger := boot.InitLogger(component, &cfg.Application)
 	engine := boot.InitEngine(logger,    &cfg.Application)
 	initClients()
+	auth.InitAuthentication(&cfg.Authentication)
 	db.InitDatabase(&cfg.Database)
 	msg.InitMessaging(&cfg.Messaging)
 	service.Init(engine, cfg, logger)
 	tradingsystem.InitUpdaterProcess(cfg)
 	inventory.InitMessageListener()
 	runtime.InitMessageListener()
+	platform.InitPlatform(cfg)
 	boot.RunHttpServer(engine, &cfg.Application)
 }
 

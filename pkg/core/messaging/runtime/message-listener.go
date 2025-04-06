@@ -329,7 +329,7 @@ func updateChart(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) error {
 		return err
 	}
 
-	err = platform.SetEquityChart(ts.Id, buf)
+	err = platform.SetEquityChart(ts.Username, ts.Id, buf)
 	if err != nil {
 		slog.Error("updateChart: Cannot save equity chart into storage", "id", ts.Id, "error", err)
 	}
