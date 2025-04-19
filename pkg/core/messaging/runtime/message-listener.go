@@ -199,17 +199,32 @@ func updateTradingSystem(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, 
 //=============================================================================
 
 func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) {
-	netProfit := 0.0
-	numTrades := 0
+	grossProfit := 0.0
+	netProfit   := 0.0
+	numTrades   := 0
+
+	var grossEquity   []float64
+	var grossDrawdown []float64
+	var netEquity     []float64
+	var netDrawdown   []float64
 
 	startDate := time.Now().Add(-time.Hour * 24 * time.Duration(lastDays))
 
 	for _, trade := range *trades {
 		if trade.ExitDate.After(startDate) {
-			netProfit += trade.GrossProfit - 2 * float64(ts.CostPerOperation)
+			grossProfit += trade.GrossProfit
+			netProfit   += trade.GrossProfit - 2 * float64(ts.CostPerOperation)
 			numTrades++
+
+			grossEquity   = append(grossEquity, grossProfit)
+			netEquity     = append(netEquity,   netProfit)
+			grossDrawdown = append(grossDrawdown, 0)
+			netDrawdown   = append(netDrawdown,   0)
 		}
 	}
+
+	//maxGrossDD := core.CalcDrawDown(&grossEquity, &grossDrawdown)
+	//maxNetDD   := core.CalcDrawDown(&netEquity,   &netDrawdown)
 
 	ts.LastNetProfit   = core.Trunc2d(netProfit)
 	ts.LastNumTrades   = numTrades

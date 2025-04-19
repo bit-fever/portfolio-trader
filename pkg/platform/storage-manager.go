@@ -71,7 +71,7 @@ func SetEquityChart(username string, id uint, data []byte) error {
 		Image   : data,
 	}
 
-	err = req.DoPost(client, url, &er, "", token)
+	err = req.DoPut(client, url, &er, "", token)
 	if err != nil {
 		slog.Error("SetEquityChart: Got an error when sending to storage-manager", "id", id, "error", err.Error())
 		return req.NewServerError("Cannot communicate with storage-manager: %v", err.Error())
