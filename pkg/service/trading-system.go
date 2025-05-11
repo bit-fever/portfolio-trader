@@ -28,6 +28,7 @@ import (
 	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
+	"github.com/bit-fever/portfolio-trader/pkg/business/performance"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
@@ -71,6 +72,26 @@ func getTrades(c *auth.Context) {
 			}
 
 			return c.ReturnObject(&list)
+		})
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func deleteTrades(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		err = db.RunInTransaction(func(tx *gorm.DB) error {
+			err = business.DeleteTrades(tx, c, tsId)
+
+			if err != nil {
+				return err
+			}
+
+			return c.ReturnObject("")
 		})
 	}
 
@@ -207,6 +228,31 @@ func getFilterOptimizationInfo(c *auth.Context) {
 		}
 
 		return
+	}
+
+	c.ReturnError(err)
+}
+
+//=============================================================================
+
+func runPerformanceAnalysis(c *auth.Context) {
+	tsId, err := c.GetIdFromUrl()
+
+	if err == nil {
+		req := performance.AnalysisRequest{}
+		err = c.BindParamsFromBody(&req)
+
+		if err == nil {
+			err = db.RunInTransaction(func(tx *gorm.DB) error {
+				res, err := business.RunPerformanceAnalysis(tx, c, tsId, &req)
+
+				if err != nil {
+					return err
+				}
+
+				return c.ReturnObject(res)
+			})
+		}
 	}
 
 	c.ReturnError(err)

@@ -119,6 +119,9 @@ func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrad
 		tradeSet[dbt.String()] = true
 	}
 
+	firstTrade := ts.FirstTrade
+	lastTrade  := ts.LastTrade
+
 	for _, tr := range newTrades {
 		dbTr := toDbTrade(ts.Id, tr)
 		_, exists := tradeSet[dbTr.String()]
@@ -126,33 +129,58 @@ func addNewTrades(tx *gorm.DB, ts *db.TradingSystem, trades *[]db.Trade, newTrad
 			continue
 		}
 
-		tradeSet[dbTr.String()] = true
-		err  := db.AddTrade(tx, dbTr)
+		//--- We need to add trades that are outside of [firstTrade .. lastTrade]
+		//--- because we will have duplicates when importing from external strategies
+		//--- Example: we have @NQ and we run the strategy on the full period to get lots of data.
+		//--- Then, when switching to live, the instrument will switch to something like @NQM25 for roughly
+		//--- 180 days. @NQ and @NQM25 are slightly different and there will be a jump in the continuous
+		//--- contract causing duplicates between @NQ and @NQM25 during the last 180 days
 
-		if err != nil {
-			return nil, err
-		}
+		if isTheTradeOutOfRange(ts, dbTr) {
+			tradeSet[dbTr.String()] = true
+			err  := db.AddTrade(tx, dbTr)
 
-		list = append(list, *dbTr)
+			if err != nil {
+				return nil, err
+			}
 
-		//--- Update information on trading system
+			list = append(list, *dbTr)
 
-		if ts.FirstTrade == nil || ts.FirstTrade.After(*tr.EntryDate) {
-			ts.FirstTrade = tr.EntryDate
-		}
+			//--- Update information on trading system
+			//--- It is better to use the exit date for first/last trade because a trade could last
+			//--- for 7+ days and the IDLE flag is impacted
 
-		if ts.LastTrade == nil || ts.LastTrade.Before(*tr.EntryDate) {
-			ts.LastTrade = tr.EntryDate
+			if firstTrade == nil || firstTrade.After(*tr.ExitDate) {
+				firstTrade = tr.ExitDate
+			}
+
+			if lastTrade == nil || lastTrade.Before(*tr.ExitDate) {
+				lastTrade = tr.ExitDate
+			}
 		}
 	}
+
+	ts.FirstTrade = firstTrade
+	ts.LastTrade  = lastTrade
 
 	//--- Sort final list as new trades could be in the past
 
 	sort.Slice(list, func(i,j int) bool {
-		return list[i].ExitDate.Before(*list[j].ExitDate)
+		return list[i].EntryDate.Before(*list[j].EntryDate)
 	})
 
 	return &list, nil
+}
+
+//=============================================================================
+
+func isTheTradeOutOfRange(ts *db.TradingSystem, t *db.Trade) bool {
+	if ts.FirstTrade == nil || ts.LastTrade == nil {
+		return true
+	}
+
+	//--- Better to use the exit date (please, see above)
+	return t.ExitDate.Before(*ts.FirstTrade) || t.ExitDate.After(*ts.LastTrade)
 }
 
 //=============================================================================
@@ -204,9 +232,9 @@ func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) {
 	numTrades   := 0
 
 	var grossEquity   []float64
-	var grossDrawdown []float64
+	//var grossDrawdown []float64
 	var netEquity     []float64
-	var netDrawdown   []float64
+	//var netDrawdown   []float64
 
 	startDate := time.Now().Add(-time.Hour * 24 * time.Duration(lastDays))
 
@@ -218,8 +246,8 @@ func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) {
 
 			grossEquity   = append(grossEquity, grossProfit)
 			netEquity     = append(netEquity,   netProfit)
-			grossDrawdown = append(grossDrawdown, 0)
-			netDrawdown   = append(netDrawdown,   0)
+			//grossDrawdown = append(grossDrawdown, 0)
+			//netDrawdown   = append(netDrawdown,   0)
 		}
 	}
 

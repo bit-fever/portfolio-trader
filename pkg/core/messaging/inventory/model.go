@@ -143,6 +143,7 @@ type TradingSystemMessage struct {
 	BrokerProduct  BrokerProduct  `json:"brokerProduct"`
 	Currency       Currency       `json:"currency"`
 	TradingSession TradingSession `json:"tradingSession"`
+	Exchange       Exchange       `json:"exchange"`
 }
 
 //=============================================================================

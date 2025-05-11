@@ -103,8 +103,11 @@ func RunAnalysis(ts *db.TradingSystem, filter *db.TradingFilter, list *[]db.Trad
 	calcFilterActivation(e, res.Activations, filter)
 	calcFilteredEquity(res)
 
-	maxUnfDD := core.CalcDrawDown(&e.UnfilteredEquity, &e.UnfilteredDrawdown)
-	maxFilDD := core.CalcDrawDown(&e.FilteredEquity,   &e.FilteredDrawdown)
+	unfilteredDrawdown, maxUnfDD := core.BuildDrawDown(&e.UnfilteredEquity)
+	filteredDrawdown,   maxFilDD := core.BuildDrawDown(&e.FilteredEquity)
+
+	e.UnfilteredDrawdown = *unfilteredDrawdown
+	e.FilteredDrawdown   = *filteredDrawdown
 
 	calcSummary(res, maxUnfDD, maxFilDD)
 

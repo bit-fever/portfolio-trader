@@ -106,6 +106,7 @@ type TradingSystem struct {
 	LastNetAvgTrade   float64      `json:"lastNetAvgTrade"`
 	LastNumTrades     int          `json:"lastNumTrades"`
 	PortfolioId       *uint        `json:"portfolioId"`
+	Timezone          string       `json:"timezone"`
 }
 
 //=============================================================================
@@ -133,22 +134,27 @@ type TradingFilter struct {
 const (
 	TradeTypeLong  = "LO"
 	TradeTypeShort = "SH"
+	TradeTypeAll   = "**"
 )
 
 //-----------------------------------------------------------------------------
 
 type Trade struct {
-	Id              uint       `json:"id" gorm:"primaryKey"`
-	TradingSystemId uint       `json:"tradingSystemId"`
-	TradeType       string     `json:"tradeType"`
-	EntryDate       *time.Time `json:"entryDate"`
-	EntryPrice      float64    `json:"entryPrice"`
-	EntryLabel      string     `json:"entryLabel"`
-	ExitDate        *time.Time `json:"exitDate"`
-	ExitPrice       float64    `json:"exitPrice"`
-	ExitLabel       string     `json:"exitLabel"`
-	GrossProfit     float64    `json:"grossProfit"`
-	Contracts       int        `json:"contracts"`
+	Id                 uint       `json:"id" gorm:"primaryKey"`
+	TradingSystemId    uint       `json:"tradingSystemId"`
+	TradeType          string     `json:"tradeType"`
+	EntryDate          *time.Time `json:"entryDate"`
+	EntryPrice         float64    `json:"entryPrice"`
+	EntryLabel         string     `json:"entryLabel"`
+	ExitDate           *time.Time `json:"exitDate"`
+	ExitPrice          float64    `json:"exitPrice"`
+	ExitLabel          string     `json:"exitLabel"`
+	GrossProfit        float64    `json:"grossProfit"`
+	Contracts          int        `json:"contracts"`
+	EntryDateAtBroker  *time.Time `json:"entryDateAtBroker"`
+	EntryPriceAtBroker float64    `json:"entryPriceAtBroker"`
+	ExitDateAtBroker   *time.Time `json:"exitDateAtBroker"`
+	ExitPriceAtBroker  float64    `json:"exitPriceAtBroker"`
 }
 
 //-----------------------------------------------------------------------------

@@ -155,6 +155,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.Overnight       = tsm.TradingSystem.Overnight
 		ts.Tags            = tsm.TradingSystem.Tags
 		ts.Finalized       = tsm.TradingSystem.Finalized
+		ts.Timezone        = tsm.Exchange.Timezone
 
 		err = db.UpdateTradingSystem(tx, ts)
 

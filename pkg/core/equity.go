@@ -24,14 +24,69 @@ THE SOFTWARE.
 
 package core
 
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
+)
+
 //=============================================================================
 
-func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
+func BuildGrossProfits(trades *[]db.Trade, tradeType string) (*[]time.Time, *[]float64){
+	timeSlice := []time.Time{}
+	equSlice  := []float64{}
+
+	for _, tr := range *trades {
+		if tradeType == db.TradeTypeAll || tr.TradeType == tradeType {
+			etime := tr.ExitDate
+			gross := tr.GrossProfit
+
+			timeSlice = append(timeSlice, *etime)
+			equSlice  = append(equSlice ,  gross)
+		}
+	}
+
+	return &timeSlice, &equSlice
+}
+
+//=============================================================================
+
+func BuildNetProfits(grossProfits *[]float64, costPerOper float32) *[]float64 {
+	cost  := float64(costPerOper)
+
+	netSlice := []float64{}
+
+	for _, gross := range *grossProfits {
+		net := gross - 2 * cost
+		netSlice = append(netSlice, net)
+	}
+
+	return &netSlice
+}
+
+//=============================================================================
+
+func BuildEquity(profits *[]float64) *[]float64 {
+	equity := []float64{}
+	value  := 0.0
+
+	for _, profit := range *profits {
+		value += profit
+
+		equity = append(equity, value)
+	}
+
+	return &equity
+}
+
+//=============================================================================
+
+func BuildDrawDown(equity *[]float64) (*[]float64, float64) {
 	maxProfit    := 0.0
 	currDrawDown := 0.0
 	maxDrawDown  := 0.0
+	drawDown     := []float64{}
 
-	for i, currProfit := range *equity {
+	for _, currProfit := range *equity {
 		if currProfit >= maxProfit {
 			maxProfit = currProfit
 			currDrawDown = 0
@@ -39,14 +94,14 @@ func CalcDrawDown(equity *[]float64, drawDown *[]float64) float64 {
 			currDrawDown = currProfit - maxProfit
 		}
 
-		(*drawDown)[i] = currDrawDown
+		drawDown = append(drawDown, currDrawDown)
 
 		if currDrawDown < maxDrawDown {
 			maxDrawDown = currDrawDown
 		}
 	}
 
-	return maxDrawDown
+	return &drawDown, maxDrawDown
 }
 
 //=============================================================================

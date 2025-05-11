@@ -24,7 +24,10 @@ THE SOFTWARE.
 
 package core
 
-import "time"
+import (
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
+)
 
 //=============================================================================
 
@@ -50,6 +53,16 @@ func LinearRegression(x []time.Time, y []float64) float64 {
 	}
 
 	return num / den
+}
+
+//=============================================================================
+
+func GetLocation(timezone string, ts *db.TradingSystem) (*time.Location, error) {
+	if timezone == "exchange" {
+		timezone = ts.Timezone
+	}
+
+	return time.LoadLocation(timezone)
 }
 
 //=============================================================================

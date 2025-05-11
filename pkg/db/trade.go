@@ -38,7 +38,27 @@ func FindTradesByTsId(tx *gorm.DB, tsId uint) (*[]Trade, error) {
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
 
-	res := tx.Where(filter).Find(&list).Order("exit_date")
+	res := tx.Where(filter).Find(&list).Order("entry_date,exit_date")
+
+	if res.Error != nil {
+		return nil, req.NewServerErrorByError(res.Error)
+	}
+
+	return &list, nil
+}
+
+//=============================================================================
+// We MUST order b y entry_date because we may have cases like:
+// entry_date,       exit_date
+// 2025-1-1 03:00    2025-1-2 06:00
+// 2025-1-2 06:00    2025-1-2 06:00    <-- fake trade
+// 2025-1-2 06:00    2025-1-4 02:00
+// Ordering by exit_date, the second record could come first
+
+func FindTradesByTsIdFromTime(tx *gorm.DB, tsId uint, fromTime time.Time) (*[]Trade, error) {
+	var list []Trade
+
+	res := tx.Find(&list, "trading_system_id = ? and entry_date >= ?", tsId, fromTime).Order("entry_date,exit_date")
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
@@ -50,15 +70,15 @@ func FindTradesByTsId(tx *gorm.DB, tsId uint) (*[]Trade, error) {
 //=============================================================================
 
 func FindTradesFromTime(tx *gorm.DB, tsIds []uint, fromTime time.Time) (*[]Trade, error) {
-	var data []Trade
+	var list []Trade
 
-	res := tx.Find(&data, "trading_system_id in ? and exit_time >= ?", tsIds, fromTime)
+	res := tx.Find(&list, "trading_system_id in ? and entry_date >= ?", tsIds, fromTime)
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
 	}
 
-	return &data, nil
+	return &list, nil
 }
 
 //=============================================================================

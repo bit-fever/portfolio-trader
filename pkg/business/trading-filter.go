@@ -26,7 +26,6 @@ package business
 
 import (
 	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
@@ -35,7 +34,7 @@ import (
 //=============================================================================
 
 func GetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingFilter, error) {
-	_, err := getTradingSystem(tx, c, tsId)
+	_, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +45,7 @@ func GetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingFilt
 //=============================================================================
 
 func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.TradingFilter) error {
-	_, err := getTradingSystem(tx, c, tsId)
+	_, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return err
 	}
@@ -60,7 +59,7 @@ func SetTradingFilters(tx *gorm.DB, c *auth.Context, tsId uint, f *filter.Tradin
 //=============================================================================
 
 func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.AnalysisRequest) (*filter.AnalysisResponse, error){
-	ts, err := getTradingSystem(tx, c, tsId)
+	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +90,7 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.Anal
 //=============================================================================
 
 func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, oreq *filter.OptimizationRequest) error {
-	ts, err := getTradingSystem(tx, c, tsId)
+	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return err
 	}
@@ -133,25 +132,6 @@ func GetFilterOptimizationInfo(c *auth.Context, tsId uint) (*filter.Optimization
 //===
 //=== Private methods
 //===
-//=============================================================================
-
-func getTradingSystem(tx *gorm.DB, c *auth.Context, tsId uint) (*db.TradingSystem, error){
-	ts, err := db.GetTradingSystemById(tx, tsId)
-	if err != nil {
-		return nil, err
-	}
-
-	if ts == nil {
-		return nil, req.NewNotFoundError("Trading system was not found: %v", tsId)
-	}
-
-	if ts.Username != c.Session.Username {
-		return nil, req.NewForbiddenError("Trading system not owned by user: %v", tsId)
-	}
-
-	return ts, nil
-}
-
 //=============================================================================
 
 func convert(f *filter.TradingFilter) *db.TradingFilter {

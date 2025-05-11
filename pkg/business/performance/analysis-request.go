@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2025 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,52 +22,13 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package business
-
-import "time"
-
-//=============================================================================
-//===
-//=== PortfolioMonitoringResponse
-//===
-//=============================================================================
-
-type PortfolioMonitoringParams struct {
-	TsIds  []uint `form:"tsIds"  binding:"required,min=1,dive"`
-	Period    int `form:"period" binding:"required,min=1,max=5000"`
-}
+package performance
 
 //=============================================================================
 
-type BaseMonitoring struct {
-	Time          *[]time.Time `json:"time"`
-	GrossProfit   *[]float64   `json:"grossProfit"`
-	NetProfit     *[]float64   `json:"netProfit"`
-	GrossDrawdown *[]float64   `json:"grossDrawdown"`
-	NetDrawdown   *[]float64   `json:"netDrawdown"`
-}
-
-//=============================================================================
-
-type TradingSystemMonitoring struct {
-	BaseMonitoring
-	Id   uint   `json:"id"`
-	Name string `json:"name"`
-}
-
-//=============================================================================
-
-func NewTradingSystemMonitoring(size int) *TradingSystemMonitoring {
-	tsa := &TradingSystemMonitoring{}
-
-	return tsa
-}
-
-//=============================================================================
-
-type PortfolioMonitoringResponse struct {
-	BaseMonitoring
-	TradingSystems []*TradingSystemMonitoring `json:"tradingSystems"`
+type AnalysisRequest struct {
+	DaysBack int    `json:"daysBack" binding:"min=0,max=10000"`
+	Timezone string `json:"timezone" binding:"required"`
 }
 
 //=============================================================================

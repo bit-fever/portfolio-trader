@@ -3,7 +3,7 @@ module github.com/bit-fever/portfolio-trader
 go 1.23.0
 
 require (
-	github.com/bit-fever/core v1.8.5
+	github.com/bit-fever/core v1.9.0
 	github.com/emirpasic/gods v1.18.1
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-sql-driver/mysql v1.9.1 // indirect
@@ -12,10 +12,7 @@ require (
 	gorm.io/gorm v1.25.12
 )
 
-require (
-	github.com/coreos/go-oidc/v3 v3.14.1
-	golang.org/x/exp v0.0.0-20230905200255-921286631fa9
-)
+require golang.org/x/exp v0.0.0-20230905200255-921286631fa9
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -23,6 +20,7 @@ require (
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
+	github.com/coreos/go-oidc/v3 v3.14.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect

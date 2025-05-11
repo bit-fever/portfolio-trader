@@ -82,3 +82,29 @@ func SetEquityChart(username string, id uint, data []byte) error {
 }
 
 //=============================================================================
+
+func DeleteEquityChart(username string, id uint) error {
+	slog.Info("DeleteEquityChart: Deleting equity chart from the storage manager", "id", id, "username", username)
+
+	token,err := auth.Token()
+	if err != nil {
+		return err
+	}
+
+	client :=req.GetClient("bf")
+	url    := platform.Storage +"/v1/trading-systems/"+ strconv.Itoa(int(id)) +"/equity-chart"
+	er     := EquityRequest{
+		Username: username,
+	}
+
+	err = req.DoDelete(client, url, &er, "", token)
+	if err != nil {
+		slog.Error("DeleteEquityChart: Got an error when sending to storage-manager", "id", id, "error", err.Error())
+		return req.NewServerError("Cannot communicate with storage-manager: %v", err.Error())
+	}
+
+	slog.Info("DeleteEquityChart: Equity chart deleted", "id", id, "username", username)
+	return nil
+}
+
+//=============================================================================

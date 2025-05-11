@@ -147,17 +147,17 @@ func buildTradingSystemMonitoring(ts *db.TradingSystem, list []*db.Trade) *Tradi
 
 	//--- build data for a single trading system
 
-	for i, tr := range list {
+	for _, tr := range list {
 		currRawProfit += tr.GrossProfit
 		currNetProfit += tr.GrossProfit - float64(ts.CostPerOperation) * 2
 
-		tsa.Time[i]        = *tr.ExitDate
-		tsa.GrossProfit[i] = currRawProfit
-		tsa.NetProfit[i]   = currNetProfit
+		//tsa.Time[i]        = *tr.ExitDate
+		//tsa.GrossProfit[i] = currRawProfit
+		//tsa.NetProfit[i]   = currNetProfit
 	}
 
-	core.CalcDrawDown(&tsa.GrossProfit, &tsa.GrossDrawdown)
-	core.CalcDrawDown(&tsa.NetProfit,   &tsa.NetDrawdown)
+	tsa.GrossDrawdown,_ = core.BuildDrawDown(tsa.GrossProfit)
+	tsa.NetDrawdown,  _ = core.BuildDrawDown(tsa.NetProfit)
 
 	return tsa
 }
@@ -177,7 +177,7 @@ func buildTotalInfo(pm *PortfolioMonitoringResponse) {
 	//--- Collect all days with associated sums
 
 	for _, tsm := range (*pm).TradingSystems {
-		for i, t := range tsm.Time {
+		for i, t := range *tsm.Time {
 			ds, ok := timeSum[t]
 
 			if !ok {
@@ -185,8 +185,8 @@ func buildTotalInfo(pm *PortfolioMonitoringResponse) {
 				timeSum[t] = ds
 			}
 
-			ds.grossProfit += tsm.GrossProfit[i]
-			ds.netProfit   += tsm.NetProfit[i]
+			ds.grossProfit += (*tsm.GrossProfit)[i]
+			ds.netProfit   += (*tsm.NetProfit)[i]
 		}
 	}
 
@@ -202,24 +202,24 @@ func buildTotalInfo(pm *PortfolioMonitoringResponse) {
 		return res[i].Before(res[j])
 	})
 
-	pm.Time = res
+	//pm.Time = res
 
 	//--- Loop on all days and build total arrays
 
-	pm.GrossProfit   = make([]float64, len(res))
-	pm.NetProfit     = make([]float64, len(res))
-	pm.GrossDrawdown = make([]float64, len(res))
-	pm.NetDrawdown   = make([]float64, len(res))
+	//pm.GrossProfit   = make([]float64, len(res))
+	//pm.NetProfit     = make([]float64, len(res))
+	//pm.GrossDrawdown = make([]float64, len(res))
+	//pm.NetDrawdown   = make([]float64, len(res))
 
-	for i, day := range res {
-		ds := timeSum[day]
+	//for i, day := range res {
+		//ds := timeSum[day]
+		//
+		//pm.GrossProfit[i] = ds.grossProfit
+		//pm.NetProfit[i]   = ds.netProfit
+	//}
 
-		pm.GrossProfit[i] = ds.grossProfit
-		pm.NetProfit[i]   = ds.netProfit
-	}
-
-	core.CalcDrawDown(&pm.GrossProfit, &pm.GrossDrawdown)
-	core.CalcDrawDown(&pm.NetProfit,   &pm.NetDrawdown)
+	pm.GrossDrawdown,_ = core.BuildDrawDown(pm.GrossProfit)
+	pm.NetDrawdown,  _ = core.BuildDrawDown(pm.NetProfit)
 }
 
 //=============================================================================

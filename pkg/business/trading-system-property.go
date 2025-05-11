@@ -76,7 +76,7 @@ type TradingSystemPropertyResponse struct {
 func SetTradingSystemTrading(tx *gorm.DB, c *auth.Context, tsId uint, req *TradingSystemTradingRequest) (*TradingSystemPropertyResponse, error) {
 	c.Log.Info("SetTradingSystemTrading: Trading property change request", "id", tsId, "value", req.Value)
 
-	ts, err := getTradingSystem(tx, c, tsId)
+	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func SetTradingSystemTrading(tx *gorm.DB, c *auth.Context, tsId uint, req *Tradi
 func SetTradingSystemRunning(tx *gorm.DB, c *auth.Context, tsId uint, req *TradingSystemRunningRequest) (*TradingSystemPropertyResponse, error) {
 	c.Log.Info("SetTradingSystemRunning: Running property change request", "id", tsId, "value", req.Value)
 
-	ts, err := getTradingSystem(tx, c, tsId)
+	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func SetTradingSystemRunning(tx *gorm.DB, c *auth.Context, tsId uint, req *Tradi
 func SetTradingSystemActivation(tx *gorm.DB, c *auth.Context, tsId uint, req *TradingSystemActivationRequest) (*TradingSystemPropertyResponse, error) {
 	c.Log.Info("SetTradingSystemActivation: Auto-activation property change request", "id", tsId, "value", req.Value)
 
-	ts, err := getTradingSystem(tx, c, tsId)
+	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func SetTradingSystemActivation(tx *gorm.DB, c *auth.Context, tsId uint, req *Tr
 func SetTradingSystemActive(tx *gorm.DB, c *auth.Context, tsId uint, req *TradingSystemActiveRequest) (*TradingSystemPropertyResponse, error) {
 	c.Log.Info("SetTradingSystemActive: Active property change request", "id", tsId, "value", req.Value)
 
-	ts, err := getTradingSystem(tx, c, tsId)
+	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}

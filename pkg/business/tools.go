@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2025 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -24,50 +24,33 @@ THE SOFTWARE.
 
 package business
 
-import "time"
-
-//=============================================================================
-//===
-//=== PortfolioMonitoringResponse
-//===
-//=============================================================================
-
-type PortfolioMonitoringParams struct {
-	TsIds  []uint `form:"tsIds"  binding:"required,min=1,dive"`
-	Period    int `form:"period" binding:"required,min=1,max=5000"`
-}
+import (
+	"github.com/bit-fever/core/auth"
+	"github.com/bit-fever/core/req"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"gorm.io/gorm"
+)
 
 //=============================================================================
 
-type BaseMonitoring struct {
-	Time          *[]time.Time `json:"time"`
-	GrossProfit   *[]float64   `json:"grossProfit"`
-	NetProfit     *[]float64   `json:"netProfit"`
-	GrossDrawdown *[]float64   `json:"grossDrawdown"`
-	NetDrawdown   *[]float64   `json:"netDrawdown"`
-}
+func getTradingSystemAndCheckAccess(tx *gorm.DB, c *auth.Context, id uint) (*db.TradingSystem, error){
+	ts, err := db.GetTradingSystemById(tx, id)
+	if err != nil {
+		c.Log.Error("getTradingSystem: Cannot get the trading system", "id", id, "error", err)
+		return nil, err
+	}
 
-//=============================================================================
+	if ts == nil {
+		return nil, req.NewNotFoundError("Trading system was not found: %v", id)
+	}
 
-type TradingSystemMonitoring struct {
-	BaseMonitoring
-	Id   uint   `json:"id"`
-	Name string `json:"name"`
-}
+	if ! c.Session.IsAdmin() {
+		if ts.Username != c.Session.Username {
+			return nil, req.NewForbiddenError("Trading system not owned by user: %v", id)
+		}
+	}
 
-//=============================================================================
-
-func NewTradingSystemMonitoring(size int) *TradingSystemMonitoring {
-	tsa := &TradingSystemMonitoring{}
-
-	return tsa
-}
-
-//=============================================================================
-
-type PortfolioMonitoringResponse struct {
-	BaseMonitoring
-	TradingSystems []*TradingSystemMonitoring `json:"tradingSystems"`
+	return ts, nil
 }
 
 //=============================================================================
