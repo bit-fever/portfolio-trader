@@ -45,7 +45,7 @@ const MaxResultSize = 1000
 
 type OptimizationProcess struct {
 	ts              *db.TradingSystem
-	data            *[]db.Trade
+	trades          *[]db.Trade
 	optReq          *OptimizationRequest
 	info            *OptimizationInfo
 	fitnessFunction FitnessFunction
@@ -55,7 +55,9 @@ type OptimizationProcess struct {
 //=============================================================================
 
 func (op *OptimizationProcess) Start() {
-	field := op.optReq.FieldToOptimize
+	field     := op.optReq.FieldToOptimize
+	startDate := op.optReq.StartDate
+
 	op.fitnessFunction = GetFitnessFunction(field)
 
 	algo := algorithm.New(op.optReq.Algorithm.Type)
@@ -63,7 +65,7 @@ func (op *OptimizationProcess) Start() {
 	algo.Init(ctx)
 
 	fc := op.optReq.FilterConfig
-	op.info = NewOptimizationInfo(MaxResultSize, field, fc, algo.StepsCount(), op.calcBaseValue())
+	op.info = NewOptimizationInfo(MaxResultSize, field, fc, algo.StepsCount(), op.calcBaseValue(), startDate)
 
 	go op.generate(algo)
 }
@@ -104,7 +106,7 @@ func (op *OptimizationProcess) generate(algo optimization.Algorithm) {
 //=============================================================================
 
 func (op *OptimizationProcess) runAnalysis(filter *db.TradingFilter) float64 {
-	sum := RunAnalysis(op.ts, filter, op.data).Summary
+	sum := RunAnalysis(op.ts, filter, op.trades).Summary
 	run := op.createRun(filter, &sum)
 	op.info.addResult(run)
 
@@ -132,7 +134,7 @@ func (op *OptimizationProcess) createRun(filter *db.TradingFilter, sum *Summary)
 func (op *OptimizationProcess) calcBaseValue() float64 {
 	baseline := op.optReq.Baseline
 
-	sum := RunAnalysis(op.ts, baseline, op.data).Summary
+	sum := RunAnalysis(op.ts, baseline, op.trades).Summary
 	run := op.createRun(baseline, &sum)
 
 	return run.FitnessValue

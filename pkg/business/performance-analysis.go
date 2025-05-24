@@ -41,13 +41,15 @@ func RunPerformanceAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, req *perfor
 		return nil, err
 	}
 
+	var t *time.Time
+
 	daysBack := req.DaysBack
-	if daysBack == 0 {
-		daysBack = 100000
+	if daysBack != 0 {
+		tt := time.Now()
+		back := time.Hour * time.Duration(24 * daysBack)
+		tt = tt.Add(-back)
+		t = &tt
 	}
-	t := time.Now()
-	back := time.Hour * time.Duration(24 * daysBack)
-	t = t.Add(-back)
 
 	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, t)
 	if err != nil {

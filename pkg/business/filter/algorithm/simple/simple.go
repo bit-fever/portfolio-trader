@@ -59,7 +59,8 @@ func (sa *simpleAlgorithm) StepsCount() uint {
 			sa.stepsCountOldNew   () +
 			sa.stepsCountWinPerc  () +
 			sa.stepsCountEquAvg   () +
-			sa.stepsCountTrendline()
+			sa.stepsCountTrendline() +
+			sa.stepsCountDrawdown ()
 }
 
 //=============================================================================
@@ -69,7 +70,10 @@ func (sa *simpleAlgorithm) Optimize() {
 		if !sa.generateOldVsNew() {
 			if !sa.generateWinPerc() {
 				if !sa.generateEquVsAvg() {
-					sa.generateTrendline()
+					if !sa.generateTrendline() {
+						if !sa.generateDrawdown() {
+						}
+					}
 				}
 			}
 		}
@@ -125,6 +129,16 @@ func (sa *simpleAlgorithm) stepsCountEquAvg() uint {
 func (sa *simpleAlgorithm) stepsCountTrendline() uint {
 	if sa.fc.EnableTrendline {
 		return sa.fc.TrendlineLen.StepsCount() * sa.fc.TrendlineValue.StepsCount()
+	}
+
+	return 0
+}
+
+//=============================================================================
+
+func (sa *simpleAlgorithm) stepsCountDrawdown() uint {
+	if sa.fc.EnableDrawdown {
+		return sa.fc.DrawdownMin.StepsCount() * sa.fc.DrawdownMax.StepsCount()
 	}
 
 	return 0
@@ -268,6 +282,36 @@ func (sa *simpleAlgorithm) generateTrendline() bool {
 
 				if sa.ctx.IsStopping() {
 					sa.ctx.LogInfo("generateTrendline: Got stop request")
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+//=============================================================================
+
+func (sa *simpleAlgorithm) generateDrawdown() bool {
+	if sa.fc.EnableDrawdown {
+		sa.ctx.LogInfo("generateDrawdown: Optimizing drawdown")
+
+		for _, minVal := range *sa.fc.DrawdownMin.Steps() {
+			for _, maxVal := range *sa.fc.DrawdownMax.Steps() {
+				f := sa.ctx.Baseline()
+				f.DrawdownEnabled = true
+				f.DrawdownMin     = minVal
+				f.DrawdownMax     = maxVal
+
+				go func(){
+					sa.ctx.RunAnalysis(&f)
+				}()
+
+				//--- Check if we have to stop the process
+
+				if sa.ctx.IsStopping() {
+					sa.ctx.LogInfo("generateDrawdown: Got stop request")
 					return true
 				}
 			}

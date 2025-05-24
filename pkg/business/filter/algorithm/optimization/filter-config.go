@@ -40,6 +40,7 @@ const MaxTradesLength     = 300
 const MaxTrendlineValue   = 200
 const MaxOldNewPercentage = 200
 const MaxWinningPercentage= 100
+const MaxDrawdown         = 50000
 
 //=============================================================================
 
@@ -49,6 +50,7 @@ type FilterConfig struct {
 	EnableWinPerc   bool   `json:"enableWinPerc"`
 	EnableEquAvg    bool   `json:"enableEquAvg"`
 	EnableTrendline bool   `json:"enableTrendline"`
+	EnableDrawdown  bool   `json:"enableDrawdown"`
 
 	PosProLen      FieldOptimization  `json:"posProLen"`
 	OldNewOldLen   FieldOptimization  `json:"oldNewOldLen"`
@@ -59,6 +61,8 @@ type FilterConfig struct {
 	EquAvgLen      FieldOptimization  `json:"equAvgLen"`
 	TrendlineLen   FieldOptimization  `json:"trendlineLen"`
 	TrendlineValue FieldOptimization  `json:"trendlineValue"`
+	DrawdownMin    FieldOptimization  `json:"drawdownMin"`
+	DrawdownMax    FieldOptimization  `json:"drawdownMax"`
 }
 
 //=============================================================================
@@ -97,6 +101,14 @@ func (fc *FilterConfig) Validate() error {
 	}
 
 	if err := fc.TrendlineValue.Validate(1, MaxTrendlineValue); err != nil {
+		return err
+	}
+
+	if err := fc.DrawdownMin.Validate(1, MaxDrawdown); err != nil {
+		return err
+	}
+
+	if err := fc.DrawdownMax.Validate(1, MaxDrawdown); err != nil {
 		return err
 	}
 

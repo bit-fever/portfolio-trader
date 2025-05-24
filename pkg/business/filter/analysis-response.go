@@ -105,6 +105,7 @@ type Activations struct {
 	WinningPercentage   *Activation `json:"winningPercentage"`
 	OldVsNew            *Activation `json:"oldVsNew"`
 	Trendline           *Activation `json:"trendline"`
+	Drawdown            *Activation `json:"drawdown"`
 }
 
 //-----------------------------------------------------------------------------
@@ -115,6 +116,7 @@ func (a *Activations) IsLastActive() bool {
 	winPerc  := true
 	oldNew   := true
 	trendline:= true
+	drawdown := true
 
 	if a.EquityVsAverage != nil {
 		equVsAvg = a.EquityVsAverage.IsLastActive()
@@ -136,7 +138,11 @@ func (a *Activations) IsLastActive() bool {
 		trendline = a.Trendline.IsLastActive()
 	}
 
-	return equVsAvg && posProf && winPerc && oldNew && trendline
+	if a.Drawdown != nil {
+		drawdown = a.Drawdown.IsLastActive()
+	}
+
+	return equVsAvg && posProf && winPerc && oldNew && trendline && drawdown
 }
 
 //=============================================================================

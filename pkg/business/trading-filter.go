@@ -77,12 +77,12 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.Anal
 		filters = convert(far.Filter)
 	}
 
-	diList, err := db.FindTradesByTsId(tx, ts.Id)
+	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, far.StartDate)
 	if err != nil {
 		return nil,err
 	}
 
-	res := filter.RunAnalysis(ts, filters, diList)
+	res := filter.RunAnalysis(ts, filters, trades)
 
 	return res, err
 }
@@ -95,7 +95,7 @@ func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, oreq *filt
 		return err
 	}
 
-	tradeList, err := db.FindTradesByTsId(tx, ts.Id)
+	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, oreq.StartDate)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, oreq *filt
 	}
 
 	c.Log.Info("StartFilterOptimization: Starting optimization", "tsId", ts.Id, "tsName", ts.Name)
-	filter.StartOptimization(ts, tradeList, oreq)
+	filter.StartOptimization(ts, trades, oreq)
 
 	return nil
 }
@@ -124,7 +124,6 @@ func StopFilterOptimization(c *auth.Context, tsId uint) error {
 
 func GetFilterOptimizationInfo(c *auth.Context, tsId uint) (*filter.OptimizationResponse, error) {
 	info := filter.GetOptimizationInfo(tsId)
-
 	return filter.NewOptimizationResponse(info), nil
 }
 
@@ -150,6 +149,9 @@ func convert(f *filter.TradingFilter) *db.TradingFilter {
 		TrendlineEnabled: f.TrendlineEnabled,
 		TrendlineLen    : f.TrendlineLen,
 		TrendlineValue  : f.TrendlineValue,
+		DrawdownEnabled : f.DrawdownEnabled,
+		DrawdownMin     : f.DrawdownMin,
+		DrawdownMax     : f.DrawdownMax,
 	}
 }
 

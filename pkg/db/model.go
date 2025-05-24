@@ -127,6 +127,9 @@ type TradingFilter struct {
 	TrendlineEnabled bool   `json:"trendlineEnabled"`
 	TrendlineLen     int    `json:"trendlineLen"`
 	TrendlineValue   int    `json:"trendlineValue"`
+	DrawdownEnabled  bool   `json:"drawdownEnabled"`
+	DrawdownMin      int    `json:"drawdownMin"`
+	DrawdownMax      int    `json:"drawdownMax"`
 }
 
 //=============================================================================

@@ -29,6 +29,7 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm"
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
 )
 
 //=============================================================================
@@ -53,6 +54,7 @@ type AlgorithmSpec struct {
 //=============================================================================
 
 type OptimizationRequest struct {
+	StartDate       *time.Time                 `json:"startDate,omitempty"`
 	FieldToOptimize string                     `json:"fieldToOptimize"`
 	FilterConfig    *optimization.FilterConfig `json:"filterConfig"`
 	Algorithm       *AlgorithmSpec             `json:"algorithm"`

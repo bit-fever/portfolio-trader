@@ -35,6 +35,7 @@ import (
 //=============================================================================
 
 type OptimizationResponse struct {
+	StartDate       *time.Time    `json:"startDate"`
 	CurrStep        uint          `json:"currStep"`
 	MaxSteps        uint          `json:"maxSteps"`
 	StartTime       time.Time     `json:"startTime"`
@@ -51,6 +52,7 @@ type OptimizationResponse struct {
 		WinPerc   bool `json:"winPerc"`
 		EquVsAvg  bool `json:"equVsAvg"`
 		Trendline bool `json:"trendline"`
+		Drawdown  bool `json:"drawdown"`
 	} `json:"filter"`
 }
 
@@ -58,6 +60,7 @@ type OptimizationResponse struct {
 
 func NewOptimizationResponse(info *OptimizationInfo) *OptimizationResponse {
 	or := &OptimizationResponse{}
+	or.StartDate = info.StartDate
 	or.CurrStep  = info.CurrStep
 	or.MaxSteps  = info.MaxSteps
 	or.StartTime = info.StartTime
@@ -72,6 +75,7 @@ func NewOptimizationResponse(info *OptimizationInfo) *OptimizationResponse {
 	or.Filter.WinPerc   = info.Filter.WinPerc
 	or.Filter.EquVsAvg  = info.Filter.EquVsAvg
 	or.Filter.Trendline = info.Filter.Trendline
+	or.Filter.Drawdown  = info.Filter.Drawdown
 
 	or.Runs     = info.GetRuns()
 	or.Duration = int64(time.Now().Sub(info.StartTime).Seconds())

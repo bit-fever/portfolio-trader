@@ -67,6 +67,7 @@ type OptimizationInfo struct {
 	Status    string
 	results   *core.SortedResults
 
+	StartDate       *time.Time
 	BaseValue       float64
 	BestValue       float64
 	FieldToOptimize string
@@ -77,27 +78,31 @@ type OptimizationInfo struct {
 		WinPerc   bool
 		EquVsAvg  bool
 		Trendline bool
+		Drawdown  bool
 	}
 }
 
 //=============================================================================
 
 func NewOptimizationInfo(maxResultSize int, field string, fc *optimization.FilterConfig,
-						 steps uint, baseValue float64) *OptimizationInfo {
+						 steps uint, baseValue float64, startDate *time.Time) *OptimizationInfo {
 	oi := &OptimizationInfo{}
-	oi.CurrStep          = 0
-	oi.StartTime         = time.Now()
-	oi.Status            = OptimStatusRunning
-	oi.results           = core.NewSortedResults(maxResultSize, runComparator)
-	oi.BaseValue         = baseValue
-	oi.BestValue         = baseValue
-	oi.MaxSteps          = steps
-	oi.FieldToOptimize   = field
+	oi.CurrStep        = 0
+	oi.StartTime       = time.Now()
+	oi.Status          = OptimStatusRunning
+	oi.results         = core.NewSortedResults(maxResultSize, runComparator)
+	oi.BaseValue       = baseValue
+	oi.BestValue       = baseValue
+	oi.MaxSteps        = steps
+	oi.FieldToOptimize = field
+	oi.StartDate       = startDate
+
 	oi.Filter.PosProfit = fc.EnablePosProfit
 	oi.Filter.OldVsNew  = fc.EnableOldNew
 	oi.Filter.WinPerc   = fc.EnableWinPerc
 	oi.Filter.EquVsAvg  = fc.EnableEquAvg
 	oi.Filter.Trendline = fc.EnableTrendline
+	oi.Filter.Drawdown  = fc.EnableDrawdown
 
 	return oi
 }

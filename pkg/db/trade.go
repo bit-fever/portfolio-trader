@@ -48,14 +48,18 @@ func FindTradesByTsId(tx *gorm.DB, tsId uint) (*[]Trade, error) {
 }
 
 //=============================================================================
-// We MUST order b y entry_date because we may have cases like:
+// We MUST order by entry_date because we may have cases like:
 // entry_date,       exit_date
 // 2025-1-1 03:00    2025-1-2 06:00
 // 2025-1-2 06:00    2025-1-2 06:00    <-- fake trade
 // 2025-1-2 06:00    2025-1-4 02:00
 // Ordering by exit_date, the second record could come first
 
-func FindTradesByTsIdFromTime(tx *gorm.DB, tsId uint, fromTime time.Time) (*[]Trade, error) {
+func FindTradesByTsIdFromTime(tx *gorm.DB, tsId uint, fromTime *time.Time) (*[]Trade, error) {
+	if fromTime == nil {
+		return FindTradesByTsId(tx, tsId)
+	}
+
 	var list []Trade
 
 	res := tx.Order("entry_date,exit_date").Find(&list, "trading_system_id = ? and entry_date >= ?", tsId, fromTime)

@@ -24,6 +24,8 @@ THE SOFTWARE.
 
 package filter
 
+import "time"
+
 //=============================================================================
 //===
 //=== AnalysisRequest
@@ -31,7 +33,8 @@ package filter
 //=============================================================================
 
 type AnalysisRequest struct {
-	Filter *TradingFilter  `json:"filter,omitempty"`
+	StartDate *time.Time      `json:"startDate,omitempty"`
+	Filter    *TradingFilter  `json:"filter,omitempty"`
 }
 
 //=============================================================================
@@ -51,6 +54,9 @@ type TradingFilter struct {
 	TrendlineEnabled bool   `json:"trendlineEnabled"`
 	TrendlineLen     int    `json:"trendlineLen"`
 	TrendlineValue   int    `json:"trendlineValue"`
+	DrawdownEnabled  bool   `json:"drawdownEnabled"`
+	DrawdownMin      int    `json:"drawdownMin"`
+	DrawdownMax      int    `json:"drawdownMax"`
 }
 
 //=============================================================================
