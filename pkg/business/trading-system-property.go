@@ -26,7 +26,6 @@ package business
 
 import (
 	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/portfolio-trader/pkg/core/tradingsystem"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
@@ -103,7 +102,7 @@ func SetTradingSystemTrading(tx *gorm.DB, c *auth.Context, tsId uint, req *Tradi
 	}
 
 	ts.Trading = newValue
-	tradingsystem.UpdateStatus(ts)
+	updateStatus(ts)
 	err = db.UpdateTradingSystem(tx, ts)
 	if err != nil {
 		return nil, err
@@ -137,7 +136,7 @@ func SetTradingSystemRunning(tx *gorm.DB, c *auth.Context, tsId uint, req *Tradi
 	}
 
 	ts.Running = newValue
-	tradingsystem.UpdateStatus(ts)
+	updateStatus(ts)
 	err = db.UpdateTradingSystem(tx, ts)
 	if err != nil {
 		return nil, err
@@ -213,7 +212,7 @@ func SetTradingSystemActive(tx *gorm.DB, c *auth.Context, tsId uint, req *Tradin
 	}
 
 	ts.Active = newValue
-	tradingsystem.UpdateStatus(ts)
+	updateStatus(ts)
 	err = db.UpdateTradingSystem(tx, ts)
 	if err != nil {
 		return nil, err
@@ -234,6 +233,20 @@ func SetTradingSystemActive(tx *gorm.DB, c *auth.Context, tsId uint, req *Tradin
 //=== Private functions
 //===
 //=============================================================================
+
+func updateStatus(ts *db.TradingSystem) {
+	ts.SuggestedAction = db.TsActionNone
+
+	if ! ts.Running {
+		ts.Status = db.TsStatusOff
+	} else if ts.Active {
+		ts.Status = db.TsStatusRunning
+	} else {
+		ts.Status = db.TsStatusPaused
+	}
+}
+
+//============================================================================
 
 func updateRewind(ts *db.TradingSystem) error {
 	return nil

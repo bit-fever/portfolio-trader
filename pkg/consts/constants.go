@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2025 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,24 +22,12 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package tradingsystem
-
-import (
-	"github.com/bit-fever/portfolio-trader/pkg/db"
-)
+package consts
 
 //=============================================================================
+//--- Days to move a trading system from running to idle and from idle to broken
 
-func UpdateStatus(ts *db.TradingSystem) {
-	ts.SuggestedAction = db.TsActionNone
+const IdleDays   = 14
+const BrokenDays = 30
 
-	if ! ts.Running {
-		ts.Status = db.TsStatusOff
-	} else if ts.Active {
-		ts.Status = db.TsStatusRunning
-	} else {
-		ts.Status = db.TsStatusPaused
-	}
-}
-
-//============================================================================
+//=============================================================================

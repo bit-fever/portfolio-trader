@@ -22,10 +22,11 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package tradingsystem
+package statusupdater
 
 import (
 	"github.com/bit-fever/portfolio-trader/pkg/app"
+	"github.com/bit-fever/portfolio-trader/pkg/consts"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
@@ -34,13 +35,8 @@ import (
 
 //=============================================================================
 
-var IdleDays   = 14
-var BrokenDays = 30
-
-//=============================================================================
-
-func InitUpdaterProcess(cfg *app.Config) *time.Ticker {
-	ticker := time.NewTicker(8 * time.Hour)
+func Init(cfg *app.Config) *time.Ticker {
+	ticker := time.NewTicker(4 * time.Hour)
 
 	go func() {
 		//--- Wait 2 secs to allow the system to boot properly
@@ -58,25 +54,25 @@ func InitUpdaterProcess(cfg *app.Config) *time.Ticker {
 //=============================================================================
 
 func run(cfg *app.Config) {
-	slog.Info("TradingSystemUpdater: Starting")
+	slog.Info("StatusUpdater: Starting")
 	start := time.Now()
 
 	list, err := GetTradingSystemsInIdle()
 	if err != nil {
-		slog.Error("Cannot get list of trading systems. Update aborted", "error", err)
+		slog.Error("StatusUpdater:Cannot get list of trading systems. Update aborted", "error", err)
 	} else {
-		slog.Info("TradingSystemUpdater: Processing trading systems", "count", len(*list))
+		slog.Info("StatusUpdater: Processing trading systems", "count", len(*list))
 
 		for _, ts := range *list {
 			err = updateTradingSystem(&ts)
 			if err != nil {
-				slog.Error("Cannot update trading system", "id", ts.Id, "error", err)
+				slog.Error("StatusUpdater:Cannot update trading system", "id", ts.Id, "error", err)
 			}
 		}
 	}
 
 	duration := time.Now().Sub(start).Seconds()
-	slog.Info("TradingSystemUpdater: Ended", "seconds", duration)
+	slog.Info("StatusUpdater: Ended", "seconds", duration)
 }
 
 //=============================================================================
@@ -86,7 +82,7 @@ func GetTradingSystemsInIdle() (*[]db.TradingSystem, error){
 	var err error
 
 	err = db.RunInTransaction(func (tx *gorm.DB) error {
-		list, err = db.GetTradingSystemsInIdle(tx, IdleDays)
+		list, err = db.GetTradingSystemsInIdle(tx, consts.IdleDays)
 		return err
 	})
 
@@ -99,7 +95,7 @@ func updateTradingSystem(ts *db.TradingSystem) error {
 	if ts.Status == db.TsStatusRunning {
 		ts.Status = db.TsStatusIdle
 	} else if ts.Status == db.TsStatusIdle {
-		brokenDate := time.Now().Add(-time.Hour * 24 * time.Duration(BrokenDays))
+		brokenDate := time.Now().Add(-time.Hour * 24 * time.Duration(consts.BrokenDays))
 
 		if ts.LastTrade.Before(brokenDate) {
 			ts.Status          = db.TsStatusBroken

@@ -36,8 +36,15 @@ import (
 //=============================================================================
 
 type EquityRequest struct {
-	Username string `json:"username"`
-	Image    []byte `json:"image"`
+	Username string            `json:"username"`
+	Images   map[string][]byte `json:"images"`
+}
+//-----------------------------------------------------------------------------
+
+func NewEquityRequest() *EquityRequest {
+	return &EquityRequest{
+		Images: map[string][]byte{},
+	}
 }
 
 //=============================================================================
@@ -56,8 +63,8 @@ func InitPlatform(cfg *app.Config) {
 
 //=============================================================================
 
-func SetEquityChart(username string, id uint, data []byte) error {
-	slog.Info("SetEquityChart: Sending equity chart to storage manager", "id", id, "username", username)
+func SetEquityChart(id uint, er *EquityRequest) error {
+	slog.Info("SetEquityChart: Sending equity chart to storage manager", "id", id, "username", er.Username)
 
 	token,err := auth.Token()
 	if err != nil {
@@ -66,10 +73,6 @@ func SetEquityChart(username string, id uint, data []byte) error {
 
 	client :=req.GetClient("bf")
 	url    := platform.Storage +"/v1/trading-systems/"+ strconv.Itoa(int(id)) +"/equity-chart"
-	er     := EquityRequest{
-		Username: username,
-		Image   : data,
-	}
 
 	err = req.DoPut(client, url, &er, "", token)
 	if err != nil {
