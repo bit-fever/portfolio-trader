@@ -45,6 +45,8 @@ const (
 	ChartTypeTrades = "trades"
 )
 
+const LastDays = 180
+
 //=============================================================================
 
 func Init(cfg *app.Config) *time.Ticker {
@@ -128,7 +130,7 @@ func getTradingSystemsByUser(user string) (*[]db.TradingSystem, error){
 //=============================================================================
 
 func updateTradingSystem(ts *db.TradingSystem) {
-	lastDays := 90
+	lastDays := LastDays
 	trades, err := getTradingSystemTrades(ts.Id, lastDays)
 	if err != nil {
 		slog.Error("updateTradingSystem: Cannot get the list of trades for trading system. Skipping", "user", ts.Username, "id", ts.Id, "error", err)
@@ -227,6 +229,12 @@ func updateChart(ts *db.TradingSystem, trades *[]db.Trade, lastDays int) error {
 		return err
 	}
 
+	//--- If the TS is new, we don't have any trade and need to skip the chart generation
+
+	if p == nil {
+		return nil
+	}
+
 	buf, err = p.Bytes()
 	if err != nil {
 		slog.Error("updateChart: Cannot convert equity chart (trades) to byte array", "id", ts.Id, "error", err)
@@ -303,6 +311,10 @@ func calcEquityTime(trades *[]db.Trade, lastDays int, costPerOper float64) ([]st
 
 func buildEquityChartTrades(ts *db.TradingSystem, trades *[]db.Trade) (*charts.Painter, error) {
 	xAxis, values := calcEquityTrades(trades, float64(ts.CostPerOperation))
+
+	if xAxis == nil {
+		return nil, nil
+	}
 
 	return charts.LineRender(
 		[][]float64{ values, },
