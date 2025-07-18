@@ -26,6 +26,8 @@ package business
 
 import (
 	"github.com/bit-fever/core/auth"
+	"github.com/bit-fever/core/datatype"
+	"github.com/bit-fever/core/req"
 	"github.com/bit-fever/portfolio-trader/pkg/business/performance"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
@@ -36,73 +38,97 @@ import (
 //=============================================================================
 
 func RunPerformanceAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, req *performance.AnalysisRequest) (*performance.AnalysisResponse, error) {
+
+	//--- Get trading system
+
 	ts, err := getTradingSystemAndCheckAccess(tx, c, tsId)
 	if err != nil {
 		return nil, err
 	}
 
-	var t *time.Time
+	//--- Get location of timezone to shift dates
 
-	daysBack := req.DaysBack
-	if daysBack != 0 {
-		tt := time.Now()
-		back := time.Hour * time.Duration(24 * daysBack)
-		tt = tt.Add(-back)
-		t = &tt
-	}
-
-	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, t)
-	if err != nil {
-		return nil,err
-	}
-
-	res := performance.GetPerformanceAnalysis(ts, trades)
-
-	//--- Get location and shift timezone according to user's preference
-
-	loc, err := core.GetLocation(req.Timezone, res.TradingSystem)
+	loc, err := core.GetLocation(req.Timezone, ts)
 	if err != nil {
 		c.Log.Error("RunPerformanceAnalysis: Bad timezone", "timezone", req.Timezone, "error", err)
 		return nil, err
 	}
 
-	res.AllEquities  .Time = shiftEquityTimezone(res.AllEquities  .Time, loc)
-	res.LongEquities .Time = shiftEquityTimezone(res.LongEquities .Time, loc)
-	res.ShortEquities.Time = shiftEquityTimezone(res.ShortEquities.Time, loc)
-	res.Trades             = shiftTradesTimezone(res, loc)
+	fromTime, toTime, err := calcPerformancePeriod(req.DaysBack, req.FromDate, req.ToDate, loc)
+	if err != nil {
+		c.Log.Error("RunPerformanceAnalysis: Bad fromDate or toDate", "fromDate", req.FromDate, "toDate", req.ToDate, "error", err)
+		return nil, err
+	}
+
+	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, fromTime, toTime)
+	if err != nil {
+		return nil,err
+	}
+	shiftTradesTimezone(trades, loc)
+
+	res := performance.GetPerformanceAnalysis(ts, trades)
 
 	return res, nil
 }
 
 //=============================================================================
 
-func shiftEquityTimezone(values *[]time.Time, loc *time.Location) *[]time.Time {
+func calcPerformancePeriod(daysBack int, fromDate, toDate datatype.IntDate, loc *time.Location) (*time.Time, *time.Time, error) {
+	//--- All
 
-	var list []time.Time
-
-	for _, tim := range *values {
-		list = append(list, *shiftLocation(&tim, loc))
+	if daysBack == 0 {
+		return nil, nil, nil
 	}
 
-	return &list
+	//--- Specific last days
+
+	if daysBack > 0 {
+		fromTime := time.Now().UTC()
+		back     := time.Hour * time.Duration(24 * daysBack)
+		fromTime = fromTime.Add(-back)
+
+		return &fromTime, nil, nil
+	}
+
+	//--- Custom range
+
+	if daysBack == -1 {
+		var from *time.Time
+		var to   *time.Time
+
+		if !fromDate.IsNil() {
+			if !fromDate.IsValid() {
+				return nil, nil, req.NewBadRequestError("Invalid fromDate parameter: %d", fromDate)
+			}
+
+			tt := fromDate.ToDateTime(false, loc)
+			from = &tt
+		}
+
+		if !toDate.IsNil() {
+			if !toDate.IsValid() {
+				return nil, nil, req.NewBadRequestError("Invalid toDate parameter: %d", toDate)
+			}
+
+			tt := toDate.ToDateTime(true, loc)
+			to = &tt
+		}
+
+		return from, to, nil
+	}
+
+	return nil, nil, req.NewBadRequestError("Invalid daysBack parameter: %d", daysBack)
 }
 
 //=============================================================================
 
-func shiftTradesTimezone(res *performance.AnalysisResponse, loc *time.Location) *[]db.Trade {
-
-	var list []db.Trade
-
-	for _, tr := range *res.Trades {
-		tr.EntryDate         = shiftLocation(tr.EntryDate, loc)
-		tr.ExitDate          = shiftLocation(tr.ExitDate, loc)
+func shiftTradesTimezone(trades *[]db.Trade, loc *time.Location) {
+	for _, tr := range *trades {
+		tr.EntryDate         = shiftLocation(tr.EntryDate,         loc)
+		tr.ExitDate          = shiftLocation(tr.ExitDate,          loc)
 		tr.EntryDateAtBroker = shiftLocation(tr.EntryDateAtBroker, loc)
-		tr.ExitDateAtBroker  = shiftLocation(tr.ExitDateAtBroker, loc)
-
-		list = append(list, tr)
+		tr.ExitDateAtBroker  = shiftLocation(tr.ExitDateAtBroker,  loc)
 	}
-
-	return &list
 }
 
 //=============================================================================

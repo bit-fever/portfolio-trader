@@ -77,7 +77,7 @@ func RunFilterAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, far *filter.Anal
 		filters = convert(far.Filter)
 	}
 
-	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, far.StartDate)
+	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, far.StartDate, nil)
 	if err != nil {
 		return nil,err
 	}
@@ -95,7 +95,7 @@ func StartFilterOptimization(tx *gorm.DB, c *auth.Context, tsId uint, oreq *filt
 		return err
 	}
 
-	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, oreq.StartDate)
+	trades, err := db.FindTradesByTsIdFromTime(tx, ts.Id, oreq.StartDate, nil)
 	if err != nil {
 		return err
 	}

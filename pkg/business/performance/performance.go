@@ -25,8 +25,10 @@ THE SOFTWARE.
 package performance
 
 import (
+	"github.com/bit-fever/core/datatype"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"time"
 )
 
 //=============================================================================
@@ -64,6 +66,9 @@ func GetPerformanceAnalysis(ts *db.TradingSystem, trades *[]db.Trade) *AnalysisR
 	res.Net  .AverageTrade.Total = calcAvgTrade(res.Net  .Profit.Total, allEq.Trades)
 	res.Net  .AverageTrade.Long  = calcAvgTrade(res.Net  .Profit.Long , longEq.Trades)
 	res.Net  .AverageTrade.Short = calcAvgTrade(res.Net  .Profit.Short, shortEq.Trades)
+
+	calcAggregates(&res)
+	updateGeneralInfo(&res)
 
 	return &res
 }
@@ -112,6 +117,76 @@ func calcAvgTrade(value float64, count int) float64 {
 	}
 
 	return core.Trunc2d(value / float64(count))
+}
+
+//=============================================================================
+//=== Timezone shifting
+//=============================================================================
+
+func calcAggregates(res *AnalysisResponse) {
+	calcYearAggregates(res)
+}
+
+//=============================================================================
+
+func calcYearAggregates(res *AnalysisResponse) {
+	cost := float64(res.TradingSystem.CostPerOperation)
+	list := []*AnnualAggregate{}
+
+	var currYear *AnnualAggregate
+
+	for _, tr := range *res.Trades {
+		if currYear == nil {
+			//--- Beginning of a new year
+
+			currYear = NewAggregate(&tr, cost)
+			list = append(list, currYear)
+		} else {
+			if currYear.Year == tr.ExitDate.Year() {
+				//--- Continue on the current year
+				currYear.addTrade(&tr, cost)
+			} else {
+				//--- Continue on the new year
+
+				currYear.consolidate()
+				currYear = NewAggregate(&tr, cost)
+				list = append(list, currYear)
+			}
+		}
+	}
+
+	if currYear != nil {
+		currYear.consolidate()
+	}
+
+	res.Aggregates.Annual = &list
+}
+
+//=============================================================================
+//=== General information
+//=============================================================================
+
+func updateGeneralInfo(res *AnalysisResponse) {
+	calcFromToDates(res)
+}
+
+//=============================================================================
+
+func calcFromToDates(res *AnalysisResponse) {
+	numTrades := len(*res.Trades)
+	if  numTrades> 0 {
+		firstTrade := (*res.Trades)[0].ExitDate
+		lastTrade  := (*res.Trades)[numTrades-1].ExitDate
+
+		res.General.FromDate = NewIntDate(firstTrade)
+		res.General.ToDate   = NewIntDate(lastTrade)
+	}
+}
+
+//=============================================================================
+
+func NewIntDate(t *time.Time) datatype.IntDate {
+	return datatype.IntDate(t.Year()*10000 + int(t.Month())*100 + t.Day())
 }
 
 //=============================================================================

@@ -25,6 +25,8 @@ THE SOFTWARE.
 package performance
 
 import (
+	"github.com/bit-fever/core/datatype"
+	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"time"
 )
@@ -59,7 +61,90 @@ type Equities struct {
 
 //=============================================================================
 
+type General struct {
+	FromDate              datatype.IntDate     `json:"fromDate"`
+	ToDate                datatype.IntDate     `json:"toDate"`
+	//TradingPeriod         string  `json:"tradingPeriod"`
+	//TimeInMarket          float32 `json:"timeInMarket"`
+	//SharpeRatioNormal     float32 `json:"sharpeRatioNormal"`
+	//SharpeRatioAnnualized float32 `json:"sharpeRatioAnnualized"`
+}
+
+//=============================================================================
+
+type Aggregates struct {
+	Annual *[]*AnnualAggregate `json:"annual"`
+}
+
+//=============================================================================
+
+type AnnualAggregate struct {
+	Year          int     `json:"year"`
+	GrossProfit   float64 `json:"grossProfit"`
+	GrossAvgTrade float64 `json:"grossAvgTrade"`
+	GrossWinPerc  float64 `json:"grossWinPerc"`
+	NetProfit     float64 `json:"netProfit"`
+	NetAvgTrade   float64 `json:"netAvgTrade"`
+	NetWinPerc    float64 `json:"netWinPerc"`
+	Trades        int     `json:"trades"`
+}
+
+//-----------------------------------------------------------------------------
+
+func NewAggregate(tr *db.Trade, cost float64) *AnnualAggregate{
+	a := &AnnualAggregate{
+		Year         : tr.ExitDate.Year(),
+		GrossProfit  : tr.GrossProfit,
+		GrossAvgTrade: 0,
+		GrossWinPerc : 0,
+		NetProfit    : tr.GrossProfit - 2 * cost,
+		NetAvgTrade  : 0,
+		NetWinPerc   : 0,
+		Trades       : 1,
+	}
+
+	if a.GrossProfit > 0 {
+		a.GrossWinPerc = 1
+	}
+
+	if a.NetProfit > 0 {
+		a.NetWinPerc = 1
+	}
+
+	return a
+}
+
+//-----------------------------------------------------------------------------
+
+func (a *AnnualAggregate) addTrade(tr *db.Trade, cost float64) {
+	netProfit := tr.GrossProfit - 2 * cost
+
+	a.GrossProfit += tr.GrossProfit
+	a.NetProfit   += netProfit
+	a.Trades++
+
+	if tr.GrossProfit > 0 {
+		a.GrossWinPerc++
+	}
+
+	if netProfit > 0 {
+		a.NetWinPerc++
+	}
+}
+
+//-----------------------------------------------------------------------------
+
+func (a *AnnualAggregate) consolidate() {
+	a.GrossAvgTrade = core.Trunc2d(a.GrossProfit  / float64(a.Trades))
+	a.GrossWinPerc  = core.Trunc2d(a.GrossWinPerc / float64(a.Trades) * 100)
+	a.NetAvgTrade   = core.Trunc2d(a.NetProfit    / float64(a.Trades))
+	a.NetWinPerc    = core.Trunc2d(a.NetWinPerc   / float64(a.Trades) * 100)
+}
+
+//=============================================================================
+
 type AnalysisResponse struct {
+	General           General           `json:"general"`
 	TradingSystem     *db.TradingSystem `json:"tradingSystem"`
 	Gross             Performance       `json:"gross"`
 	Net               Performance       `json:"net"`
@@ -67,7 +152,7 @@ type AnalysisResponse struct {
 	LongEquities      *Equities         `json:"longEquities"`
 	ShortEquities     *Equities         `json:"shortEquities"`
 	Trades            *[]db.Trade       `json:"trades"`
-	//Periodic          int
+	Aggregates        Aggregates        `json:"aggregates"`
 	//AvgBarsInTrade    int               `json:"avgBarsInTrade"`
 	//AvgBarsBetwTrades int               `json:"avgBarsBetwTrades"`
 }

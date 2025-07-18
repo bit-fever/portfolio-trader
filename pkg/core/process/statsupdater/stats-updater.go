@@ -157,7 +157,7 @@ func getTradingSystemTrades(id uint, lastDays int) (*[]db.Trade, error) {
 	fromDate := time.Now().Add(-time.Hour * 24 * time.Duration(lastDays))
 
 	err = db.RunInTransaction(func (tx *gorm.DB) error {
-		list, err = db.FindTradesByTsIdFromTime(tx, id, &fromDate)
+		list, err = db.FindTradesByTsIdFromTime(tx, id, &fromDate, nil)
 		return err
 	})
 

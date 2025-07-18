@@ -3,7 +3,7 @@ module github.com/bit-fever/portfolio-trader
 go 1.24.0
 
 require (
-	github.com/bit-fever/core v1.9.0
+	github.com/bit-fever/core v1.9.2
 	github.com/emirpasic/gods v1.18.1
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-sql-driver/mysql v1.9.2 // indirect
