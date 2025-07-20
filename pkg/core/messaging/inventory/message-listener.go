@@ -150,12 +150,13 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.TradingSessionId= tsm.TradingSession.Id
 		ts.SessionName     = tsm.TradingSession.Name
 		ts.SessionConfig   = tsm.TradingSession.Config
-		ts.External        = tsm.TradingSystem.ExternalRef != ""
 		ts.StrategyType    = tsm.TradingSystem.StrategyType
 		ts.Overnight       = tsm.TradingSystem.Overnight
 		ts.Tags            = tsm.TradingSystem.Tags
 		ts.Finalized       = tsm.TradingSystem.Finalized
 		ts.Timezone        = tsm.Exchange.Timezone
+		ts.AgentProfileId  = tsm.TradingSystem.AgentProfileId
+		ts.ExternalRef     = tsm.TradingSystem.ExternalRef
 
 		err = db.UpdateTradingSystem(tx, ts)
 

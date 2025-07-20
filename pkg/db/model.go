@@ -89,7 +89,8 @@ type TradingSystem struct {
 	TradingSessionId  uint         `json:"tradingSessionId"`
 	SessionName       string       `json:"sessionName"`
 	SessionConfig     string       `json:"sessionConfig"`
-	External          bool         `json:"external"`
+	AgentProfileId   *uint         `json:"agentProfileId"`
+	ExternalRef       string       `json:"externalRef"`
 	StrategyType      string       `json:"strategyType"`
 	Overnight         bool         `json:"overnight"`
 	Tags              string       `json:"tags"`

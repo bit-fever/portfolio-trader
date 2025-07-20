@@ -109,7 +109,7 @@ type TradingSystem struct {
 	DataProductId     uint    `json:"dataProductId"`
 	BrokerProductId   uint    `json:"brokerProductId"`
 	TradingSessionId  uint    `json:"tradingSessionId"`
-	AgentProfileId    *uint   `json:"agentProfileId"`
+	AgentProfileId   *uint    `json:"agentProfileId"`
 	StrategyType      string  `json:"strategyType"`
 	Overnight         bool    `json:"overnight"`
 	Tags              string  `json:"tags"`
