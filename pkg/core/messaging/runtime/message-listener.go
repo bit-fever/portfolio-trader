@@ -86,6 +86,11 @@ func handleNewTrades(tm *TradeListMessage) bool {
 			return nil
 		}
 
+		if !ts.Trading {
+			slog.Warn("handleNewTrades: Trading system is not in TRADING mode. Discarding trades", "id", tsId)
+			return nil
+		}
+
 		var trades *[]db.Trade
 		trades,err = db.FindTradesByTsId(tx, tsId)
 		if err == nil {
