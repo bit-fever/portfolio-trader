@@ -136,7 +136,7 @@ func UpdateTradingSystem(tx *gorm.DB, ts *TradingSystem) error {
 func UpdateDataProductInfo(tx *gorm.DB, dataProductId uint, values map[string]interface{}) error {
 	return tx.Model(&TradingSystem{}).
 		Where("data_product_id", dataProductId).
-		Save(values).Error
+		Updates(values).Error
 }
 
 //=============================================================================
@@ -144,7 +144,7 @@ func UpdateDataProductInfo(tx *gorm.DB, dataProductId uint, values map[string]in
 func UpdateBrokerProductInfo(tx *gorm.DB, brokerProductId uint, values map[string]interface{}) error {
 	return tx.Model(&TradingSystem{}).
 		Where("broker_product_id", brokerProductId).
-		Save(values).Error
+		Updates(values).Error
 }
 
 //=============================================================================
