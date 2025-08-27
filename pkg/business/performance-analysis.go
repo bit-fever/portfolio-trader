@@ -25,6 +25,8 @@ THE SOFTWARE.
 package business
 
 import (
+	"time"
+
 	"github.com/bit-fever/core/auth"
 	"github.com/bit-fever/core/datatype"
 	"github.com/bit-fever/core/req"
@@ -32,7 +34,6 @@ import (
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
-	"time"
 )
 
 //=============================================================================
@@ -123,7 +124,8 @@ func calcPerformancePeriod(daysBack int, fromDate, toDate datatype.IntDate, loc 
 //=============================================================================
 
 func shiftTradesTimezone(trades *[]db.Trade, loc *time.Location) {
-	for _, tr := range *trades {
+	for i:=0; i<len(*trades); i++ {
+		tr := &(*trades)[i]
 		tr.EntryDate         = shiftLocation(tr.EntryDate,         loc)
 		tr.ExitDate          = shiftLocation(tr.ExitDate,          loc)
 		tr.EntryDateAtBroker = shiftLocation(tr.EntryDateAtBroker, loc)

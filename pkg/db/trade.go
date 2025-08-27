@@ -25,9 +25,10 @@ THE SOFTWARE.
 package db
 
 import (
+	"time"
+
 	"github.com/bit-fever/core/req"
 	"gorm.io/gorm"
-	"time"
 )
 
 //=============================================================================
@@ -71,7 +72,7 @@ func FindTradesByTsIdFromTime(tx *gorm.DB, tsId uint, fromTime *time.Time, toTim
 
 	//--- WHERE condition must be exit_date otherwise we loose trades started in the past and ended after fromTime
 	query := "trading_system_id = ? and exit_date >= ? and exit_date<= ?"
-	res   := tx.Order("entry_date,exit_date").Find(&list, query, tsId, from, to)
+	res   := tx.Order("exit_date,entry_date").Find(&list, query, tsId, from, to)
 
 	if res.Error != nil {
 		return nil, req.NewServerErrorByError(res.Error)
