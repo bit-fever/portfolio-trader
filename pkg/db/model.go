@@ -30,6 +30,8 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/bit-fever/core/datatype"
 )
 
 //=============================================================================
@@ -172,6 +174,16 @@ func (t Trade) String() string {
 }
 
 //=============================================================================
+
+type DailyProfit struct {
+	Id               uint             `json:"id" gorm:"primaryKey"`
+	TradingSystemId  uint             `json:"tradingSystemId"`
+	Day              datatype.IntDate `json:"day"`
+	GrossProfit      float64          `json:"grossProfit"`
+	Trades           int              `json:"trades"`
+}
+
+//=============================================================================
 //===
 //=== Table names
 //===
@@ -181,6 +193,7 @@ func (TradingSystem) TableName() string { return "trading_system" }
 func (TradingFilter) TableName() string { return "trading_filter" }
 func (Trade)         TableName() string { return "trade"          }
 func (Portfolio)     TableName() string { return "portfolio"      }
+func (DailyProfit)   TableName() string { return "daily_profit"   }
 
 //=============================================================================
 //===

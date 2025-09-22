@@ -26,14 +26,16 @@ package runtime
 
 import (
 	"encoding/json"
+	"log/slog"
+	"sort"
+	"time"
+
+	"github.com/bit-fever/core/datatype"
 	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/portfolio-trader/pkg/business/filter"
 	"github.com/bit-fever/portfolio-trader/pkg/consts"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
-	"log/slog"
-	"sort"
-	"time"
 )
 
 //=============================================================================
@@ -92,14 +94,21 @@ func handleNewTrades(tm *TradeListMessage) bool {
 		}
 
 		var trades *[]db.Trade
-		trades,err = db.FindTradesByTsId(tx, tsId)
+		trades,err = db.FindTradesByTradingSystemId(tx, tsId)
 		if err == nil {
-			var tf *db.TradingFilter
-			tf, err = db.GetTradingFilterByTsId(tx, tsId)
+			var dailyProfits *[]db.DailyProfit
+			dailyProfits,err = db.FindDailyProfitsByTradingSystemId(tx, tsId)
 			if err == nil {
-				trades,err = addNewTrades(tx, ts, trades, tm.Trades)
+				var tf *db.TradingFilter
+				tf, err = db.GetTradingFilterByTsId(tx, tsId)
 				if err == nil {
-					err = updateTradingSystem(tx, ts, trades, tf)
+					trades,err = addNewTrades(tx, ts, trades, tm.Trades)
+					if err == nil {
+						err = addNewDailyProfits(tx, ts, dailyProfits, tm.DailyProfits)
+						if err == nil {
+							err = updateTradingSystem(tx, ts, trades, tf)
+						}
+					}
 				}
 			}
 		}
@@ -198,6 +207,41 @@ func toDbTrade(tsId uint, t *TradeItem) *db.Trade {
 		ExitLabel      : t.ExitLabel,
 		GrossProfit    : t.GrossProfit,
 		Contracts      : t.Contracts,
+	}
+}
+
+//=============================================================================
+
+func addNewDailyProfits(tx *gorm.DB, ts *db.TradingSystem, profits *[]db.DailyProfit, newProfits []*DailyProfitItem) error {
+	profitSet := map[datatype.IntDate]bool{}
+	for _, dp := range *profits {
+		profitSet[dp.Day] = true
+	}
+
+	for _, dp := range newProfits {
+		dbDp := toDbDailyProfit(ts.Id, dp)
+		_, exists := profitSet[dbDp.Day]
+		if !exists {
+			profitSet[dbDp.Day] = true
+			err  := db.AddDailyProfit(tx, dbDp)
+
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+//=============================================================================
+
+func toDbDailyProfit(tsId uint, p *DailyProfitItem) *db.DailyProfit {
+	return &db.DailyProfit{
+		TradingSystemId: tsId,
+		Day            : p.Day,
+		GrossProfit    : p.GrossProfit,
+		Trades         : p.Trades,
 	}
 }
 

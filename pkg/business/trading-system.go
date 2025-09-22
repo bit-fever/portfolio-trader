@@ -49,6 +49,11 @@ func DeleteTradingSystem(tx *gorm.DB, id uint) error {
 		return err
 	}
 
+	err = db.DeleteAllDailyProfitsByTradingSystemId(tx, id)
+	if err != nil {
+		return err
+	}
+
 	err = db.DeleteTradingFilter(tx, id)
 	if err != nil {
 		return err
@@ -65,7 +70,7 @@ func GetTrades(tx *gorm.DB, c *auth.Context, id uint) (*[]db.Trade, error) {
 		return nil, err
 	}
 
-	return db.FindTradesByTsId(tx, id)
+	return db.FindTradesByTradingSystemId(tx, id)
 }
 
 //=============================================================================
@@ -79,6 +84,11 @@ func DeleteTrades(tx *gorm.DB, c *auth.Context, id uint) error {
 	}
 
 	err = db.DeleteAllTradesByTradingSystemId(tx, id)
+	if err != nil {
+		return err
+	}
+
+	err = db.DeleteAllDailyProfitsByTradingSystemId(tx, id)
 	if err != nil {
 		return err
 	}

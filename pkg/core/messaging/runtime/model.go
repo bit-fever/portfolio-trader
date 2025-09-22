@@ -26,13 +26,16 @@ package runtime
 
 import (
 	"time"
+
+	"github.com/bit-fever/core/datatype"
 )
 
 //=============================================================================
 
 type TradeListMessage struct {
-	TradingSystemId uint         `json:"tradingSystemId"`
-	Trades          []*TradeItem `json:"trades"`
+	TradingSystemId uint               `json:"tradingSystemId"`
+	Trades          []*TradeItem       `json:"trades"`
+	DailyProfits    []*DailyProfitItem `json:"dailyProfits"`
 }
 
 //=============================================================================
@@ -47,6 +50,14 @@ type TradeItem struct {
 	ExitLabel       string       `json:"exitLabel"`
 	GrossProfit     float64      `json:"grossProfit"`
 	Contracts       int          `json:"contracts"`
+}
+
+//=============================================================================
+
+type DailyProfitItem struct {
+	Day         datatype.IntDate `json:"day"`
+	GrossProfit float64          `json:"grossProfit"`
+	Trades      int             `json:"trades"`
 }
 
 //=============================================================================
