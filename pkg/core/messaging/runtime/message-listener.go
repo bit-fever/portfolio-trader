@@ -96,8 +96,8 @@ func handleNewTrades(tm *TradeListMessage) bool {
 		var trades *[]db.Trade
 		trades,err = db.FindTradesByTradingSystemId(tx, tsId)
 		if err == nil {
-			var dailyProfits *[]db.DailyProfit
-			dailyProfits,err = db.FindDailyProfitsByTradingSystemId(tx, tsId)
+			var dailyProfits *[]db.DailyReturn
+			dailyProfits,err = db.FindDailyReturnsByTradingSystemId(tx, tsId)
 			if err == nil {
 				var tf *db.TradingFilter
 				tf, err = db.GetTradingFilterByTsId(tx, tsId)
@@ -212,7 +212,7 @@ func toDbTrade(tsId uint, t *TradeItem) *db.Trade {
 
 //=============================================================================
 
-func addNewDailyProfits(tx *gorm.DB, ts *db.TradingSystem, profits *[]db.DailyProfit, newProfits []*DailyProfitItem) error {
+func addNewDailyProfits(tx *gorm.DB, ts *db.TradingSystem, profits *[]db.DailyReturn, newProfits []*DailyProfitItem) error {
 	profitSet := map[datatype.IntDate]bool{}
 	for _, dp := range *profits {
 		profitSet[dp.Day] = true
@@ -223,7 +223,7 @@ func addNewDailyProfits(tx *gorm.DB, ts *db.TradingSystem, profits *[]db.DailyPr
 		_, exists := profitSet[dbDp.Day]
 		if !exists {
 			profitSet[dbDp.Day] = true
-			err  := db.AddDailyProfit(tx, dbDp)
+			err  := db.AddDailyReturn(tx, dbDp)
 
 			if err != nil {
 				return err
@@ -236,8 +236,8 @@ func addNewDailyProfits(tx *gorm.DB, ts *db.TradingSystem, profits *[]db.DailyPr
 
 //=============================================================================
 
-func toDbDailyProfit(tsId uint, p *DailyProfitItem) *db.DailyProfit {
-	return &db.DailyProfit{
+func toDbDailyProfit(tsId uint, p *DailyProfitItem) *db.DailyReturn {
+	return &db.DailyReturn{
 		TradingSystemId: tsId,
 		Day            : p.Day,
 		GrossProfit    : p.GrossProfit,

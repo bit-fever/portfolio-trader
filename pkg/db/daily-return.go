@@ -31,8 +31,8 @@ import (
 
 //=============================================================================
 
-func FindDailyProfitsByTradingSystemId(tx *gorm.DB, tsId uint) (*[]DailyProfit, error) {
-	var list []DailyProfit
+func FindDailyReturnsByTradingSystemId(tx *gorm.DB, tsId uint) (*[]DailyReturn, error) {
+	var list []DailyReturn
 
 	filter := map[string]any{}
 	filter["trading_system_id"] = tsId
@@ -48,15 +48,15 @@ func FindDailyProfitsByTradingSystemId(tx *gorm.DB, tsId uint) (*[]DailyProfit, 
 
 //=============================================================================
 
-func AddDailyProfit(tx *gorm.DB, dp *DailyProfit) error {
-	err := tx.Create(dp).Error
+func AddDailyReturn(tx *gorm.DB, dr *DailyReturn) error {
+	err := tx.Create(dr).Error
 	return req.NewServerErrorByError(err)
 }
 
 //=============================================================================
 
-func DeleteAllDailyProfitsByTradingSystemId(tx *gorm.DB, id uint) error {
-	err := tx.Delete(&DailyProfit{}, "trading_system_id", id).Error
+func DeleteAllDailyReturnsByTradingSystemId(tx *gorm.DB, id uint) error {
+	err := tx.Delete(&DailyReturn{}, "trading_system_id", id).Error
 	return req.NewServerErrorByError(err)
 }
 

@@ -175,7 +175,7 @@ func (t Trade) String() string {
 
 //=============================================================================
 
-type DailyProfit struct {
+type DailyReturn struct {
 	Id               uint             `json:"id" gorm:"primaryKey"`
 	TradingSystemId  uint             `json:"tradingSystemId"`
 	Day              datatype.IntDate `json:"day"`
@@ -193,7 +193,7 @@ func (TradingSystem) TableName() string { return "trading_system" }
 func (TradingFilter) TableName() string { return "trading_filter" }
 func (Trade)         TableName() string { return "trade"          }
 func (Portfolio)     TableName() string { return "portfolio"      }
-func (DailyProfit)   TableName() string { return "daily_profit"   }
+func (DailyReturn)   TableName() string { return "daily_return"   }
 
 //=============================================================================
 //===
