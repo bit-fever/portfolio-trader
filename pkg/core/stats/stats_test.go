@@ -1,6 +1,6 @@
 //=============================================================================
 /*
-Copyright © 2024 Andrea Carboni andrea.carboni71@gmail.com
+Copyright © 2023 Andrea Carboni andrea.carboni71@gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -22,55 +22,28 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package core
+package stats
 
 import (
 	"math"
-	"time"
-
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"testing"
 )
 
 //=============================================================================
 
-func Trunc2d(value float64) float64 {
-	return float64(int(math.Floor(value * 100))) / 100
-}
+var prices = []float64{ 1.64, 5.85, 9.22, 3.51, -0.88, 1.07, 13.03, 9.4, 10.49, -5.08, 0, 0 }
 
 //=============================================================================
 
-func GetLocation(timezone string, ts *db.TradingSystem) (*time.Location, error) {
-	if timezone == "exchange" {
-		timezone = ts.Timezone
-	}
+func TestSharpeRatio(t *testing.T) {
+	t.Logf("Avg: %v", Mean(prices))
+	t.Logf("Std: %v", StdDev(prices, Mean(prices)))
+	t.Logf("SR : %v", SharpeRatio(10, 0.05))
+	t.Logf("SRA: %v", SharpeRatio(10, 0.05)*math.Sqrt(12))
 
-	return time.LoadLocation(timezone)
-}
-
-//=============================================================================
-
-func ToNonZeroDailyReturnSlice(list *[]db.DailyReturn) []float64 {
-	var res []float64
-
-	for _, dr := range *list {
-		if dr.GrossProfit != 0 {
-			res = append(res, dr.GrossProfit)
-		}
-	}
-
-	return res
-}
-
-//=============================================================================
-
-func CloneWithDelta(list []float64, delta float64) []float64 {
-	res := make([]float64, len(list))
-
-	for _, x := range list {
-		res = append(res, x + delta)
-	}
-
-	return res
+	//if !slices.Equal(*equ, equity) {
+	//	t.Errorf("Bad gross equity calculation. Expected %v but got %v", equity, equ)
+	//}
 }
 
 //=============================================================================

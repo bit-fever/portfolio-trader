@@ -22,72 +22,40 @@ THE SOFTWARE.
 */
 //=============================================================================
 
-package db
+package stats
 
 import (
-	"time"
-
-	"github.com/bit-fever/core/datatype"
-	"github.com/bit-fever/core/req"
-	"gorm.io/gorm"
+	"math"
+	"slices"
 )
 
 //=============================================================================
 
-func FindDailyReturnsByTradingSystemId(tx *gorm.DB, tsId uint) (*[]DailyReturn, error) {
-	var list []DailyReturn
-
-	filter := map[string]any{}
-	filter["trading_system_id"] = tsId
-
-	res := tx.Where(filter).Order("day").Find(&list)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
+type Percentile struct {
+	data []float64
 }
 
 //=============================================================================
 
-func FindDailyReturnsByTsIdFromTime(tx *gorm.DB, tsId uint, fromTime *time.Time, toTime *time.Time) (*[]DailyReturn, error) {
-	to   := datatype.Today(time.UTC)
-	from := to.AddDays(-50 * 365)
+func NewPercentile(data []float64) *Percentile {
+	perc := slices.Clone(data)
+	slices.Sort(perc)
 
-	if fromTime != nil {
-		from = datatype.ToIntDate(fromTime)
+	return &Percentile{
+		data: perc,
 	}
-
-	if toTime != nil {
-		to = datatype.ToIntDate(toTime)
-	}
-
-	var list []DailyReturn
-
-	//--- WHERE condition must be exit_date otherwise we loose trades started in the past and ended after fromTime
-	query := "trading_system_id = ? and day >= ? and day <= ?"
-	res   := tx.Order("day").Find(&list, query, tsId, from, to)
-
-	if res.Error != nil {
-		return nil, req.NewServerErrorByError(res.Error)
-	}
-
-	return &list, nil
 }
 
 //=============================================================================
 
-func AddDailyReturn(tx *gorm.DB, dr *DailyReturn) error {
-	err := tx.Create(dr).Error
-	return req.NewServerErrorByError(err)
-}
+func (p *Percentile) Get(percentile float64) float64 {
+	size := len(p.data)
+	idx  := int(math.Floor(percentile * float64(size -1) / 100))
+	if idx >= size {
+		idx = size - 1
+	}
 
-//=============================================================================
-
-func DeleteAllDailyReturnsByTradingSystemId(tx *gorm.DB, id uint) error {
-	err := tx.Delete(&DailyReturn{}, "trading_system_id", id).Error
-	return req.NewServerErrorByError(err)
+	return p.data[idx]
 }
 
 //=============================================================================

@@ -67,7 +67,12 @@ func RunPerformanceAnalysis(tx *gorm.DB, c *auth.Context, tsId uint, req *perfor
 	}
 	shiftTradesTimezone(trades, loc)
 
-	res := performance.GetPerformanceAnalysis(ts, trades)
+	returns,err := db.FindDailyReturnsByTsIdFromTime(tx, ts.Id, fromTime, toTime)
+	if err != nil {
+		return nil,err
+	}
+
+	res := performance.GetPerformanceAnalysis(ts, trades, returns)
 
 	return res, nil
 }

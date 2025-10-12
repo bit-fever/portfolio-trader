@@ -25,9 +25,11 @@ THE SOFTWARE.
 package filter
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/core"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"time"
+
+	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/bit-fever/portfolio-trader/pkg/core/stats"
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 )
 
 //=============================================================================
@@ -356,7 +358,7 @@ func calcTrendlineActivation(e *Equities, f *db.TradingFilter) *Activation {
 
 	for i, t := range e.Time {
 		if i >= trendLen -1 {
-			slope := core.LinearRegression(e.Time[i -trendLen +1:i], equity[i -trendLen +1:i])
+			slope := stats.LinearRegression(e.Time[i -trendLen +1:i], equity[i -trendLen +1:i])
 			value := int8(0)
 
 			if slope >= thresh {

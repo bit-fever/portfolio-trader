@@ -25,15 +25,17 @@ THE SOFTWARE.
 package performance
 
 import (
+	"time"
+
 	"github.com/bit-fever/core/datatype"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/bit-fever/portfolio-trader/pkg/core/stats"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"time"
 )
 
 //=============================================================================
 
-func GetPerformanceAnalysis(ts *db.TradingSystem, trades *[]db.Trade) *AnalysisResponse {
+func GetPerformanceAnalysis(ts *db.TradingSystem, trades *[]db.Trade, returns *[]db.DailyReturn) *AnalysisResponse {
 	res := AnalysisResponse{}
 	res.TradingSystem = ts
 	res.Trades        = trades
@@ -69,6 +71,7 @@ func GetPerformanceAnalysis(ts *db.TradingSystem, trades *[]db.Trade) *AnalysisR
 
 	calcAggregates(&res)
 	updateGeneralInfo(&res)
+	calcDistributions(&res, returns)
 
 	return &res
 }
@@ -187,6 +190,77 @@ func calcFromToDates(res *AnalysisResponse) {
 
 func NewIntDate(t *time.Time) datatype.IntDate {
 	return datatype.IntDate(t.Year()*10000 + int(t.Month())*100 + t.Day())
+}
+
+//=============================================================================
+//=== Metrics
+//=============================================================================
+
+func calcDistributions(res *AnalysisResponse, returns *[]db.DailyReturn) {
+	dist := &res.Distributions
+	list := core.ToNonZeroDailyReturnSlice(returns)
+	dist.Daily = calcDistribution(list)
+
+	dist.AnnualSharpeRatio = core.Trunc2d(dist.Daily.SharpeRatio * 16)
+	dist.AnnualStandardDev = core.Trunc2d(dist.Daily.StandardDev * 16)
+
+	//--- All (gross + net)
+
+	_, allGross := core.BuildGrossProfits(res.Trades, db.TradeTypeAll)
+	allNet      := core.BuildNetProfits(allGross, res.TradingSystem.CostPerOperation)
+
+	dist.TradesAllGross = calcDistribution(*allGross)
+	dist.TradesAllNet   = calcDistribution(*allNet)
+
+	//--- Long (gross + net)
+
+	_, longGross := core.BuildGrossProfits(res.Trades, db.TradeTypeLong)
+	longNet      := core.BuildNetProfits(longGross, res.TradingSystem.CostPerOperation)
+
+	dist.TradesLongGross = calcDistribution(*longGross)
+	dist.TradesLongNet   = calcDistribution(*longNet)
+
+	//--- Short (gross + net)
+
+	_, shortGross := core.BuildGrossProfits(res.Trades, db.TradeTypeShort)
+	shortNet      := core.BuildNetProfits(shortGross, res.TradingSystem.CostPerOperation)
+
+	dist.TradesShortGross = calcDistribution(*shortGross)
+	dist.TradesShortNet   = calcDistribution(*shortNet)
+}
+
+//=============================================================================
+
+func calcDistribution(data []float64) *Distribution {
+	if data == nil || len(data) == 0 {
+		return nil
+	}
+
+	mean    := stats.Mean(data)
+	median  := stats.Median(data)
+	stdDev  := stats.StdDev(data, mean)
+	sharpeR := stats.SharpeRatio(mean, stdDev)
+	skewness:= stats.Skewness(mean, median, stdDev)
+	percen  := stats.NewPercentile(data)
+
+	perc01 := percen.Get( 1) - mean
+	perc30 := percen.Get(30) - mean
+	perc70 := percen.Get(70) - mean
+	perc99 := percen.Get(99) - mean
+
+	lowerPercRatio := perc01 / perc30
+	upperPercRatio := perc99 / perc70
+
+	return &Distribution{
+		Mean        : core.Trunc2d(mean),
+		Median      : core.Trunc2d(median),
+		StandardDev : core.Trunc2d(stdDev),
+		SharpeRatio : core.Trunc2d(sharpeR),
+		LowerTail   : core.Trunc2d(lowerPercRatio / 4.43),
+		UpperTail   : core.Trunc2d(upperPercRatio / 4.43),
+		Skewness    : core.Trunc2d(skewness),
+		Histogram   : stats.NewHistogram(data),
+	}
 }
 
 //=============================================================================

@@ -25,10 +25,12 @@ THE SOFTWARE.
 package performance
 
 import (
+	"time"
+
 	"github.com/bit-fever/core/datatype"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/bit-fever/portfolio-trader/pkg/core/stats"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"time"
 )
 
 //=============================================================================
@@ -62,12 +64,8 @@ type Equities struct {
 //=============================================================================
 
 type General struct {
-	FromDate              datatype.IntDate     `json:"fromDate"`
-	ToDate                datatype.IntDate     `json:"toDate"`
-	//TradingPeriod         string  `json:"tradingPeriod"`
-	//TimeInMarket          float32 `json:"timeInMarket"`
-	//SharpeRatioNormal     float32 `json:"sharpeRatioNormal"`
-	//SharpeRatioAnnualized float32 `json:"sharpeRatioAnnualized"`
+	FromDate datatype.IntDate  `json:"fromDate"`
+	ToDate   datatype.IntDate  `json:"toDate"`
 }
 
 //=============================================================================
@@ -143,6 +141,42 @@ func (a *AnnualAggregate) consolidate() {
 
 //=============================================================================
 
+type TradeDistribution struct {
+	SharpeRatioAnnualized Value `json:"sharpeRatioAnnualized"`
+	StandardDevAnnualized Value `json:"standardDevAnnualized"`
+	LowerTail             Value `json:"lowerTail"`
+	UpperTail             Value `json:"upperTail"`
+}
+
+//=============================================================================
+
+type Distribution struct {
+	Mean           float64           `json:"mean"`
+	Median         float64           `json:"median"`
+	StandardDev    float64           `json:"standardDev"`
+	SharpeRatio    float64           `json:"sharpeRatio"`
+	LowerTail      float64           `json:"lowerTail"`
+	UpperTail      float64           `json:"upperTail"`
+	Skewness       float64           `json:"skewness"`
+	Histogram      *stats.Histogram  `json:"histogram"`
+}
+
+//=============================================================================
+
+type Distributions struct {
+	Daily             *Distribution `json:"daily"`
+	TradesAllGross    *Distribution `json:"tradesAllGross"`
+	TradesAllNet      *Distribution `json:"tradesAllNet"`
+	TradesLongGross   *Distribution `json:"tradesLongGross"`
+	TradesLongNet     *Distribution `json:"tradesLongNet"`
+	TradesShortGross  *Distribution `json:"tradesShortGross"`
+	TradesShortNet    *Distribution `json:"tradesShortNet"`
+	AnnualSharpeRatio float64       `json:"annualSharpeRatio"`
+	AnnualStandardDev float64       `json:"annualStandardDev"`
+}
+
+//=============================================================================
+
 type AnalysisResponse struct {
 	General           General           `json:"general"`
 	TradingSystem     *db.TradingSystem `json:"tradingSystem"`
@@ -153,8 +187,7 @@ type AnalysisResponse struct {
 	ShortEquities     *Equities         `json:"shortEquities"`
 	Trades            *[]db.Trade       `json:"trades"`
 	Aggregates        Aggregates        `json:"aggregates"`
-	//AvgBarsInTrade    int               `json:"avgBarsInTrade"`
-	//AvgBarsBetwTrades int               `json:"avgBarsBetwTrades"`
+	Distributions     Distributions     `json:"distributions"`
 }
 
 //=============================================================================
