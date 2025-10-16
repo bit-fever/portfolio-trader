@@ -88,6 +88,7 @@ type TradingSystem struct {
 	MarketType        string       `json:"marketType"`
 	CurrencyId        uint         `json:"currencyId"`
 	CurrencyCode      string       `json:"currencyCode"`
+	CurrencySymbol    string       `json:"currencySymbol"`
 	TradingSessionId  uint         `json:"tradingSessionId"`
 	SessionName       string       `json:"sessionName"`
 	SessionConfig     string       `json:"sessionConfig"`

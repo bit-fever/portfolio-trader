@@ -26,11 +26,12 @@ package inventory
 
 import (
 	"encoding/json"
+	"log/slog"
+
 	"github.com/bit-fever/core/msg"
 	"github.com/bit-fever/portfolio-trader/pkg/business"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
-	"log/slog"
 )
 
 //=============================================================================
@@ -147,6 +148,7 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.MarketType      = tsm.BrokerProduct.MarketType
 		ts.CurrencyId      = tsm.Currency.Id
 		ts.CurrencyCode    = tsm.Currency.Code
+		ts.CurrencySymbol  = tsm.Currency.Symbol
 		ts.TradingSessionId= tsm.TradingSession.Id
 		ts.SessionName     = tsm.TradingSession.Name
 		ts.SessionConfig   = tsm.TradingSession.Config

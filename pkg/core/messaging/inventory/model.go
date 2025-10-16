@@ -87,8 +87,9 @@ type Exchange struct {
 //=============================================================================
 
 type Currency struct {
-	Id   uint   `json:"id"`
-	Code string `json:"code"`
+	Id     uint    `json:"id"`
+	Code   string  `json:"code"`
+	Symbol string  `json:"symbol"`
 }
 
 //=============================================================================
