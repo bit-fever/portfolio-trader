@@ -25,8 +25,9 @@ THE SOFTWARE.
 package core
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/db"
 	"time"
+
+	"github.com/bit-fever/portfolio-trader/pkg/db"
 )
 
 //=============================================================================
@@ -50,13 +51,11 @@ func BuildGrossProfits(trades *[]db.Trade, tradeType string) (*[]time.Time, *[]f
 
 //=============================================================================
 
-func BuildNetProfits(grossProfits *[]float64, costPerOper float32) *[]float64 {
-	cost  := float64(costPerOper)
-
+func BuildNetProfits(grossProfits *[]float64, costPerOper float64) *[]float64 {
 	netSlice := []float64{}
 
 	for _, gross := range *grossProfits {
-		net := gross - 2 * cost
+		net := gross - 2 * costPerOper
 		netSlice = append(netSlice, net)
 	}
 

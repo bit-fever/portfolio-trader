@@ -26,6 +26,10 @@ package statsupdater
 
 import (
 	"fmt"
+	"log/slog"
+	"strconv"
+	"time"
+
 	"github.com/bit-fever/portfolio-trader/pkg/app"
 	"github.com/bit-fever/portfolio-trader/pkg/core"
 	"github.com/bit-fever/portfolio-trader/pkg/db"
@@ -33,9 +37,6 @@ import (
 	"github.com/vicanso/go-charts/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 	"gorm.io/gorm"
-	"log/slog"
-	"strconv"
-	"time"
 )
 
 //=============================================================================
@@ -178,7 +179,7 @@ func updateLastStats(ts *db.TradingSystem, trades *[]db.Trade) {
 
 	for _, trade := range *trades {
 		grossProfit += trade.GrossProfit
-		netProfit   += trade.GrossProfit - 2 * float64(ts.CostPerOperation)
+		netProfit   += trade.GrossProfit - 2 * ts.CostPerOperation
 		numTrades++
 
 		grossEquity   = append(grossEquity, grossProfit)

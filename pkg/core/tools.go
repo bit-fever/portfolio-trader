@@ -62,15 +62,3 @@ func ToNonZeroDailyReturnSlice(list *[]db.DailyReturn) []float64 {
 }
 
 //=============================================================================
-
-func CloneWithDelta(list []float64, delta float64) []float64 {
-	res := make([]float64, len(list))
-
-	for _, x := range list {
-		res = append(res, x + delta)
-	}
-
-	return res
-}
-
-//=============================================================================

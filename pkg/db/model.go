@@ -81,9 +81,9 @@ type TradingSystem struct {
 	DataSymbol        string       `json:"dataSymbol"`
 	BrokerProductId   uint         `json:"brokerProductId"`
 	BrokerSymbol      string       `json:"brokerSymbol"`
-	PointValue        float32      `json:"pointValue"`
-	CostPerOperation  float32      `json:"costPerOperation"`
-	MarginValue       float32      `json:"marginValue"`
+	PointValue        float64      `json:"pointValue"`
+	CostPerOperation  float64      `json:"costPerOperation"`
+	MarginValue       float64      `json:"marginValue"`
 	Increment         float64      `json:"increment"`
 	MarketType        string       `json:"marketType"`
 	CurrencyId        uint         `json:"currencyId"`

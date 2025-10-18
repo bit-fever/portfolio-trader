@@ -69,9 +69,10 @@ func GetPerformanceAnalysis(ts *db.TradingSystem, trades *[]db.Trade, returns *[
 	res.Net  .AverageTrade.Long  = calcAvgTrade(res.Net  .Profit.Long , longEq.Trades)
 	res.Net  .AverageTrade.Short = calcAvgTrade(res.Net  .Profit.Short, shortEq.Trades)
 
-	calcAggregates(&res)
+	calcAggregates   (&res)
 	updateGeneralInfo(&res)
 	calcDistributions(&res, returns)
+	calcRolling      (&res)
 
 	return &res
 }
@@ -261,6 +262,69 @@ func calcDistribution(data []float64) *Distribution {
 		Skewness    : core.Trunc2d(skewness),
 		Histogram   : stats.NewHistogram(data),
 	}
+}
+
+//=============================================================================
+
+func calcRolling(res *AnalysisResponse) {
+	costPerOper := res.TradingSystem.CostPerOperation
+
+	for _, tr := range *res.Trades {
+		year := tr.EntryDate.Year()
+		dow  := int(tr.EntryDate.Weekday())
+		mon  := int(tr.EntryDate.Month()) -1
+
+		dowRI := &res.Rolling.Daily  [dow]
+		monRI := &res.Rolling.Monthly[mon]
+
+		updateRollingInfo(&tr, dowRI, costPerOper)
+		updateRollingInfo(&tr, monRI, costPerOper)
+
+		res.Rolling.DayYoY   = updateYoY(res.Rolling.DayYoY,   year, &tr, dow, costPerOper,  7)
+		res.Rolling.MonthYoY = updateYoY(res.Rolling.MonthYoY, year, &tr, mon, costPerOper, 12)
+	}
+}
+
+//=============================================================================
+
+func updateRollingInfo(tr *db.Trade, ri *RollingInfo, costPerOper float64) {
+	ri.Trades.Total++
+	ri.GrossReturns.Total += tr.GrossProfit
+	ri.NetReturns.Total   += tr.GrossProfit - 2 * costPerOper
+
+	if tr.TradeType == db.TradeTypeLong {
+		ri.Trades      .Long++
+		ri.GrossReturns.Long += tr.GrossProfit
+		ri.NetReturns  .Long += tr.GrossProfit - 2 * costPerOper
+	} else {
+		ri.Trades      .Short++
+		ri.GrossReturns.Short += tr.GrossProfit
+		ri.NetReturns  .Short += tr.GrossProfit - 2 * costPerOper
+	}
+}
+
+//=============================================================================
+
+func updateYoY(list []*YoYRolling, year int, tr *db.Trade, slot int, costPerOper float64, slots int) []*YoYRolling{
+	var yoy *YoYRolling
+
+	if list == nil || list[len(list)-1].Year != year {
+		yoy = &YoYRolling{
+			Year: year,
+		}
+
+		list = append(list, yoy)
+
+		for i:=0;i<slots;i++ {
+			yoy.Data = append(yoy.Data, &RollingInfo{})
+		}
+	} else {
+		yoy = list[len(list)-1]
+	}
+
+	updateRollingInfo(tr, yoy.Data[slot], costPerOper)
+
+	return list
 }
 
 //=============================================================================

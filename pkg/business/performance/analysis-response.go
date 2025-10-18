@@ -177,17 +177,42 @@ type Distributions struct {
 
 //=============================================================================
 
+type RollingInfo struct {
+	Trades       Value `json:"trades"`
+	GrossReturns Value `json:"grossReturns"`
+	NetReturns   Value `json:"netReturns"`
+}
+
+//=============================================================================
+
+type YoYRolling struct {
+	Year int            `json:"year"`
+	Data []*RollingInfo `json:"data"`
+}
+
+//=============================================================================
+
+type Rolling struct {
+	Daily    [ 7]RollingInfo `json:"daily"`
+	Monthly  [12]RollingInfo `json:"monthly"`
+	DayYoY   []*YoYRolling   `json:"dayYoY"`
+	MonthYoY []*YoYRolling   `json:"monthYoY"`
+}
+
+//=============================================================================
+
 type AnalysisResponse struct {
-	General           General           `json:"general"`
-	TradingSystem     *db.TradingSystem `json:"tradingSystem"`
-	Gross             Performance       `json:"gross"`
-	Net               Performance       `json:"net"`
-	AllEquities       *Equities         `json:"allEquities"`
-	LongEquities      *Equities         `json:"longEquities"`
-	ShortEquities     *Equities         `json:"shortEquities"`
-	Trades            *[]db.Trade       `json:"trades"`
-	Aggregates        Aggregates        `json:"aggregates"`
-	Distributions     Distributions     `json:"distributions"`
+	General         General           `json:"general"`
+	TradingSystem   *db.TradingSystem `json:"tradingSystem"`
+	Gross           Performance       `json:"gross"`
+	Net             Performance       `json:"net"`
+	AllEquities     *Equities         `json:"allEquities"`
+	LongEquities    *Equities         `json:"longEquities"`
+	ShortEquities   *Equities         `json:"shortEquities"`
+	Trades          *[]db.Trade       `json:"trades"`
+	Aggregates      Aggregates        `json:"aggregates"`
+	Distributions   Distributions     `json:"distributions"`
+	Rolling         Rolling           `json:"rolling"`
 }
 
 //=============================================================================
