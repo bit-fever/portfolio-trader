@@ -159,6 +159,9 @@ func setTradingSystem(tsm *TradingSystemMessage, create bool) bool {
 		ts.Timezone        = tsm.Exchange.Timezone
 		ts.AgentProfileId  = tsm.TradingSystem.AgentProfileId
 		ts.ExternalRef     = tsm.TradingSystem.ExternalRef
+		ts.InSampleFrom    = tsm.TradingSystem.InSampleFrom
+		ts.InSampleTo      = tsm.TradingSystem.InSampleTo
+		ts.EngineCode      = tsm.TradingSystem.EngineCode
 
 		err = db.UpdateTradingSystem(tx, ts)
 
