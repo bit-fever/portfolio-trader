@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 package optimization
 
-import "github.com/bit-fever/portfolio-trader/pkg/db"
+import "github.com/tradalia/portfolio-trader/pkg/db"
 
 //=============================================================================
 

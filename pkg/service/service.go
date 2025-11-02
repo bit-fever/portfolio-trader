@@ -25,10 +25,10 @@ THE SOFTWARE.
 package service
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/auth/roles"
-	"github.com/bit-fever/core/req"
-	"github.com/bit-fever/portfolio-trader/pkg/app"
+	"github.com/tradalia/core/auth"
+	"github.com/tradalia/core/auth/roles"
+	"github.com/tradalia/core/req"
+	"github.com/tradalia/portfolio-trader/pkg/app"
 	"github.com/gin-gonic/gin"
 	"log/slog"
 )

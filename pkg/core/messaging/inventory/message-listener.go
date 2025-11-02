@@ -28,9 +28,9 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"github.com/bit-fever/core/msg"
-	"github.com/bit-fever/portfolio-trader/pkg/business"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/tradalia/core/msg"
+	"github.com/tradalia/portfolio-trader/pkg/business"
+	"github.com/tradalia/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
 

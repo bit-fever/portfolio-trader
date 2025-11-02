@@ -27,12 +27,12 @@ package business
 import (
 	"time"
 
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/datatype"
-	"github.com/bit-fever/core/req"
-	"github.com/bit-fever/portfolio-trader/pkg/business/performance"
-	"github.com/bit-fever/portfolio-trader/pkg/core"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/tradalia/core/auth"
+	"github.com/tradalia/core/datatype"
+	"github.com/tradalia/core/req"
+	"github.com/tradalia/portfolio-trader/pkg/business/performance"
+	"github.com/tradalia/portfolio-trader/pkg/core"
+	"github.com/tradalia/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
 

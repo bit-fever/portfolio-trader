@@ -25,9 +25,9 @@ THE SOFTWARE.
 package process
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/app"
-	"github.com/bit-fever/portfolio-trader/pkg/core/process/statsupdater"
-	"github.com/bit-fever/portfolio-trader/pkg/core/process/statusupdater"
+	"github.com/tradalia/portfolio-trader/pkg/app"
+	"github.com/tradalia/portfolio-trader/pkg/core/process/statsupdater"
+	"github.com/tradalia/portfolio-trader/pkg/core/process/statusupdater"
 )
 
 //=============================================================================

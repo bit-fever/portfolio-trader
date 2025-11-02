@@ -27,7 +27,7 @@ package stats
 import (
 	"math"
 
-	"github.com/bit-fever/portfolio-trader/pkg/core"
+	"github.com/tradalia/portfolio-trader/pkg/core"
 )
 
 //=============================================================================

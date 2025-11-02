@@ -25,9 +25,9 @@ THE SOFTWARE.
 package service
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/portfolio-trader/pkg/business"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/tradalia/core/auth"
+	"github.com/tradalia/portfolio-trader/pkg/business"
+	"github.com/tradalia/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 )
 

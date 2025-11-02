@@ -25,9 +25,9 @@ THE SOFTWARE.
 package statusupdater
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/app"
-	"github.com/bit-fever/portfolio-trader/pkg/consts"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/tradalia/portfolio-trader/pkg/app"
+	"github.com/tradalia/portfolio-trader/pkg/consts"
+	"github.com/tradalia/portfolio-trader/pkg/db"
 	"gorm.io/gorm"
 	"log/slog"
 	"time"

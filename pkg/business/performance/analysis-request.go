@@ -25,7 +25,7 @@ THE SOFTWARE.
 package performance
 
 import (
-	"github.com/bit-fever/core/datatype"
+	"github.com/tradalia/core/datatype"
 )
 
 //=============================================================================

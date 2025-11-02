@@ -25,9 +25,9 @@ THE SOFTWARE.
 package algorithm
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/genetic"
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/simple"
+	"github.com/tradalia/portfolio-trader/pkg/business/filter/algorithm/genetic"
+	"github.com/tradalia/portfolio-trader/pkg/business/filter/algorithm/optimization"
+	"github.com/tradalia/portfolio-trader/pkg/business/filter/algorithm/simple"
 )
 
 //=============================================================================

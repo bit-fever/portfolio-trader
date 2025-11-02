@@ -25,17 +25,17 @@ THE SOFTWARE.
 package main
 
 import (
-	"github.com/bit-fever/core/auth"
-	"github.com/bit-fever/core/boot"
-	"github.com/bit-fever/core/msg"
-	"github.com/bit-fever/core/req"
-	"github.com/bit-fever/portfolio-trader/pkg/app"
-	"github.com/bit-fever/portfolio-trader/pkg/core/messaging/inventory"
-	"github.com/bit-fever/portfolio-trader/pkg/core/messaging/runtime"
-	"github.com/bit-fever/portfolio-trader/pkg/core/process"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
-	"github.com/bit-fever/portfolio-trader/pkg/platform"
-	"github.com/bit-fever/portfolio-trader/pkg/service"
+	"github.com/tradalia/core/auth"
+	"github.com/tradalia/core/boot"
+	"github.com/tradalia/core/msg"
+	"github.com/tradalia/core/req"
+	"github.com/tradalia/portfolio-trader/pkg/app"
+	"github.com/tradalia/portfolio-trader/pkg/core/messaging/inventory"
+	"github.com/tradalia/portfolio-trader/pkg/core/messaging/runtime"
+	"github.com/tradalia/portfolio-trader/pkg/core/process"
+	"github.com/tradalia/portfolio-trader/pkg/db"
+	"github.com/tradalia/portfolio-trader/pkg/platform"
+	"github.com/tradalia/portfolio-trader/pkg/service"
 	"log/slog"
 )
 

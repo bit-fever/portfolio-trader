@@ -25,7 +25,7 @@ THE SOFTWARE.
 package business
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/tradalia/portfolio-trader/pkg/db"
 )
 
 //=============================================================================

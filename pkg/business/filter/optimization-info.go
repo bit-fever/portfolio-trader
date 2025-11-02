@@ -25,9 +25,9 @@ THE SOFTWARE.
 package filter
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
-	"github.com/bit-fever/portfolio-trader/pkg/core"
-	"github.com/bit-fever/portfolio-trader/pkg/db"
+	"github.com/tradalia/portfolio-trader/pkg/business/filter/algorithm/optimization"
+	"github.com/tradalia/portfolio-trader/pkg/core"
+	"github.com/tradalia/portfolio-trader/pkg/db"
 	"sync"
 	"time"
 )

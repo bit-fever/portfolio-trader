@@ -27,7 +27,7 @@ package runtime
 import (
 	"time"
 
-	"github.com/bit-fever/core/datatype"
+	"github.com/tradalia/core/datatype"
 )
 
 //=============================================================================

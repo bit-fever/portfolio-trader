@@ -1,9 +1,9 @@
-module github.com/bit-fever/portfolio-trader
+module github.com/tradalia/portfolio-trader
 
 go 1.24.0
 
 require (
-	github.com/bit-fever/core v1.10.12
+	github.com/tradalia/core v1.10.12
 	github.com/emirpasic/gods v1.18.1
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-sql-driver/mysql v1.9.3 // indirect

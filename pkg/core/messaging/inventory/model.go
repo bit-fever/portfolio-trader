@@ -24,7 +24,7 @@ THE SOFTWARE.
 
 package inventory
 
-import "github.com/bit-fever/core/datatype"
+import "github.com/tradalia/core/datatype"
 
 //=============================================================================
 //=== Entities

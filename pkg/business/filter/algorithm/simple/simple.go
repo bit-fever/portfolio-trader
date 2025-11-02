@@ -25,7 +25,7 @@ THE SOFTWARE.
 package simple
 
 import (
-	"github.com/bit-fever/portfolio-trader/pkg/business/filter/algorithm/optimization"
+	"github.com/tradalia/portfolio-trader/pkg/business/filter/algorithm/optimization"
 )
 
 //=============================================================================

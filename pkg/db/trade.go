@@ -27,7 +27,7 @@ package db
 import (
 	"time"
 
-	"github.com/bit-fever/core/req"
+	"github.com/tradalia/core/req"
 	"gorm.io/gorm"
 )
 
