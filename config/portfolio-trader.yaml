@@ -5,14 +5,14 @@ application:
 database:
   address: localhost:3401
   name: portfolio
-  username: bitfever
-  password: bitfever
+  username: tradalia
+  password: tradalia
 authentication:
-  authority: https://bitfever-server:8443/auth/realms/bitfever
-  clientId: bitfever-backend
-  clientSecret: AXRNrPrBiiOlBcwiOPX67XFTcbu9p9IZ
+  authority: https://tradalia-server:8443/auth/realms/tradalia
+  clientId: tradalia-backend
+  clientSecret: YdImL2TpOb120tnerwsmLVJv6F3nHv0o
 platform:
-  storage: https://bitfever-server:8452/api/storage
+  storage: https://tradalia-server:8452/api/storage
 messaging:
   address: localhost:8450
   username: rabbit-admin
